@@ -184,7 +184,7 @@ function PLUGIN:PreDrawHUD()
 
 			local time = CurTime() * heartbeatSpeed
 			local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
-			--local pulseSize = 1 + (math.abs(math.sin(time * 2)) * 0.1) -- Pulsate size from 1.0 to 1.1
+			local pulseSize = 1 + (math.abs(math.sin(time * 2)) * 0.1) -- Pulsate size from 1.0 to 1.1
 
 			local x, y = 0, 0
 			local scrW, scrH = ScrW(), ScrH()
@@ -195,8 +195,8 @@ function PLUGIN:PreDrawHUD()
 				TEMP_BLUR:SetFloat("$blur", (psydmg*3)*i)
 				TEMP_BLUR:Recompute()
 				render.UpdateScreenEffectTexture()
-				surface.DrawTexturedRect(x * -1, y * -1, scrW, scrH)
-				--surface.DrawTexturedRect(x * -1 * pulseSize, y * -1 * pulseSize, scrW * pulseSize, scrH * pulseSize)
+				--surface.DrawTexturedRect(x * -1, y * -1, scrW, scrH)
+				surface.DrawTexturedRect(x * -1 * pulseSize, y * -1 * pulseSize, scrW * pulseSize, scrH * pulseSize)
 			end
 		cam.End2D()
 	end
