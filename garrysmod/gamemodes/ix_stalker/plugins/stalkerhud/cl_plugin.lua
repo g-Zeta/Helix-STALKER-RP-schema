@@ -817,22 +817,28 @@ function PLUGIN:PsyhealthIconHUDPaint()
 		local psy3 = Material("stalkerCoP/ui/hud/status/psyz3.png", "noclamp smooth") 
 		local psy4 = Material("stalkerCoP/ui/hud/status/psyz4.png", "noclamp smooth") 
 
+		local heartbeatSpeed = 2.5 -- Speed of the heartbeat effect
+		local maxAlpha = 255 -- Maximum alpha value
+		local minAlpha = 50 -- Minimum alpha value (to avoid complete transparency)
+		local time = CurTime() * heartbeatSpeed
+		local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
+
 		surface.SetDrawColor(Color(255, 255, 255, 0))
 		if (lp:GetPsyHealth() <= 99) then
 			surface.SetMaterial(psy1)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, alpha))
 		end
 		if (lp:GetPsyHealth() <= 75) then
 			surface.SetMaterial(psy2)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, alpha))
 		end
 		if (lp:GetPsyHealth() <= 50) then
 			surface.SetMaterial(psy3)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, alpha))
 		end
 		if (lp:GetPsyHealth() <= 20) then
 			surface.SetMaterial(psy4)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, alpha))
 		end
 		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-250 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
 	end

@@ -19,7 +19,7 @@ ITEM.res = {
 }
 
 ITEM.buff = "endbuff"
-ITEM.buffval = 2
+ITEM.buffval = 1
 
 ITEM.debuff = "rads"
 ITEM.debuffval = 1
