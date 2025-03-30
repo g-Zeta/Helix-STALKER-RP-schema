@@ -1,0 +1,8 @@
+
+"skeleton"
+{
+	"base" 			"helix"
+	"title" 		"IX: STALKER RP - Fireside Tales"
+	"author" 		"nebulous"
+	"menusystem"	"1"
+}

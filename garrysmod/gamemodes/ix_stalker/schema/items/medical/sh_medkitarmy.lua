@@ -1,0 +1,15 @@
+ITEM.name = "Army Medkit"
+ITEM.description = "A small military medkit."
+ITEM.longdesc = "A specialized medical kit for providing first aid to combat casualties. \nThe kit includes blood coagulants based on menadione, painkillers, antibiotics and immunostimulants."
+ITEM.model = "models/kek1ch/dev_aptechka_high.mdl"
+ITEM.width = 1
+ITEM.height = 1
+ITEM.category = "Medical"
+ITEM.quantMax = 3
+ITEM.quantity = 3
+ITEM.restore = 4
+ITEM.sound = "stalkersound/inv_bandage.mp3"
+ITEM.price = "5000"
+ITEM.flag = "1"
+ITEM.weight = 0.3
+ITEM.stopsBleed = true

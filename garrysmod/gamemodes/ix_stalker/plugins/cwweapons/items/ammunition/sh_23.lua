@@ -1,0 +1,10 @@
+ITEM.name = "23x75mm Shrapnel"
+ITEM.model = "models/kek1ch/ammo_12x70_buck.mdl"
+ITEM.ammo = "23mm Shell"
+ITEM.ammoAmount = 10
+ITEM.description = "A Box that contains %s 23mm Shrapnel shells."
+ITEM.category = "Ammunition"
+ITEM.price = 1000
+ITEM.flag = "3"
+ITEM.weight = 0.1
+ITEM.img = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_23x75_shrapnel.png")

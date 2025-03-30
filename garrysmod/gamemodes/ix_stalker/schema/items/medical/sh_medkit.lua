@@ -1,0 +1,15 @@
+ITEM.name = "First-Aid Kit"
+ITEM.description = "A small general-purpose medkit."
+ITEM.longdesc = "Basic first aid kit for minor wounds, bleeds and burns."
+ITEM.model = "models/kek1ch/dev_aptechka_low.mdl"
+ITEM.width = 1
+ITEM.height = 1
+ITEM.category = "Medical"
+ITEM.quantMax = 3
+ITEM.quantity = 3
+ITEM.restore = 3
+ITEM.sound = "stalkersound/inv_bandage.mp3"
+ITEM.price = "2500"
+ITEM.flag = "1"
+ITEM.weight = 0.25
+ITEM.stopsBleed = true

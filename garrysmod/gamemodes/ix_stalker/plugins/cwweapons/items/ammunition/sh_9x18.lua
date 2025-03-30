@@ -1,0 +1,10 @@
+ITEM.name = "9x18mm"
+ITEM.model = "models/kek1ch/ammo_9x18_fmj.mdl"
+ITEM.ammo = "9x18MM" // type of the ammo
+ITEM.ammoAmount = 30 // amount of the ammo
+ITEM.description= "A box that contains %s rounds of 9x18mm ammo."
+ITEM.longdesc = "This 9x18mm round contains full metal jacket rounds with a steel penetrator and a lead core under a metal jacket."
+ITEM.price = 200
+ITEM.flag = "1"
+ITEM.weight = 0.16
+ITEM.img = Material("stalker2/ui/ammunition/ammo_9x18.png")
