@@ -18,6 +18,7 @@ if SERVER then
 			character:SetData("WoundHealCur", 0)
 			character:SetData("Bleeding", 0)
 			character:SetData("BleedingCur", 0)
+			character:SetData("PsyRegen", 0)
 			character:SetData("WeightBuff", 0)
 			character:SetData("WeightBuffCur", 0)
 		end
@@ -27,6 +28,8 @@ if SERVER then
 	local artihealTimer = 1
 	local woundhealTimer = 1
 	local bleedingTimer = 1
+	local psyhealthTimer = 1
+	local psyRegenTimer = 1
 	local radsTimer = 1
 	
 	function PLUGIN:Think()
@@ -42,6 +45,8 @@ if SERVER then
 			local rads = character:GetData("Rads", 0)				-- Radiation
 			local antirads = character:GetData("AntiRads",0)		-- Anti-Radiation
 			local accumrad = v:GetNetVar("AccumRads") or 0
+			local psyhealth = v:GetPsyHealth() or 100				-- Psy Health
+			local psyRegen = character:GetData("PsyRegen", 0)		-- Psy Regeneration
 			local maxweight = character:GetData("MaxWeight", 50)	-- Weight
 			local weightbuff = character:GetData("WeightBuff", 0)
 			local weightprev = character:GetData("WeightBuffCur", 0)
@@ -81,6 +86,23 @@ if SERVER then
 				if (v:IsValid() and v:Alive()) then
 					local bleedingAmount = math.Clamp(bleeding, 1, 100)
 					v:SetHealth(math.Clamp(v:Health() - bleedingAmount, 0, maxhealth))
+				end
+			end
+
+			-- Psi damage
+			if psyhealth < 80 and psyhealthTimer < CurTime() then
+				psyhealthTimer = CurTime() + 1 -- psi damage per second
+				if (v:IsValid() and v:Alive()) then
+					local psidamageAmount = math.Round(math.Clamp(ix.util.mapValueToRange(psyhealth, 0, 80, 5, 1), 1, 100))
+					v:SetHealth(math.Clamp(v:Health() - psidamageAmount, 0, maxhealth))
+				end
+			end
+
+			-- PsyHealth regeneration
+			if psyRegen > 0 and psyRegenTimer < CurTime() then
+				psyRegenTimer = CurTime() + 1 -- regeneration per second
+				if (v:IsValid() and v:Alive()) then
+					v:SetPsyHealth(math.Clamp(v:GetPsyHealth() + psyRegen, 0, 100))
 				end
 			end
 
@@ -131,7 +153,7 @@ if SERVER then
 	end
 end 
 
-hook.Add("PlayerDeath","ArtiWipe", function(client)
+hook.Add("PlayerDeath","ArtiWipe", function(client)	-- Reset on death
 	local character = client:GetChar()
 	if not character then return end
 	for k,v in pairs(character:GetInv():GetItems()) do
@@ -152,6 +174,7 @@ hook.Add("PlayerDeath","ArtiWipe", function(client)
     character:SetData("WoundHealCur", 0)
     character:SetData("Bleeding", 0)
     character:SetData("BleedingCur", 0)
+	character:SetData("PsyRegen", 0)
 	character:SetData("WeightBuff", 0)
 	character:SetData("WeightBuffCur", 0)
 	

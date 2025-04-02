@@ -18,9 +18,9 @@ function ENT:SpawnFunction( ply, tr )
 end
 
 function ENT:Initialize()
-	self.Entity:SetModel( "models/props_junk/watermelon01.mdl" ) --Set its model
-	self.Entity:SetMoveType( MOVETYPE_NONE )
-	self.Entity:SetSolid( SOLID_BBOX )
+	self.Entity:SetModel("models/props_junk/watermelon01.mdl") --Set its model
+	self.Entity:SetMoveType(MOVETYPE_NONE)
+	self.Entity:SetSolid(SOLID_BBOX)
 	self.Entity:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	self.Entity:SetKeyValue("rendercolor", "150 255 150")
 	self.Entity:SetKeyValue("renderamt", "0")
@@ -40,7 +40,7 @@ local soundEmitter
 
 function ENT:Think()
     if delayTime < CurTime() then
-        delayTime = CurTime() + 0.5
+        delayTime = CurTime() + 1
         for k, v in pairs(ents.FindInSphere(self.Entity:GetPos(), 2560)) do
             if v:IsPlayer() and v:GetCharacter() and v:GetMoveType() != MOVETYPE_NOCLIP then
                 local distance = v:GetPos():Distance(self:GetPos())

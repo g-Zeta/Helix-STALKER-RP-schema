@@ -154,8 +154,8 @@ function PLUGIN:PreDrawHUD()
 
 	if(lp:GetNetVar("ix_psysuppressed", false)) then psydmgPre = psydmgPre/2 end
 
-	if psydmgPre > 10 then
-		local psydmg = math.Clamp((ix.util.mapValueToRange(psydmgPre,10,100,0,100)/100),0,1)
+	if psydmgPre > 5 then
+		local psydmg = math.Clamp((ix.util.mapValueToRange(psydmgPre,5,100,0,100)/100),0,1)
 
 		local tab = {
 			[ "$pp_colour_addr" ] = 0.01*(psydmg*2),
@@ -178,25 +178,40 @@ function PLUGIN:PreDrawHUD()
 		local TEMP_BLUR = Material("pp/blurscreen")
 		cam.Start2D()
 			local psyHealth = lp:GetPsyHealth() or 100
-			local heartbeatSpeed = ((100 - psyHealth) / 25) -- Increase speed as PsyHealth decreases
 			local maxAlpha = 255
 			local minAlpha = 100			
+			local heartbeatSpeed
+			-- Set heartbeatSpeed based on psyHealth stages
+			if psyHealth > 80 then
+				heartbeatSpeed = 1.5 -- slower
+			elseif psyHealth > 60 then
+				heartbeatSpeed = 2
+			elseif psyHealth > 40 then
+				heartbeatSpeed = 3
+			elseif psyHealth > 20 then
+				heartbeatSpeed = 4
+			elseif psyHealth > 10 then
+				heartbeatSpeed = 5
+			else
+				heartbeatSpeed = 6 -- faster
+			end
 
 			local time = CurTime() * heartbeatSpeed
 			local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
-			local pulseSize = 1 + (math.abs(math.sin(time * 2)) * 0.1) -- Pulsate size from 1.0 to 1.1
+			local pulseSize = 1 + (math.abs(math.sin(time)) * 0.015)
 
 			local x, y = 0, 0
 			local scrW, scrH = ScrW(), ScrH()
+			local x, y = scrW / 2, scrH / 2 -- Center the effect on the screen
 			surface.SetDrawColor(255, 255, 255, alpha)
 			surface.SetMaterial( TEMP_BLUR )
 					
 			for i = 1, 3 do
-				TEMP_BLUR:SetFloat("$blur", (psydmg*3)*i)
+				TEMP_BLUR:SetFloat("$blur", (psydmg*3) * math.abs(math.sin(time)))
 				TEMP_BLUR:Recompute()
 				render.UpdateScreenEffectTexture()
 				--surface.DrawTexturedRect(x * -1, y * -1, scrW, scrH)
-				surface.DrawTexturedRect(x * -1 * pulseSize, y * -1 * pulseSize, scrW * pulseSize, scrH * pulseSize)
+				surface.DrawTexturedRect(x - (scrW * pulseSize / 2), y - (scrH * pulseSize / 2), scrW * pulseSize, scrH * pulseSize)
 			end
 		cam.End2D()
 	end

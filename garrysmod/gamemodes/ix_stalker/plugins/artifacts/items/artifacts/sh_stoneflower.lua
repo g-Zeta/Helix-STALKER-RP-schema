@@ -18,6 +18,9 @@ ITEM.res = {
 	["Radiation"] = -0.10,
 }
 
+ITEM.buff = "psi"
+ITEM.buffval = 2
+
 ITEM.debuff = "rads"
 ITEM.debuffval = 1
 

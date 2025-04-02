@@ -92,6 +92,10 @@ if (CLIENT) then
                 ix.util.PropertyDesc4(tooltip, "Energy recovery: ", Color(255, 255, 255), buffval, buffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/stamina.png")
             end
 
+            if self.buff == "psi" then
+                ix.util.PropertyDesc4(tooltip, "Psi: ", Color(255, 255, 255), buffval, buffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/psiprot.png")
+            end
+
 			local weightbuffval = self.buffval or 0
             if self.buff == "weight" then
                 ix.util.PropertyDesc4(tooltip, "Weight capacity: ", Color(255, 255, 255), "+" .. ix.weight.WeightString(weightbuffval, ix.option.Get("imperial", false)), buffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/carryweightinc.png")
@@ -196,6 +200,12 @@ ITEM:Hook("drop", function(item)
             client:RemoveBuff("buff_staminarestore")
         end
 
+        if item.buff == "psi" then
+            local curPsyRegen = character:GetData("PsyRegen") or 0
+            local newPsyRegen = (curPsyRegen - item.buffval)
+            character:SetData("PsyRegen", newPsyRegen)
+        end
+
         if item.buff == "weight" then
            local curweight = character:GetData("WeightBuff") or 0
            local newweight = (curweight - item.buffval)
@@ -245,6 +255,13 @@ ITEM.functions.Equip =
         
         if item.buff == "endbuff" then
 			client:AddBuff("buff_staminarestore", -1, { amount = item.buffval })
+        end
+
+        if item.buff == "psi" then
+            local curPsyRegen = character:GetData("PsyRegen") or 0
+            curPsyRegen = math.Clamp(curPsyRegen,0,1000)
+            local newPsyRegen = (curPsyRegen + item.buffval)
+            character:SetData("PsyRegen", newPsyRegen)
         end
 
         if item.buff == "weight" then
@@ -329,6 +346,12 @@ ITEM.functions.UnEquip =
         if item.buff == "endbuff" then
             client:RemoveBuff("buff_staminarestore")
         end
+
+		if item.buff == "psi" then
+			local curPsyRegen = character:GetData("PsyRegen") or 0
+			local newPsyRegen = (curPsyRegen - item.buffval)
+			character:SetData("PsyRegen", newPsyRegen)
+		end
 
         if item.buff == "weight" then
            local curweight = character:GetData("WeightBuff") or 0
@@ -465,6 +488,12 @@ ITEM.functions.Sell = {
 			
 			if item.buff == "endbuff" then
 				client:RemoveBuff("buff_staminarestore")
+			end
+
+			if item.buff == "psi" then
+				local curPsyRegen = character:GetData("PsyRegen") or 0
+				local newPsyRegen = (curPsyRegen - item.buffval)
+				character:SetData("PsyRegen", newPsyRegen)
 			end
 
 			if item.buff == "weight" then
