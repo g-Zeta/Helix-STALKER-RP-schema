@@ -130,22 +130,21 @@ if SERVER then
 							end
 						end
 					end
-				else
-					if radsTimer < CurTime() then
-						radsTimer = CurTime() + 0.5
+				elseif radsTimer < CurTime() then
+					radsTimer = CurTime() + 0.5
 
-						local antiradcalc = (antirads - rads) or 0		-- antiradiation artis help
-						local modifier = 0.1 + antiradcalc				-- the time for radiation to dissipate by itself: 0.1 = 3 rads every 20 seconds
-						local radred = (accumrad - modifier)			-- reduce the accumulated radiation value by the modifier
-						local damage = (radred/50)						-- determine how much damage the player will receive
-						v:SetNetVar("AccumRads", radred)				-- Update the accumulated radiation value
-						if radred <= 0 or v:Alive() == false then
-							v:SetNetVar("AccumRads", 0)
-						end
+					local antiradcalc = (antirads - rads) or 0		-- antiradiation artis help
+					local modifier = 0.1 + antiradcalc				-- the time for radiation to dissipate by itself: 0.1 = 3 rads every 20 seconds
+					local radred = (accumrad - modifier)			-- reduce the accumulated radiation value by the modifier
+					local damage = (radred/50)						-- determine how much damage the player will receive
+					v:SetNetVar("AccumRads", radred)				-- Update the accumulated radiation value
 
-						if accumrad > 24 then
-							v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
-						end
+					if radred <= 0 or v:Alive() == false then
+						v:SetNetVar("AccumRads", 0)
+					end
+
+					if accumrad > 24 then
+						v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
 					end
 				end
 			end

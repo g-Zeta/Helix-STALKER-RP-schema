@@ -73,7 +73,7 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
             end
         end
         
-        entity:addRadiation(math.Clamp(radDamage - totalRadResist, 0, 100))
+        entity:addRadiation(math.Clamp(radDamage, 0, 100))
 
         dmgInfo:SetDamage(0)
     end
