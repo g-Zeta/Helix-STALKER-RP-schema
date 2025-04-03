@@ -5,8 +5,9 @@ include('shared.lua')
 local delayTime = 0
 local range = 512
 local radiationamount = 1
-local geigerHeavy = {"geiger/heavy/geiger_heavy_1.wav", "geiger/heavy/geiger_heavy_2.wav", "geiger/heavy/geiger_heavy_3.wav", "geiger/heavy/geiger_heavy_4.wav", "geiger/heavy/geiger_heavy_5.wav", }
-local geigerLight = {"geiger/light/geiger_light_1.wav", "geiger/light/geiger_light_2.wav", "geiger/light/geiger_light_3.wav", "geiger/light/geiger_light_4.wav", "geiger/light/geiger_light_5.wav", }
+local geigerHeavy = {"stalker/detectors/geiger_6.ogg", }
+local geigerMid = {"stalker/detectors/geiger_3.ogg", "stalker/detectors/geiger_4.ogg", "stalker/detectors/geiger_5.ogg", }
+local geigerLight = {"stalker/detectors/geiger_1.ogg", }
 
 function ENT:SpawnFunction( ply, tr )
 	if ( !tr.Hit ) then return end
@@ -24,9 +25,9 @@ end
 function ENT:Initialize()
 
 	self.Entity:SetModel( "models/props_junk/watermelon01.mdl" ) --Set its model.
-	//self.Entity:PhysicsInit( SOLID_NONE )      -- Make us work with physics,
-	self.Entity:SetMoveType( MOVETYPE_NONE )   -- after all, gmod is a physics
-	self.Entity:SetSolid( SOLID_NONE ) 	-- Toolbox
+	self.Entity:SetMoveType(MOVETYPE_NONE)
+	self.Entity:SetSolid(SOLID_BBOX)
+	self.Entity:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	self.Entity:SetKeyValue("rendercolor", "150 255 150")
 	self.Entity:SetKeyValue("renderamt", "0")
 	self.Entity:SetMaterial("models/props_combine/portalball001_sheet")
@@ -39,7 +40,7 @@ end
 
 function ENT:Think()
 	if delayTime < CurTime() then
-		delayTime = CurTime()
+		delayTime = CurTime() + 0.2
 		for k, v in pairs( ents.FindInSphere( self.Entity:GetPos(), 2560 )  ) do
 			if v:IsPlayer() and v:GetCharacter() and v:GetMoveType() != MOVETYPE_NOCLIP then
 				local items = v:GetCharacter():GetInventory():GetItems(true)
@@ -59,7 +60,12 @@ function ENT:Think()
 						local randomsound = table.Random(geigerHeavy)
 						v:EmitSound(randomsound)
 					end
-				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 256 then
+				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 100 then
+					if v:hasGeiger() then
+						local randomsound = table.Random(geigerMid)
+						v:EmitSound(randomsound)
+					end
+				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 250 then
 					if v:hasGeiger() then
 						local randomsound = table.Random(geigerLight)
 						v:EmitSound(randomsound)

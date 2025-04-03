@@ -46,17 +46,9 @@ function playerMeta:getRadResist()
 	local items = char:GetInventory():GetItems(true)
 
 	for k,v in pairs(items) do
-		if (v.radProt and v:GetData("equip") == true) then
-			res = res + v.radProt * 10
+		if (v:GetData("equip") == true) then
+			res = res
 			break
-		end
-	end
-
-	--second loop for artifacts
-
-	if ix.plugin.list["buffs"] then
-		if self:HasBuff("buff_radprotect") then
-			res = res + 0.1
 		end
 	end
 
@@ -68,9 +60,12 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
 	if ( entity:IsPlayer() and dmgInfo:IsDamageType(DMG_RADIATION)) then
 		local radAmount = dmgInfo:GetDamage()
 		local radResist = entity:getRadResist()
+		local radDamage = radAmount - radResist
 		
-		entity:addRadiation(math.Clamp(radAmount - radResist, 0, 100))
+		entity:addRadiation(radDamage)
 		dmgInfo:SetDamage(0)
+		
+		entity:ChatPrint("Radiation Damage: " .. radDamage)
 	end
 end
 
@@ -78,7 +73,6 @@ end
 if (CLIENT) then
 	local color = Color(39, 174, 96)
 
-	--nut.bar.add(function() return (LocalPlayer():getRadiationPercent()) end, color, nil, "radiation")
 	function PLUGIN:RenderScreenspaceEffects()
 		if (LocalPlayer():getRadiation() > 45 and LocalPlayer():getRadiation() < 75) then
 			DrawMotionBlur(0.05, 0.15, 0.001)

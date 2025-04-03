@@ -17,7 +17,7 @@ ITEM.res = {
 	["Shock"] = 0.013,
 	["Chemical"] = 0.013,
 	["Psi"] = 0.15,
-	["Radiation"] = 0.016,
+	["Radiation"] = 0.00,
 }
 
 ITEM.ballisticlevels = {"lll-a", "0"}

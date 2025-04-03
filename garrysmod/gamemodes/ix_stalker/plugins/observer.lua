@@ -45,6 +45,27 @@ if (CLIENT) then
 		end
 	})
 
+	ix.option.Add("observerESP - Radiation", ix.type.bool, true, {
+		category = "observer",
+		hidden = function()
+			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
+		end
+	})
+
+	ix.option.Add("observerESP - Psi", ix.type.bool, true, {
+		category = "observer",
+		hidden = function()
+			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
+		end
+	})
+
+	ix.option.Add("observerESP - Anomalies", ix.type.bool, true, {
+		category = "observer",
+		hidden = function()
+			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
+		end
+	})
+
 	local dimDistance = 1024
 	local aimLength = 128
 	local barHeight = 2
@@ -143,6 +164,30 @@ if (CLIENT) then
 					surface.DrawRect(x - size/2, y - size/2, size, size)	
 					if IsValid(v) then
 						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(255, 0, 255), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
+					end				
+				end
+
+				if (ix.option.Get("observerESP - Radiation", true) and string.match(v:GetClass(),"rad_")) then
+					surface.SetDrawColor(0, 255, 0, alpha)
+					surface.DrawRect(x - size/2, y - size/2, size, size)	
+					if IsValid(v) then
+						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
+					end				
+				end
+
+				if (ix.option.Get("observerESP - Psi", true) and string.match(v:GetClass(),"psi_")) then
+					surface.SetDrawColor(0, 255, 255, alpha)
+					surface.DrawRect(x - size/2, y - size/2, size, size)	
+					if IsValid(v) then
+						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 255), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
+					end				
+				end
+
+				if (ix.option.Get("observerESP - Anomalies", true) and string.match(v:GetClass(),"anom_")) then
+					surface.SetDrawColor(255, 100, 0, alpha)
+					surface.DrawRect(x - size/2, y - size/2, size, size)	
+					if IsValid(v) then
+						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(255, 100, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
 					end				
 				end
 

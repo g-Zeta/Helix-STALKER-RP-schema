@@ -15,9 +15,9 @@ ITEM.res = {
 	["Blast"] = 0.015,
 	["Slash"] = 0.015,
 	["Fall"] = 0.015,
-	["Burn"] = 0.018,
+	["Burn"] = 0.02,
 	["Shock"] = 0.02,
-	["Chemical"] = 0.019,
+	["Chemical"] = 0.02,
 	["Psi"] = 0.10,
 	["Radiation"] = 0.05,
 }
