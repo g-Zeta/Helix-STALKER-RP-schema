@@ -75,3 +75,41 @@ else
 		end
 	end)
 end
+
+ix.command.Add("CharResistances", {
+	description = "Displays your current resistances.",
+	OnRun = function(self, client)
+		local char = client:GetChar()
+		if not char then
+			client:Notify("You do not have a character.")
+			return
+		end
+		
+		local inventory = char:GetInv()
+		local resistances = {
+			["Fall"] = 0,
+			["Burn"] = 0,
+			["Shock"] = 0,
+			["Chemical"] = 0,
+			["Psi"] = 0,
+			["Radiation"] = 0,
+		}
+		
+		for k, v in pairs(inventory:GetItems()) do
+			if v:GetData("equip", false) then
+				for resType, value in pairs(v.res or {}) do
+					if resistances[resType] then
+						resistances[resType] = resistances[resType] + value
+					end
+				end
+			end
+		end
+		
+		local response = "Your current resistances are:\n"
+		for resType, value in pairs(resistances) do
+			response = response .. string.format("%s: %.2f%%\n", resType, value * 100)
+		end
+		
+		client:ChatPrint(response)
+	end
+})

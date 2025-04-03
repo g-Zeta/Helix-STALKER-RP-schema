@@ -57,7 +57,7 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
         end
         
         -- Apply radiation resistance to radDamage
-        local effectiveRadDamage = radDamage * (1 - totalRadResist)
+        local effectiveRadDamage = radDamage * (1 - totalRadResist) * 10
         
         -- Armor Durability Reduction
         if ix.config.Get("Armor Durability") then

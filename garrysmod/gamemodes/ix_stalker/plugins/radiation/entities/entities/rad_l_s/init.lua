@@ -5,9 +5,8 @@ include('shared.lua')
 local delayTime = 0
 local range = 512
 local radiationamount = 1
-local geigerHeavy = {"stalker/detectors/geiger_6.ogg", }
-local geigerMid = {"stalker/detectors/geiger_3.ogg", "stalker/detectors/geiger_4.ogg", "stalker/detectors/geiger_5.ogg", }
-local geigerLight = {"stalker/detectors/geiger_1.ogg", }
+local geigerHeavy = {"stalker/detectors/geiger_3.ogg", "stalker/detectors/geiger_4.ogg", "stalker/detectors/geiger_5.ogg", }
+local geigerLight = {"stalker/detectors/geiger_1.ogg", "stalker/detectors/geiger_2.ogg", }
 
 function ENT:SpawnFunction( ply, tr )
 	if ( !tr.Hit ) then return end
@@ -40,7 +39,7 @@ end
 
 function ENT:Think()
 	if delayTime < CurTime() then
-		delayTime = CurTime() + 1
+		delayTime = CurTime() + 0.5
 		for k, v in pairs( ents.FindInSphere( self.Entity:GetPos(), 2560 )  ) do
 			if v:IsPlayer() and v:GetCharacter() and v:GetMoveType() != MOVETYPE_NOCLIP then
 				local items = v:GetCharacter():GetInventory():GetItems(true)
@@ -60,12 +59,7 @@ function ENT:Think()
 						local randomsound = table.Random(geigerHeavy)
 						v:EmitSound(randomsound)
 					end
-				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 100 then
-					if v:hasGeiger() then
-						local randomsound = table.Random(geigerMid)
-						v:EmitSound(randomsound)
-					end
-				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 250 then
+				elseif v:GetPos( ):Distance( self:GetPos( ) ) <= range + 256 then
 					if v:hasGeiger() then
 						local randomsound = table.Random(geigerLight)
 						v:EmitSound(randomsound)
