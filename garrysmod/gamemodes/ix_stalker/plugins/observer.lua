@@ -183,7 +183,12 @@ if (CLIENT) then
 					end				
 				end
 
-				if (ix.option.Get("observerESP - Anomalies", true) and string.match(v:GetClass(),"anom_")) then
+				if (ix.option.Get("observerESP - Anomalies", true) and
+					(string.match(v:GetClass(), "anom_") or
+					string.match(v:GetClass(), "kometa") or
+					string.match(v:GetClass(), "teleport") or
+					string.match(v:GetClass(), "space_anomaly"))) then
+					
 					surface.SetDrawColor(255, 100, 0, alpha)
 					surface.DrawRect(x - size/2, y - size/2, size, size)	
 					if IsValid(v) then

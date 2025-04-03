@@ -8,7 +8,7 @@ ITEM.weight = 4
 
 ITEM.flag = "3"
 
-ITEM.radProt = 0.20
+ITEM.radProt = 2
 
 ITEM.res = {
 	["Bullet"] = 0.03,

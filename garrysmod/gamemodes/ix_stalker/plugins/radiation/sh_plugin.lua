@@ -40,33 +40,43 @@ function PLUGIN:PostPlayerLoadout(client)
 	end
 end
 
-function playerMeta:getRadResist()
-	local res = 0
-	local char = self:GetCharacter()
-	local items = char:GetInventory():GetItems(true)
-
-	for k,v in pairs(items) do
-		if (v:GetData("equip") == true) then
-			res = res
-			break
-		end
-	end
-
-	return res
-end
-
 function PLUGIN:EntityTakeDamage(entity, dmgInfo)
-	--RADIATION OVERRIDE
-	if ( entity:IsPlayer() and dmgInfo:IsDamageType(DMG_RADIATION)) then
-		local radAmount = dmgInfo:GetDamage()
-		local radResist = entity:getRadResist()
-		local radDamage = radAmount - radResist
-		
-		entity:addRadiation(radDamage)
-		dmgInfo:SetDamage(0)
-		
-		entity:ChatPrint("Radiation Damage: " .. radDamage)
-	end
+    -- RADIATION OVERRIDE
+    if (entity:IsPlayer() and dmgInfo:IsDamageType(DMG_RADIATION)) then
+        local radDamage = dmgInfo:GetDamage()
+
+        -- Calculate total radiation resistance from equipped items and artifacts
+        local char = entity:GetCharacter()
+        local items = char:GetInventory():GetItems(true)
+        local totalRadResist = 0
+        
+        for _, item in pairs(items) do
+            if (item.isArmor or item.isGasmask or item.isHelmet or item.isArtifact) and item:GetData("equip") then
+                totalRadResist = totalRadResist + (item.res and item.res["Radiation"] or 0)
+            end
+        end
+        
+        -- Apply radiation resistance to radDamage
+        local effectiveRadDamage = radDamage * (1 - totalRadResist)
+        
+        -- Armor Durability Reduction
+        if ix.config.Get("Armor Durability") then
+            for _, item in pairs(items) do
+                if (item.isArmor or item.isGasmask or item.isHelmet) and item:GetData("equip") then
+                    local curDura = item:GetData("durability", 10000)
+                    local duraDamage = effectiveRadDamage
+                    local newDura = math.Clamp(curDura - duraDamage, 0, 10000) -- Clamp to maximum durability
+                    item:SetData("durability", newDura)
+					
+					entity:ChatPrint("Radiation Damage: " .. newDura)
+                end
+            end
+        end
+        
+        entity:addRadiation(math.Clamp(radDamage - totalRadResist, 0, 100))
+
+        dmgInfo:SetDamage(0)
+    end
 end
 
 -- Register HUD Bars.

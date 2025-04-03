@@ -40,7 +40,7 @@ end
 
 function ENT:Think()
 	if delayTime < CurTime() then
-		delayTime = CurTime() + 0.2
+		delayTime = CurTime() + 1
 		for k, v in pairs( ents.FindInSphere( self.Entity:GetPos(), 2560 )  ) do
 			if v:IsPlayer() and v:GetCharacter() and v:GetMoveType() != MOVETYPE_NOCLIP then
 				local items = v:GetCharacter():GetInventory():GetItems(true)
