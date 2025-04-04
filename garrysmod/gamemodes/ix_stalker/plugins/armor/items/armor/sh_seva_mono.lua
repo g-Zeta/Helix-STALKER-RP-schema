@@ -8,7 +8,7 @@ ITEM.weight = 7
 
 ITEM.flag = "M"
 
-ITEM.radProt = 7
+ITEM.radProt = 6
 
 ITEM.res = {
 	["Bullet"] = 0.35,
@@ -19,7 +19,7 @@ ITEM.res = {
 	["Shock"] = 0.46,
 	["Chemical"] = 0.46,
 	["Psi"] = 0.36,
-	["Radiation"] = 0.68,
+	["Radiation"] = 0.65,
 }
 
 ITEM.ballisticlevels = {"lll-a", "lll-a", "ll-a", "lll+", "ll-a"}
