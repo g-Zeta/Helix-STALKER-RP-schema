@@ -26,7 +26,6 @@ end
 local thinktime = 0
 
 function PLUGIN:Think()
-	
 	if thinktime > CurTime() then return end
 	thinktime = CurTime()
 	
