@@ -59,7 +59,7 @@ function ENT:Think()
 					
 					if v:hasGeiger() then
 						local randomsound
-						if distance <= 100 then
+						if distance <= (range / 4) then
 							randomsound = table.Random(geigerHeavy)
 						else
 							randomsound = table.Random(geigerMid)
@@ -67,7 +67,7 @@ function ENT:Think()
 						v:EmitSound(randomsound)
 					end
 				elseif distance <= range + 256 then
-					delayTime = CurTime() + 1
+					delayTime = CurTime() + 0.8
 					if v:hasGeiger() then
 						local randomsound = table.Random(geigerLight)
 						v:EmitSound(randomsound)

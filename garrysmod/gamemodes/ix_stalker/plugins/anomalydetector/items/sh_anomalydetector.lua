@@ -81,6 +81,17 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 	end
 }
 
+ITEM:Hook("drop", function(item)
+    local client = item.player;
+    local character = client:GetChar();
+
+    if (item:GetData("equip")) then
+		item:SetData("equip", false)
+		item.player:SetNetVar("ixhasanomdetector", false)
+		item.player:SetData("ixhasanomdetector", false)
+    end;
+end);
+
 ITEM.functions.Sell = {
 	name = "Sell",
 	icon = "icon16/stalker/sell.png",
@@ -109,3 +120,9 @@ ITEM.functions.Value = {
 		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip")
 	end
 }
+
+function ITEM:OnLoadout()
+	if self:GetData("equip") then
+		self:SetData("equip", false)
+	end
+end

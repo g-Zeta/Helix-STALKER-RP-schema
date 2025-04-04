@@ -1,6 +1,6 @@
 local PLUGIN = PLUGIN
 PLUGIN.name = "Radiation"
-PLUGIN.author = "Some body onc-"
+PLUGIN.author = "Lt. Taylor & Zeta"
 PLUGIN.desc = "Radiation System"
 
 local playerMeta = FindMetaTable("Player")
@@ -40,6 +40,26 @@ function PLUGIN:PostPlayerLoadout(client)
 	end
 end
 
+function playerMeta:getRadProtection()
+	local protection = 0
+	local char = self:GetCharacter()
+	local items = char:GetInventory():GetItems(true)
+
+	for k,v in pairs(items) do
+		if (v.radProt and v:GetData("equip") == true) then
+			protection = protection + v.radProt
+		end
+	end
+
+	if ix.plugin.list["buffs"] then
+		if self:HasBuff("buff_radprotect") then
+			protection = protection + 0.5
+		end
+	end
+
+	return protection
+end
+
 function PLUGIN:EntityTakeDamage(entity, dmgInfo)
     -- RADIATION OVERRIDE
     if (entity:IsPlayer() and dmgInfo:IsDamageType(DMG_RADIATION)) then
@@ -72,8 +92,10 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
                 end
             end
         end
-        
-        entity:addRadiation(math.Clamp(radDamage, 0, 100))
+
+		local radProtection = entity:getRadProtection()
+
+        entity:addRadiation(math.Clamp(radDamage - radProtection, 0, 100))	-- Accumulated radiation the player gets
 
         dmgInfo:SetDamage(0)
     end

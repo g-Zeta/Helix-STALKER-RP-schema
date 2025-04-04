@@ -5,7 +5,7 @@ include('shared.lua')
 local delayTime = 0
 local range = 512
 local psiamount = 1
-local psisound = {"anomalyrp/player/phy/psy_voices_1_l.wav", "anomalyrp/player/phy/psy_voices_1_r.wav",	}
+local psisound = {"stalker/psi/psi_sounds.ogg",	}
 
 function ENT:SpawnFunction( ply, tr )
 	if ( !tr.Hit ) then return end

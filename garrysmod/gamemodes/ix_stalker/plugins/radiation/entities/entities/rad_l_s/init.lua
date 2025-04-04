@@ -7,7 +7,7 @@ local range = 512
 local radiationamount = 1
 local geigerHeavy = {"geiger/heavy/geiger_heavy_1.wav", "geiger/heavy/geiger_heavy_2.wav", }
 local geigerMid = {"geiger/light/geiger_light_5.wav", "geiger/heavy/geiger_heavy_4.wav", "geiger/heavy/geiger_heavy_5.wav", }
-local geigerLight = {"geiger/light/geiger_light_1.wav", "geiger/light/geiger_light_2.wav", "geiger/light/geiger_light_5.wav", }
+local geigerLight = {"geiger/light/geiger_light_1.wav", "geiger/light/geiger_light_2.wav", }
 
 function ENT:SpawnFunction( ply, tr )
 	if ( !tr.Hit ) then return end
@@ -59,7 +59,7 @@ function ENT:Think()
 					
 					if v:hasGeiger() then
 						local randomsound
-						if distance <= 100 then
+						if distance <= (range / 4) then
 							randomsound = table.Random(geigerHeavy)
 						else
 							randomsound = table.Random(geigerMid)

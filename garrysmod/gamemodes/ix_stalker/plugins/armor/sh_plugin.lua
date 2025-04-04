@@ -1,5 +1,5 @@
 PLUGIN.name = "Armor"
-PLUGIN.author = "Lt. Taylor"
+PLUGIN.author = "Lt. Taylor & Zeta"
 PLUGIN.desc = "Armor system including durability, upgrades, and anomaly resistances."
 PLUGIN.repairFlag = "R"
 
@@ -76,8 +76,8 @@ else
 	end)
 end
 
-ix.command.Add("CharResistances", {
-	description = "Displays your current resistances.",
+ix.command.Add("CheckCharResistances", {
+	description = "Displays your current character's anomalous resistances.",
 	OnRun = function(self, client)
 		local char = client:GetChar()
 		if not char then
@@ -110,6 +110,29 @@ ix.command.Add("CharResistances", {
 			response = response .. string.format("%s: %.2f%%\n", resType, value * 100)
 		end
 		
+		client:ChatPrint(response)
+	end
+})
+
+ix.command.Add("CheckCharRadProt", {
+	description = "Displays your current character's radiation protection.",
+	OnRun = function(self, client)
+		local char = client:GetChar()
+		if not char then
+			client:Notify("You do not have a character.")
+			return
+		end
+		
+		local inventory = char:GetInv()
+		local radProt = 0
+		
+		for k, v in pairs(inventory:GetItems()) do
+			if v:GetData("equip", false) then
+				radProt = radProt + (v.radProt or 0)
+			end
+		end
+		
+		local response = string.format("Your current radiation protection is: " .. radProt)
 		client:ChatPrint(response)
 	end
 })
