@@ -3,7 +3,7 @@ AddCSLuaFile( "shared.lua" )
 
 include('shared.lua')
 local delayTime = 0
-local range = 512
+local range = 256
 local psiamount = 1
 local psisound = {"stalker/psi/psi_sounds.ogg", }
 

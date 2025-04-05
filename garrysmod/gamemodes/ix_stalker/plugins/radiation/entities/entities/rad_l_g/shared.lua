@@ -5,7 +5,7 @@ ENT.PrintName		= "Radiation - Light - Global"
 ENT.Author			= ""
 ENT.Contact			= ""
 ENT.Purpose			= "Irradiates players lightly"
-ENT.Category 		= "Anomalies"
+ENT.Category 		= "Radiation"
 
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true

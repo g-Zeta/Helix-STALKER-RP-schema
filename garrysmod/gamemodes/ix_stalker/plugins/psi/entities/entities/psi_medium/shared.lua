@@ -1,11 +1,11 @@
 ENT.Type = "anim"
 ENT.Base = "base_anim"
  
-ENT.PrintName		= "Radiation - Heavy - Global"
-ENT.Author			= ""
+ENT.PrintName		= "Psi-field - Medium"
+ENT.Author			= "Zeta"
 ENT.Contact			= ""
-ENT.Purpose			= "Irradiates players moderately"
-ENT.Category 		= "Radiation"
+ENT.Purpose			= "Affects the psyche of players in a medium radius"
+ENT.Category 		= "Anomalies"
 
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true

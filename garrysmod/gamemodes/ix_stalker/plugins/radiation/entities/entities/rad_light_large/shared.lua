@@ -1,10 +1,10 @@
 ENT.Type = "anim"
 ENT.Base = "base_anim"
  
-ENT.PrintName		= "Radiation - Heavy - Global"
+ENT.PrintName		= "Radiation - Light - Large"
 ENT.Author			= ""
 ENT.Contact			= ""
-ENT.Purpose			= "Irradiates players moderately"
+ENT.Purpose			= "Irradiates players lightly in a radius of 1536 units."
 ENT.Category 		= "Radiation"
 
 ENT.Spawnable			= true
