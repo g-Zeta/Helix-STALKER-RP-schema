@@ -39,7 +39,7 @@ function PLUGIN:Think()
 				anoms = {}
 				dist = 1000
 				for j,b in pairs(ents.FindInSphere(v:GetPos(), 425)) do
-					if string.sub(b:GetClass(),1,4) == "anom" then
+					if string.sub(b:GetClass(),1,4) == "anom" or string.sub(b:GetClass(),1,6) == "kometa" then
 						table.insert(anoms, b)
 					end
 				end

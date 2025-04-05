@@ -96,13 +96,6 @@ if SERVER then
 
 		local psyHealth = ply:GetPsyHealth() or 0 -- Default to 0 if nil
 
-        -- Check if psyhealth is <= 0 and kill the player
-        if (ply:IsValid() and ply:Alive()) then
-			if psyHealth <= 0 then
-				ply:Kill()
-			end
-		end
-
     end
 
 	function playerMeta:UpdatePsyHealthState(client)

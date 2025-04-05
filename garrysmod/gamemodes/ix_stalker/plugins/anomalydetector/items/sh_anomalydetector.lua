@@ -86,7 +86,7 @@ ITEM:Hook("drop", function(item)
     local character = client:GetChar();
 
     if (item:GetData("equip")) then
-		item:SetData("equip", false)
+		item:SetData("equip", nil)
 		item.player:SetNetVar("ixhasanomdetector", false)
 		item.player:SetData("ixhasanomdetector", false)
     end;
