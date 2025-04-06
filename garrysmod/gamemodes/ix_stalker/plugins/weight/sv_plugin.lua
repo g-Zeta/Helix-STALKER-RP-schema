@@ -17,14 +17,14 @@ end
 function ix.weight.Update(character) -- Updates the specified character's current carry weight.
 	character:SetData("carry", ix.weight.CalculateWeight(character))
 
-	timer.Simple(0.5, function() 
+	timer.Simple(0.1, function() 
 		local client = character:GetPlayer()
 		if character:HeavilyOverweight() then
 			client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.5)
-			client:SetRunSpeed(ix.config.Get("walkSpeed"))
+			client:SetRunSpeed(ix.config.Get("runSpeed") * 0.4)
 		elseif character:Overweight() then
 			client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.8)
-			client:SetRunSpeed(ix.config.Get("runSpeed") * 0.6)
+			client:SetRunSpeed(ix.config.Get("runSpeed") * 0.65)
 		else
 			client:SetWalkSpeed(ix.config.Get("walkSpeed"))
 			client:SetRunSpeed(ix.config.Get("runSpeed"))

@@ -44,7 +44,7 @@ end
 
 function CHAR:HeavilyOverweight() -- checks if the character is above the max overweight limit
 	local carrybuff = self:GetData("WeightBuffCur") or 0
-	return self:GetData("carry", 0) >= (ix.weight.BaseWeight(self) + ix.config.Get("maxOverWeight", 5) + carrybuff)
+	return self:GetData("carry", 0) >= (ix.weight.BaseWeight(self) + ix.config.Get("maxOverWeight", 20) + carrybuff - 5)
 end
 
 function CHAR:CanCarry(item)
@@ -72,5 +72,6 @@ end
 function CHAR:DropWeight(weight)
 	self:SetData("carry", math.max(self:GetData("carry", 0) - weight, 0))
 end
+
 ix.meta.char = CHAR
 -- CHARACTER META END --

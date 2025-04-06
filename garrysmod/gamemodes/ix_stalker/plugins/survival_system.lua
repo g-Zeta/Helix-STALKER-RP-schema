@@ -2,6 +2,16 @@ PLUGIN.name = "Survival System"
 PLUGIN.author = "ZeMysticalTaco"
 PLUGIN.description = "A survival system consisting of hunger and thirst."
 
+ix.config.Add("hungerTickTime", 600, "The time interval in seconds for ticking hunger.", nil, {
+	data = {min = 60, max = 3600},
+	category = "Survival"
+})
+
+ix.config.Add("thirstTickTime", 600, "The time interval in seconds for ticking thirst.", nil, {
+	data = {min = 60, max = 3600},
+	category = "Survival"
+})
+
 if SERVER then
 	function PLUGIN:OnCharacterCreated(client, character)
 		character:SetData("hunger", 100)
@@ -108,12 +118,12 @@ if SERVER then
 		end
 	
 		if ply:GetNetVar("hungertick", 0) <= CurTime() then
-			ply:SetNetVar("hungertick", 300 + CurTime())
+			ply:SetNetVar("hungertick", ix.config.Get("hungerTickTime") + CurTime())
 			ply:TickHunger(1)
 		end
 
 		if ply:GetNetVar("thirsttick", 0) <= CurTime() then
-			ply:SetNetVar("thirsttick", 300 + CurTime())
+			ply:SetNetVar("thirsttick", ix.config.Get("thirstTickTime") + CurTime())
 			ply:TickThirst(1)
 		end
 	end
