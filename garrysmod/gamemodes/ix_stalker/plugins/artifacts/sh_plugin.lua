@@ -119,29 +119,32 @@ if SERVER then
 							
 							local radiation = rads - antirads
 							local buildup = accumrad + radiation
-							local damage = buildup
 							v:SetNetVar("AccumRads", buildup)
+							
 							if v:Alive() == false then
 								v:SetNetVar("AccumRads", 0)
 							end
-							
+
+							local damage = accumrad / 30
+
 							if accumrad > 25 then
 								v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
 							end
 						end
 					end
 				elseif radsTimer < CurTime() then
-					radsTimer = CurTime() + 1.5
+					radsTimer = CurTime() + 1
 
 					local antiradcalc = (antirads - rads) or 0		-- antiradiation artis help
 					local radred = (accumrad - antiradcalc)			-- reduce the accumulated radiation
-					local damage = radred / 30						-- determine how much damage the player will receive
 					v:SetNetVar("AccumRads", radred)				-- Update the accumulated radiation value
 
 					if radred <= 0 or v:Alive() == false then
 						v:SetNetVar("AccumRads", 0)
 					end
 
+					local damage = accumrad / 30
+					
 					if accumrad > 25 then
 						v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
 					end

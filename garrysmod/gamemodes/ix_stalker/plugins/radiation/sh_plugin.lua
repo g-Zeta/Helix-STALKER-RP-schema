@@ -71,11 +71,14 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
         local totalRadResist = 0
         
         for _, item in pairs(items) do
-            if (item.isArmor or item.isGasmask or item.isHelmet or item.isArtifact) and item:GetData("equip") then
+            if (item.isArmor or item.isGasmask or item.isHelmet or item.isArtefact) and item:GetData("equip") then
                 totalRadResist = totalRadResist + (item.res and item.res["Radiation"] or 0)
             end
         end
-        
+
+        -- Clamp totalRadResist to ensure it does not exceed 1
+        totalRadResist = math.Clamp(totalRadResist, 0, 1)
+
         -- Apply radiation resistance to radDamage
         local effectiveRadDamage = radDamage * (1 - totalRadResist) * 10
         
