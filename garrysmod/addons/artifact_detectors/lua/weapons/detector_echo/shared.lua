@@ -162,25 +162,15 @@ end
 
 local anomalies = {}
 --Common Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/altered_wheel.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/droplet.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/jellyfish.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/slime.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/sparkler.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/thorn.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/crystal.mdl"] = true
-
-
---Uncommon Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/battery.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/crystal_thorn.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/fireball.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/flash.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/nightstar.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/slug.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/stoneblood.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/stoneflower.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/meatchunk.mdl"] = true
+anomalies["models/stalker/artifacts/altered_wheel.mdl"] = true
+anomalies["models/stalker/artifacts/altered_insulator.mdl"] = true
+anomalies["models/stalker/artifacts/anomalous_plant.mdl"] = true
+anomalies["models/stalker/artifacts/crystal.mdl"] = true
+anomalies["models/stalker/artifacts/droplet.mdl"] = true
+anomalies["models/stalker/artifacts/jellyfish.mdl"] = true
+anomalies["models/stalker/artifacts/slime.mdl"] = true
+anomalies["models/stalker/artifacts/sparkler.mdl"] = true
+anomalies["models/stalker/artifacts/thorn.mdl"] = true
 
 SWEP.LastBeep = 0
 function SWEP:Think()

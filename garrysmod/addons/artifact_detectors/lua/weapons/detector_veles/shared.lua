@@ -168,50 +168,50 @@ end
 
 local anomalies = {}
 --Common Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/altered_wheel.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/droplet.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/jellyfish.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/slime.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/sparkler.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/thorn.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/crystal.mdl"] = true
-
+anomalies["models/stalker/artifacts/altered_wheel.mdl"] = true
+anomalies["models/stalker/artifacts/altered_insulator.mdl"] = true
+anomalies["models/stalker/artifacts/anomalous_plant.mdl"] = true
+anomalies["models/stalker/artifacts/crystal.mdl"] = true
+anomalies["models/stalker/artifacts/droplet.mdl"] = true
+anomalies["models/stalker/artifacts/jellyfish.mdl"] = true
+anomalies["models/stalker/artifacts/slime.mdl"] = true
+anomalies["models/stalker/artifacts/sparkler.mdl"] = true
+anomalies["models/stalker/artifacts/thorn.mdl"] = true
 
 --Uncommon Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/battery.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/crystal_thorn.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/fireball.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/flash.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/nightstar.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/slug.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/stoneblood.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/stoneflower.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/meatchunk.mdl"] = true
-
+anomalies["models/stalker/artifacts/battery.mdl"] = true
+anomalies["models/stalker/artifacts/crystal_thorn.mdl"] = true
+anomalies["models/stalker/artifacts/fireball.mdl"] = true
+anomalies["models/stalker/artifacts/flash.mdl"] = true
+anomalies["models/stalker/artifacts/meatchunk.mdl"] = true
+anomalies["models/stalker/artifacts/nightstar.mdl"] = true
+anomalies["models/stalker/artifacts/slug.mdl"] = true
+anomalies["models/stalker/artifacts/stoneblood.mdl"] = true
+anomalies["models/stalker/artifacts/stoneflower.mdl"] = true
 
 --Rare Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/wrenched.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/shell.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/soul.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/mamas_beads.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/eye.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/gravi.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/snowflake.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/urchin.mdl"] = true
-
+anomalies["models/stalker/artifacts/eye.mdl"] = true
+anomalies["models/stalker/artifacts/goldfish.mdl"] = true
+anomalies["models/stalker/artifacts/gravi.mdl"] = true
+anomalies["models/stalker/artifacts/mamas_beads.mdl"] = true
+anomalies["models/stalker/artifacts/moonlight.mdl"] = true
+anomalies["models/stalker/artifacts/shell.mdl"] = true
+anomalies["models/stalker/artifacts/snowflake.mdl"] = true
+anomalies["models/stalker/artifacts/soul.mdl"] = true
+anomalies["models/stalker/artifacts/spring.mdl"] = true
+anomalies["models/stalker/artifacts/urchin.mdl"] = true
+anomalies["models/stalker/artifacts/wrenched.mdl"] = true
 
 --Exclusive Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/moonlight.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/bubble.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/flame.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/goldfish.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/kolobok.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/mica.mdl"] = true
-
+anomalies["models/stalker/artifacts/bubble.mdl"] = true
+anomalies["models/stalker/artifacts/flame.mdl"] = true
+anomalies["models/stalker/artifacts/kolobok.mdl"] = true
+anomalies["models/stalker/artifacts/mica.mdl"] = true
 
 --Special Artifacts--
-anomalies["models/nasca/etherealsrp_artifacts/firefly.mdl"] = true
-anomalies["models/nasca/etherealsrp_artifacts/compass.mdl"] = true
+anomalies["models/stalker/artifacts/compass.mdl"] = true
+anomalies["models/stalker/artifacts/firefly.mdl"] = true
+anomalies["models/stalker/artifacts/heart_of_oasis.mdl"] = true
 
 
 if CLIENT then
