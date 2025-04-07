@@ -52,25 +52,45 @@ local function ixActMenu()
 		Perso:Dock( TOP )
 		Perso:DockMargin( 8, 0, 0, 0 )
 		Perso:SetFont("ixSmallFont")
-		Perso:SetText( "Tokens : ".. ix.currency.Get(LocalPlayer():GetCharacter():GetMoney()) )
+		Perso:SetText( "Money : ".. ix.currency.Get(LocalPlayer():GetCharacter():GetMoney()) )
 		Perso:SetSize( 36, 20 )
 		left:AddItem( Perso )
-		
-		local Perso = vgui.Create( "DLabel", frame )
-		Perso:Dock( TOP )
-		Perso:DockMargin( 8, 0, 0, 0 )
-		Perso:SetFont("ixSmallFont")
-		Perso:SetText( "Health : ".. LocalPlayer():Health() )
-		Perso:SetSize( 36, 20 )
-		left:AddItem( Perso )
-		
-		local Perso = vgui.Create( "DLabel", frame )
-		Perso:Dock( TOP )
-		Perso:DockMargin( 8, 0, 0, 0 )
-		Perso:SetFont("ixSmallFont")
-		Perso:SetText( "Armor : ".. LocalPlayer():Armor() )
-		Perso:SetSize( 36, 20 )
-		left:AddItem( Perso )
+
+		local healthLabel = vgui.Create( "DLabel", frame )
+		healthLabel:Dock( TOP )
+		healthLabel:DockMargin( 8, 0, 0, 0 )
+		healthLabel:SetFont("ixSmallFont")
+		healthLabel:SetSize( 36, 20 )
+		left:AddItem( healthLabel )
+
+		local psyhealthLabel = vgui.Create( "DLabel", frame )
+		psyhealthLabel:Dock( TOP )
+		psyhealthLabel:DockMargin( 8, 0, 0, 0 )
+		psyhealthLabel:SetFont("ixSmallFont")
+		psyhealthLabel:SetSize( 36, 20 )
+		left:AddItem( psyhealthLabel )
+
+		local radiationLabel = vgui.Create( "DLabel", frame )
+		radiationLabel:Dock( TOP )
+		radiationLabel:DockMargin( 8, 0, 0, 0 )
+		radiationLabel:SetFont("ixSmallFont")
+		radiationLabel:SetSize( 36, 20 )
+		left:AddItem( radiationLabel )
+
+		local function updateLabels()
+			healthLabel:SetText("Health : " .. LocalPlayer():Health())
+			psyhealthLabel:SetText("Psyhealth : " .. (LocalPlayer():GetPsyHealth() or 100))
+			radiationLabel:SetText("Radiation : " .. (LocalPlayer():GetNetVar("AccumRads") or 0))
+		end
+
+		updateLabels()
+		timer.Create("UpdateLabelsTimer", 1, 0, function()
+			if (IsValid(healthLabel) and IsValid(psyhealthLabel) and IsValid(radiationLabel)) then
+				updateLabels()
+			else
+				timer.Remove("UpdateLabelsTimer")
+			end
+		end)
 		
 		local but = vgui.Create( "DButton", frame )
 		but:SetText( "Description" )
@@ -83,18 +103,7 @@ local function ixActMenu()
 		end
 		left:AddItem( but )
 		
-				local but = vgui.Create( "DButton", frame )
-		but:SetText( "Enhanced Description" )
-		but:SetFont("ixSmallFont")
-		but:SetSize( 36, 50 )
-		but:Dock( TOP )
-		but.DoClick = function()
-			frame:Close()
-			RunConsoleCommand("say", "/selfdesc")
-		end
-		left:AddItem( but )
-	
-		/*local but = vgui.Create( "DButton", frame )
+		local but = vgui.Create( "DButton", frame )
 		but:SetText( "Fall over" )
 		but:SetFont("ixSmallFont")
 		but:SetSize( 36, 50 )
@@ -103,6 +112,6 @@ local function ixActMenu()
 			frame:Close()
 			RunConsoleCommand("say", "/charfallover")
 		end
-		left:AddItem( but )*/
+		left:AddItem( but )
 end
 usermessage.Hook("ixActMenu", ixActMenu)

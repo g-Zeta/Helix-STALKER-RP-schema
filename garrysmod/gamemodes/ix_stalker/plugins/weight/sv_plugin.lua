@@ -14,22 +14,35 @@ function ix.weight.CalculateWeight(character) -- Calculates the total weight of 
     return weight
 end
 
-function ix.weight.Update(character) -- Updates the specified character's current carry weight.
-	character:SetData("carry", ix.weight.CalculateWeight(character))
+-- Define a function to update the character's movement speeds based on their weight condition
+local function UpdateCharacterSpeeds(character)
+    local client = character:GetPlayer()
+    if client then
+        if character:HeavilyOverweight() then
+            client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.5)
+            client:SetRunSpeed(ix.config.Get("runSpeed") * 0.4)
+        elseif character:Overweight() then
+            client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.8)
+            client:SetRunSpeed(ix.config.Get("runSpeed") * 0.65)
+        else
+            client:SetWalkSpeed(ix.config.Get("walkSpeed"))
+            client:SetRunSpeed(ix.config.Get("runSpeed"))
+        end
+    end
+end
 
-	timer.Simple(0.1, function() 
-		local client = character:GetPlayer()
-		if character:HeavilyOverweight() then
-			client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.5)
-			client:SetRunSpeed(ix.config.Get("runSpeed") * 0.4)
-		elseif character:Overweight() then
-			client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.8)
-			client:SetRunSpeed(ix.config.Get("runSpeed") * 0.65)
-		else
-			client:SetWalkSpeed(ix.config.Get("walkSpeed"))
-			client:SetRunSpeed(ix.config.Get("runSpeed"))
-		end
-	end)
+-- Hook into the player loadout event to ensure speeds are updated
+function PLUGIN:PostPlayerLoadout(client)
+    local character = client:GetCharacter()
+    if character then
+        UpdateCharacterSpeeds(character)
+    end
+end
+
+-- Update the existing function to use the new UpdateCharacterSpeeds function
+function ix.weight.Update(character)
+    character:SetData("carry", ix.weight.CalculateWeight(character))
+    UpdateCharacterSpeeds(character)
 end
 
 function PLUGIN:CharacterLoaded(character) -- This is just a safety net to make sure the carry weight data is up-to-date.

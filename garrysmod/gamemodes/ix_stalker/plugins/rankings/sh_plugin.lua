@@ -171,8 +171,11 @@ if CLIENT then
 		publicityTitle:Dock(TOP)
 		publicityTitle:DockMargin(0, 5 * (ScrH() / 1080), 0, 0)
 
-		-- Public Button
+		-- Define the buttons first
 		local publicButton = publicityBox:Add("DImageButton")
+		local privateButton = publicityBox:Add("DImageButton")
+
+		-- Public Button
 		publicButton:SetText("PUBLIC")
 		publicButton:SetFont("stalkerregularsmallboldfont")
 		publicButton:SetImage("stalker/ui/pda/pda_button.png") -- Default image
@@ -182,15 +185,16 @@ if CLIENT then
 			-- Toggle the public state
 			if string.match(publicButton:GetImage(), "pda_button.png") then
 				publicButton:SetImage("stalker/ui/pda/pda_button_click.png")
+				privateButton:SetEnabled(false) -- Disable the private button
 				netstream.Start("ProfileChange", "public")
 			else
 				publicButton:SetImage("stalker/ui/pda/pda_button.png")
+				privateButton:SetEnabled(true) -- Enable the private button
 				netstream.Start("ProfileChange", "public")
 			end
 		end
-		
+
 		-- Private Button
-		local privateButton = publicityBox:Add("DImageButton")
 		privateButton:SetText("PRIVATE")
 		privateButton:SetFont("stalkerregularsmallboldfont")
 		privateButton:SetImage("stalker/ui/pda/pda_button.png") -- Default image
@@ -200,9 +204,11 @@ if CLIENT then
 			-- Toggle the private state
 			if string.match(privateButton:GetImage(), "pda_button.png") then
 				privateButton:SetImage("stalker/ui/pda/pda_button_click.png")
+				publicButton:SetEnabled(false) -- Disable the public button
 				netstream.Start("ProfileChange", "private")
 			else
 				privateButton:SetImage("stalker/ui/pda/pda_button.png")
+				publicButton:SetEnabled(true) -- Enable the public button
 				netstream.Start("ProfileChange", "private")
 			end
 		end
@@ -210,17 +216,27 @@ if CLIENT then
 		netstream.Hook("UpdateProfileState", function(public, private)
 			-- Update button images based on the new state
 			if public then
-				buttonpublic:SetImage("stalker/ui/pda/pda_button_click.png")
+				publicButton:SetImage("stalker/ui/pda/pda_button_click.png")
+				privateButton:SetEnabled(false)
 			else
-				buttonpublic:SetImage("stalker/ui/pda/pda_button.png")
+				publicButton:SetImage("stalker/ui/pda/pda_button.png")
+				privateButton:SetEnabled(true)
 			end
 			
 			if private then
-				buttonprivate:SetImage("stalker/ui/pda/pda_button_click.png")
+				privateButton:SetImage("stalker/ui/pda/pda_button_click.png")
+				publicButton:SetEnabled(false)
 			else
-				buttonprivate:SetImage("stalker/ui/pda/pda_button.png")
+				privateButton:SetImage("stalker/ui/pda/pda_button.png")
+				publicButton:SetEnabled(true)
 			end
+
+			-- Refresh the avatar image
+			local character = LocalPlayer():GetCharacter()
+			local image = character:GetData("pdaavatar", "vgui/icons/face_31.png")
+			imageDisplay:SetImage(image)
 		end)
+
 
 		-- PLAYER INFO PANEL
 		local rankinfo = pdabg:Add("DImage")
@@ -564,6 +580,31 @@ if CLIENT then
 			container:Add("RankingsListFrame")
 		end
 	end)
+--[[
+	hook.Add("CreateMenuButtons", "ixRankings", function(tabs)
+		local client = LocalPlayer()
+		local character = client:GetCharacter()
+		local inventory = character:GetInventory()
+
+		if character and inventory then
+			local pdaItem
+
+			-- Iterate through the inventory to find the PDA item and check if it is equipped
+			for _, item in pairs(inventory:GetItems()) do
+				if item.isPDA and item:GetData("equip", false) then
+					pdaItem = item
+					break
+				end
+			end
+
+			if pdaItem then
+				tabs["Rankings"] = function(container)
+					container:Add("RankingsListFrame")
+				end
+			end
+		end
+	end)
+--]]
 else
 	netstream.Hook("GetRankListData",function(client)
 		local rankdata = {}
@@ -606,20 +647,39 @@ else
 			netstream.Start(client, "RankListData", rankdata)
 		end
 	end)
-	
+
 	netstream.Hook("ProfileChange", function(client, pubtype)
 		local character = client:GetCharacter()
-		if pubtype == "private" then
-			if character:GetData("RankPrivate",false) then
-				character:SetData("RankPrivate",false)
-			else
-				character:SetData("RankPrivate",true)
-			end
-		elseif pubtype == "public" then
-			if character:GetData("RankPublic",false) then
-				character:SetData("RankPublic",false)
-			else
-				character:SetData("RankPublic",true)
+
+		-- Check if the PDA item is equipped
+		local items = character:GetInventory():GetItems()
+		for _, item in pairs(items) do
+			if item.isPDA and item:GetData("equip") then
+				if pubtype == "private" then
+					if character:GetData("RankPrivate", false) then
+						character:SetData("RankPrivate", false)
+					else
+						character:SetData("RankPrivate", true)
+						character:SetData("RankPublic", false)
+						character:SetData("pdaavatar", "vgui/icons/face_31.png")
+					end
+				elseif pubtype == "public" then
+					if character:GetData("RankPublic", false) then
+						character:SetData("RankPublic", false)
+					else
+						character:SetData("RankPublic", true)
+						character:SetData("RankPrivate", false)
+						-- Retrieve the equipped PDA item
+						local items = character:GetInventory():GetItems()
+						for _, item in pairs(items) do
+							if item.isPDA and item:GetData("equip") then
+								local chosenAvatar = item:GetData("avatar", "vgui/icons/face_31.png")
+								character:SetData("pdaavatar", chosenAvatar)
+								break
+							end
+						end
+					end
+				end
 			end
 		end
 	end)
