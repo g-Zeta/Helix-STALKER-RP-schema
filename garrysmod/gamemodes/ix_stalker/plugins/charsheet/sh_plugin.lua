@@ -50,6 +50,7 @@ function PLUGIN:OnCharacterCreated(client, character)
 	character:SetData("charsheetinfo", charsheetinfo)
 end
 
+--[[
 do
 	local COMMAND = {}
 	COMMAND.description = "Edit your own description"
@@ -66,7 +67,7 @@ do
 
 	ix.command.Add("Selfdesc", COMMAND)
 end
-
+--]]
 ix.char.RegisterVar("age", {
 	field = "age",
 	fieldType = ix.type.text,

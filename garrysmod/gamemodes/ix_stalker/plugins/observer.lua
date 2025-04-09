@@ -169,10 +169,18 @@ if (CLIENT) then
 
 				if (ix.option.Get("observerESP - Radiation", true) and string.match(v:GetClass(),"rad_")) then
 					surface.SetDrawColor(0, 255, 0, alpha)
-					surface.DrawRect(x - size/2, y - size/2, size, size)	
+					surface.DrawRect(x - size/2, y - size/2, size, size)    
 					if IsValid(v) then
+						-- Draw the entity's class name
 						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
-					end				
+						
+						-- Draw the range of the "rad_" entity
+						local range = v:GetNWFloat("Range", 0)
+						cam.Start3D()
+							render.SetColorMaterial()
+							render.DrawSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 50))
+						cam.End3D()
+					end
 				end
 
 				if (ix.option.Get("observerESP - Psi", true) and string.match(v:GetClass(),"psi_")) then
@@ -180,7 +188,14 @@ if (CLIENT) then
 					surface.DrawRect(x - size/2, y - size/2, size, size)	
 					if IsValid(v) then
 						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 255), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
-					end				
+
+						-- Draw the range of the "psi_" entity
+						local range = v:GetNWFloat("Range", 0)
+						cam.Start3D()
+							render.SetColorMaterial()
+							render.DrawSphere(v:GetPos(), range, 30, 30, Color(0, 255, 255, 50))
+						cam.End3D()
+					end
 				end
 
 				if (ix.option.Get("observerESP - Anomalies", true) and

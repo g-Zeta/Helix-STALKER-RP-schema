@@ -2,6 +2,15 @@ PLUGIN.name = "Rankings"
 PLUGIN.author = "Lt. Taylor and Zeta"
 PLUGIN.desc = "Ranking list plugin."
 
+if SERVER then
+    -- Hook to update the avatar image
+    netstream.Hook("UpdatePDAAvatar", function(client)
+        local character = client:GetCharacter()
+        local image = character:GetData("pdaavatar", "vgui/icons/face_31.png")
+        netstream.Start(client, "UpdatePDAAvatar", image)
+    end)
+end
+
 local PANEL = {}
 local headcolor = Color(104, 104, 104)
 local repcolor = Color(107,104,175)
@@ -31,8 +40,8 @@ if CLIENT then
 
 	vgui.Register( "DTextEntry_Edit", PANELEDIT, "DTextEntry" )
 
+
 	function PANEL:Init()
-	
 		local client = LocalPlayer()
 		local character = client:GetCharacter()
 		local image = character:GetData("pdaavatar","vgui/icons/face_31.png")
@@ -182,17 +191,16 @@ if CLIENT then
 		publicButton:Dock(TOP)
 		publicButton:DockMargin(0, 10 * (ScrH() / 1080), 0, 0)
 		publicButton.DoClick = function()
-			-- Toggle the public state
 			if string.match(publicButton:GetImage(), "pda_button.png") then
 				publicButton:SetImage("stalker/ui/pda/pda_button_click.png")
-				privateButton:SetEnabled(false) -- Disable the private button
-				netstream.Start("ProfileChange", "public")
 			else
 				publicButton:SetImage("stalker/ui/pda/pda_button.png")
-				privateButton:SetEnabled(true) -- Enable the private button
-				netstream.Start("ProfileChange", "public")
 			end
-		end
+			netstream.Start("ProfileChange", "public")
+			-- Update RankListData and pdaavatar
+			netstream.Start("GetRankListData")
+			netstream.Start("UpdatePDAAvatar")
+		end 
 
 		-- Private Button
 		privateButton:SetText("PRIVATE")
@@ -201,42 +209,21 @@ if CLIENT then
 		privateButton:Dock(TOP)
 		privateButton:DockMargin(0, 10 * (ScrH() / 1080), 0, 0)
 		privateButton.DoClick = function()
-			-- Toggle the private state
 			if string.match(privateButton:GetImage(), "pda_button.png") then
 				privateButton:SetImage("stalker/ui/pda/pda_button_click.png")
-				publicButton:SetEnabled(false) -- Disable the public button
-				netstream.Start("ProfileChange", "private")
 			else
 				privateButton:SetImage("stalker/ui/pda/pda_button.png")
-				publicButton:SetEnabled(true) -- Enable the public button
-				netstream.Start("ProfileChange", "private")
 			end
+			netstream.Start("ProfileChange", "private")
+			-- Update RankListData and pdaavatar
+			netstream.Start("GetRankListData")
+			netstream.Start("UpdatePDAAvatar")
 		end
 
-		netstream.Hook("UpdateProfileState", function(public, private)
-			-- Update button images based on the new state
-			if public then
-				publicButton:SetImage("stalker/ui/pda/pda_button_click.png")
-				privateButton:SetEnabled(false)
-			else
-				publicButton:SetImage("stalker/ui/pda/pda_button.png")
-				privateButton:SetEnabled(true)
-			end
-			
-			if private then
-				privateButton:SetImage("stalker/ui/pda/pda_button_click.png")
-				publicButton:SetEnabled(false)
-			else
-				privateButton:SetImage("stalker/ui/pda/pda_button.png")
-				publicButton:SetEnabled(true)
-			end
-
-			-- Refresh the avatar image
-			local character = LocalPlayer():GetCharacter()
-			local image = character:GetData("pdaavatar", "vgui/icons/face_31.png")
+		-- Hook to update the avatar image
+		netstream.Hook("UpdatePDAAvatar", function(image)
 			imageDisplay:SetImage(image)
 		end)
-
 
 		-- PLAYER INFO PANEL
 		local rankinfo = pdabg:Add("DImage")
@@ -305,9 +292,9 @@ if CLIENT then
 			infoimageBox:SetPaintBackground(false)
 			infoimageBox:DockMargin(5 * (ScrW() / 1920), 0, 0, 0)			
 
-			local infoimage = Material(image)
+			local infoimage = Material(image or "vgui/icons/face_31.png")
 			local imageDisplay = infoimageBox:Add("DImage")
-			imageDisplay:SetImage(image)
+			imageDisplay:SetImage(image or "vgui/icons/face_31.png")
 			imageDisplay:Dock(TOP)
 			imageDisplay:SetSize(124 * (ScrW() / 1920), 124 * (ScrH() / 1080)) -- Adjust size if needed
 			imageDisplay:SetPaintBackground(false) -- Ensure background is not painted
@@ -478,9 +465,9 @@ if CLIENT then
 					imageBox:DockMargin(0, 5 * (ScrH() / 1080), 0, 0)
 					imageBox:SetMouseInputEnabled(false)
 
-					local infoimage = Material(image)
+					local infoimage = Material(image or "vgui/icons/face_31.png")
 					local imageDisplay = imageBox:Add("DImage")
-					imageDisplay:SetImage(image)
+					imageDisplay:SetImage(image or "vgui/icons/face_31.png")
 					imageDisplay:Dock(TOP)
 					imageDisplay:SetSize(82 * (ScrW() / 1920), 82 * (ScrH() / 1080)) -- Adjust size if needed
 					imageDisplay:SetPaintBackground(false) -- Ensure background is not painted
@@ -669,15 +656,7 @@ else
 					else
 						character:SetData("RankPublic", true)
 						character:SetData("RankPrivate", false)
-						-- Retrieve the equipped PDA item
-						local items = character:GetInventory():GetItems()
-						for _, item in pairs(items) do
-							if item.isPDA and item:GetData("equip") then
-								local chosenAvatar = item:GetData("avatar", "vgui/icons/face_31.png")
-								character:SetData("pdaavatar", chosenAvatar)
-								break
-							end
-						end
+						character:SetData("pdaavatar", item:GetData("avatar", "vgui/icons/face_31.png"))
 					end
 				end
 			end

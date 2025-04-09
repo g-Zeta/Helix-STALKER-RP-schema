@@ -5,7 +5,7 @@ include( 'shared.lua' )
 
 ENT.WaitTime = 5
 ENT.KillRadius = 1200
-ENT.Damage = 5
+ENT.Damage = 1
 
 function ENT:Initialize()
 	

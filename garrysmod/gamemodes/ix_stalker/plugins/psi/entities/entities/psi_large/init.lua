@@ -30,6 +30,8 @@ function ENT:Initialize()
 	if (phys:IsValid()) then
 		phys:Wake()
 	end
+
+    self:SetNWInt("Range", range)
 end
 
 local isSoundPlaying = false

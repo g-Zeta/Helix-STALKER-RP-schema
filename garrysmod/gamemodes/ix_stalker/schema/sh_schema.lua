@@ -2,7 +2,7 @@
 -- The shared init file. You'll want to fill out the info for your schema and include any other files that you need.
 
 -- Schema info
-Schema.name = "S.T.A.L.K.E.R. RP - Fireside Tales"
+Schema.name = "S.T.A.L.K.E.R. RP"
 Schema.author = "Zeta"
 Schema.description = "Shouldn't have come here, Stalker..."
 --Schema.logo = "vgui/background/wallpaper.jpg"
@@ -40,15 +40,15 @@ ix.flag.Add("2", "T2 Trade.")
 ix.flag.Add("3", "T3 Trade.")
 ix.flag.Add("5", "Consumables")
 ix.flag.Add("6", "Armor Technician")
-ix.flag.Add ("7", "Weapon Technician")
+ix.flag.Add("7", "Weapon Technician")
 
-ix.flag.Add ("B", "Bandit trade")
-ix.flag.Add ("D", "Duty trade")
-ix.flag.Add ("E", "Ecologist/Malachite trade")
-ix.flag.Add ("K", "Mercenaries trade")
-ix.flag.Add ("M", "Monolith trade")
-ix.flag.Add ("U", "UKM/Military trade")
-ix.flag.Add ("V", "Freedom trade")
+ix.flag.Add("B", "Bandit trade")
+ix.flag.Add("D", "Duty trade")
+ix.flag.Add("E", "Ecologist/Malachite trade")
+ix.flag.Add("K", "Mercenaries trade")
+ix.flag.Add("M", "Monolith trade")
+ix.flag.Add("U", "UKM/Military trade")
+ix.flag.Add("V", "Freedom trade")
 
 
 ALWAYS_RAISED["weapon_flashlight"] = true

@@ -3,9 +3,9 @@ AddCSLuaFile( "shared.lua" )
 
 include('shared.lua')
 local delayTime = 0
-local range = 9999999
-local radiationamount = 3
-local geigerHeavy = {"geiger/heavy/geiger_heavy_1.wav", "geiger/heavy/geiger_heavy_2.wav", "geiger/heavy/geiger_heavy_3.wav", "geiger/heavy/geiger_heavy_4.wav", "geiger/heavy/geiger_heavy_5.wav", }
+local range = 4000
+local radiationamount = 5
+local geigerHeavy = {"geiger/heavy/geiger_heavy_1.wav", "geiger/heavy/geiger_heavy_2.wav", "geiger/heavy/geiger_heavy_4.wav", "geiger/heavy/geiger_heavy_5.wav", }
 local geigerLight = {"geiger/light/geiger_light_1.wav", "geiger/light/geiger_light_2.wav", "geiger/light/geiger_light_3.wav", "geiger/light/geiger_light_4.wav", "geiger/light/geiger_light_5.wav", }
 
 function ENT:SpawnFunction( ply, tr )
@@ -35,11 +35,13 @@ function ENT:Initialize()
 	if (phys:IsValid()) then
 		phys:Wake()
 	end
+
+    self:SetNWInt("Range", range)
 end
 
 function ENT:Think()
 	if delayTime < CurTime() then
-		delayTime = CurTime() + 0.2
+		delayTime = CurTime() + 0.25
 		for k, v in pairs( ents.FindInSphere( self.Entity:GetPos(), 2560 )  ) do
 			if v:IsPlayer() and v:GetCharacter() and v:GetMoveType() != MOVETYPE_NOCLIP then
 				local items = v:GetCharacter():GetInventory():GetItems(true)

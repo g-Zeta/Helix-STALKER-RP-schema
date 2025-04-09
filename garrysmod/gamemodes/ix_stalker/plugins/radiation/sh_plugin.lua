@@ -90,8 +90,6 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
                     local duraDamage = effectiveRadDamage
                     local newDura = math.Clamp(curDura - duraDamage, 0, 10000) -- Clamp to maximum durability
                     item:SetData("durability", newDura)
-					
-					entity:ChatPrint("Radiation Damage: " .. newDura)
                 end
             end
         end
