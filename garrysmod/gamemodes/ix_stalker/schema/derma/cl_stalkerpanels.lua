@@ -358,20 +358,48 @@ function PANEL:Init()
 		end
 	end
 
-	-- Left Weapon
+	-- Secondary Weapon
 	self.LWepPanel = self.equipmentpanel:Add("DPanel")
 	self.LWepPanel:SetSize(92 * (ScrW() / 1920), 250 * (ScrH() / 1080))
 	self.LWepPanel:SetPos(14 * (ScrW() / 1920), 135 * (ScrH() / 1080))
+	function self.LWepPanel:Paint(w, h)
+		for _, item in pairs(items) do
+			if item.weaponCategory == "secondary" and item:GetData("equip", false) then
+				local PDAiconImage = item.imgEquipped
+				surface.SetMaterial(PDAiconImage)
+				surface.SetDrawColor(255, 255, 255, 255) 
+				surface.DrawTexturedRect(7 * (ScrW()/1920), 1 * (ScrH()/1080), 64 * (ScrW()/1920), 64 * (ScrH()/300))
+			end
+		end
+	end
 
-	-- Right Weapon
+	-- Primary Weapon
 	self.RWepPanel = self.equipmentpanel:Add("DPanel")
 	self.RWepPanel:SetSize(92 * (ScrW() / 1920), 250 * (ScrH() / 1080))
 	self.RWepPanel:SetPos(238 * (ScrW() / 1920), 135 * (ScrH() / 1080))
+	function self.RWepPanel:Paint(w, h)
+		for _, item in pairs(items) do
+			if item.weaponCategory == "primary" and item:GetData("equip", false) then
+				local PDAiconImage = item.imgEquipped
+				surface.SetMaterial(PDAiconImage)
+				surface.SetDrawColor(255, 255, 255, 255) 
+				surface.DrawTexturedRect(7 * (ScrW()/1920), 1 * (ScrH()/1080), 64 * (ScrW()/1920), 64 * (ScrH()/300))
+			end
+		end
+	end
 
 	-- Sidearm
 	self.SidearmPanel = self.equipmentpanel:Add("DPanel")
-	self.SidearmPanel:SetSize(110 * (ScrW() / 1920), 60 * (ScrH() / 1080))
+	self.SidearmPanel:SetSize(111110 * (ScrW() / 1920), 60 * (ScrH() / 1080))
 	self.SidearmPanel:SetPos(117 * (ScrW() / 1920), 325 * (ScrH() / 1080))
+	for _, item in pairs(items) do
+		if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
+			local PDAiconImage = item.img
+			surface.SetMaterial(PDAiconImage)
+			surface.SetDrawColor(255, 255, 255, 255) 
+			surface.DrawTexturedRect(7 * (ScrW()/1920), 1 * (ScrH()/1080), 16 * (ScrW()/500), 32 * (ScrH()/800))
+		end
+	end
 
 	-- PDA icon
 	self.PDAiconPanel = self.equipmentpanel:Add("DPanel")
