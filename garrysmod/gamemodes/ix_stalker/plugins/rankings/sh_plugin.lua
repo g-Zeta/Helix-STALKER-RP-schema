@@ -19,8 +19,6 @@ local stndcolor = Color(255,255,255)
 if CLIENT then
 	
 	local thinktime = 1
-	local marg5v = (.0046296296296296*ScrH())
-	local marg5h = (.0026041666666667*ScrW())
 	
 	local PANELEDIT = {}
 
@@ -50,9 +48,9 @@ if CLIENT then
 		local public = character:GetData("RankPublic",false)
 		local private = character:GetData("RankPrivate",false)
 		
-		self:SetSize(((.585)*ScrW()), ((.7725)*ScrH())) --Adjust size of the whole panel
-		self:Center()
-		self:SetPos(114 * (ScrW() / 1920), 46 * (ScrH() / 1080)) --Adjust position of the whole panel
+		self:SetSize(1200 * (ScrW() / 1920), 800 * (ScrH() / 1080)) --Adjust size of the whole panel
+		--self:Center()
+		self:SetPos(0, 0) --Adjust position of the whole panel
 		self:SetDrawBackground(false)
 		self:SetPaintBackground(false)
 		
@@ -65,9 +63,9 @@ if CLIENT then
 		
 		-- PLAYER PROFILE PANEL
 		local profbox = pdabg:Add("DImage")
-		profbox:SetSize(((0.625)*ScrW()),((.132)*ScrH()))
+		profbox:SetSize(1200 * (ScrW() / 1920), 140 * (ScrH() / 1080))
 		profbox:Dock(TOP)
-		profbox:DockMargin((.018229166666667*ScrW()),(.032407407407407*ScrH()),(.018229166666667*ScrW()),0)
+		profbox:DockMargin(0, 0, 0, 0)
 		profbox:SetImage("stalker/ui/rankings/profile.png")
 		profbox:SetMouseInputEnabled(true)
 		
@@ -81,7 +79,7 @@ if CLIENT then
 		imageBox:Dock(LEFT)
 		imageBox:SetSize(124 * (ScrW() / 1920), 124 * (ScrH() / 1080)) -- Adjust size as needed
 		imageBox:SetPaintBackground(false)
-		imageBox:DockMargin(5 * (ScrW() / 1920), 0, 0, 0)
+		imageBox:DockMargin(7 * (ScrW() / 1920), 0, 0, 0)
 
 		local profimage = Material(image)
 		local imageDisplay = imageBox:Add("DImage")
@@ -227,9 +225,9 @@ if CLIENT then
 
 		-- PLAYER INFO PANEL
 		local rankinfo = pdabg:Add("DImage")
-		rankinfo:SetSize(((.372)*ScrW()),((.132)*ScrH()))	--Panel on the left (1px every .0001)
+		rankinfo:SetSize(800 * (ScrW() / 1920), 655 * (ScrH() / 1080))	--Panel on the left
 		rankinfo:Dock(LEFT)
-		rankinfo:DockMargin((.018229166666667*ScrW()),marg5v,marg5h,(.020833333333333*ScrW()))
+		rankinfo:DockMargin(0, 5 * (ScrH() / 1080), 0, 0)
 		rankinfo:SetImage("stalker/ui/rankings/rank_display.png")
 		rankinfo:SetMouseInputEnabled(true)
 		
@@ -290,7 +288,7 @@ if CLIENT then
 			infoimageBox:Dock(LEFT)
 			infoimageBox:SetSize(124 * (ScrW() / 1920), 124 * (ScrH() / 1080)) -- Adjust size as needed
 			infoimageBox:SetPaintBackground(false)
-			infoimageBox:DockMargin(5 * (ScrW() / 1920), 0, 0, 0)			
+			infoimageBox:DockMargin(7 * (ScrW() / 1920), 0, 0, 0)			
 
 			local infoimage = Material(image or "vgui/icons/face_31.png")
 			local imageDisplay = infoimageBox:Add("DImage")
@@ -385,9 +383,9 @@ if CLIENT then
 		
 		-- RANK LIST PANEL
 		local ranklistbox = pdabg:Add("DImage")
-		ranklistbox:SetSize(((.175)*ScrW()),((.45185185185185)*ScrH())) --Panel on the right (1px every .001)
-		ranklistbox:Dock(RIGHT)
-		ranklistbox:DockMargin((.018229166666667*ScrW()),marg5v,(.018229166666667*ScrW()),(.037037037037037*ScrH()))
+		ranklistbox:SetSize(396 * (ScrW() / 1920), 655 * (ScrH() / 1080)) --Panel on the right
+		ranklistbox:Dock(LEFT)
+		ranklistbox:DockMargin(5 * (ScrW() / 1920), 5 * (ScrH() / 1080), 0, 0)
 		ranklistbox:SetImage("stalker/ui/rankings/rank_list.png")
 		ranklistbox:SetName("RankListBox")
 		ranklistbox:SetMouseInputEnabled(true)
@@ -410,11 +408,11 @@ if CLIENT then
 				end
 			end
 			
-			local marg4h = (.0030*ScrW())
-			local marg4v = (.0037*ScrH())
+			local marg4w = (5 * (ScrW() / 1920))
+			local marg4h = (5 * (ScrH() / 1080))
 			local ranklist = ranklistbox:Add("DScrollPanel")
 			ranklist:Dock(FILL)
-			ranklist:DockMargin(marg4h,marg4v,0,marg4v)
+			ranklist:DockMargin(marg4w, marg4h, 0, marg4h)
 			ranklist:SetName("RankList")
 			ranklist:SetMouseInputEnabled(true)
 				
@@ -440,9 +438,9 @@ if CLIENT then
 				end
 				
 				local plyrankbox = ranklist:Add("DImageButton")
-				plyrankbox:SetSize(((.284)*ScrW()), 92 * (ScrH() / 1080))
+				plyrankbox:SetSize(380 * (ScrW() / 1920), 92 * (ScrH() / 1080))
 				plyrankbox:Dock(TOP)
-				plyrankbox:DockMargin(0,marg5v,marg5h,marg5v)
+				plyrankbox:DockMargin(0, 0, 5 * (ScrW() / 1920), 0)
 				plyrankbox:SetImage("stalker/ui/rankings/rank_list_box.png")
 				plyrankbox:SetMouseInputEnabled(true)
 				plyrankbox.Player = plyr
@@ -452,7 +450,7 @@ if CLIENT then
 					rankings:SetText(count..". ")
 					rankings:SetTextColor(Color(255,255,255))
 					rankings:SetFont("stalkerregularsmallboldfont")
-					rankings:SetPos(((.2723)*ScrW()), 3 * (ScrH() / 1080))
+					rankings:SetPos(524 * (ScrW() / 1920), 3 * (ScrH() / 1080))
 					rankings:SetAutoStretchVertical(true)
 					rankings:SizeToContentsX()
 					rankings:Dock(LEFT)
@@ -477,13 +475,13 @@ if CLIENT then
 					-- Create a container for labels and values
 					local infoContainer = plyrankbox:Add("DPanel")
 					infoContainer:Dock(LEFT)
-					infoContainer:SetWidth(((.2) * ScrW()))  -- Adjust width as needed
+					infoContainer:SetWidth(384 * (ScrW() / 1920))  -- Adjust width as needed
 					infoContainer:SetPaintBackground(false)
 
 					-- Left box for labels
 					local labelBox = infoContainer:Add("DPanel")
 					labelBox:Dock(LEFT)
-					labelBox:SetWidth(((.0265) * ScrW()))  -- Adjust width as needed
+					labelBox:SetWidth(50 * (ScrW() / 1920))  -- Adjust width as needed
 					labelBox:SetBackgroundColor(Color(0, 0, 0, 0))  -- Set background color if needed
 					
 					-- Override Paint function to avoid borders
@@ -494,26 +492,26 @@ if CLIENT then
 					pdaLabel:SetTextColor(headcolor)
 					pdaLabel:SetFont("stalkerregularsmallboldfont")
 					pdaLabel:Dock(TOP)
-					pdaLabel:DockMargin(4, 4 * (ScrH() / 1080), 0, 0)
+					pdaLabel:DockMargin(4 * (ScrW() / 1920), 4 * (ScrH() / 1080), 0, 0)
 
 					local rankLabel = labelBox:Add("DLabel")
 					rankLabel:SetText("Rank:")
 					rankLabel:SetTextColor(headcolor)
 					rankLabel:SetFont("stalkerregularsmallboldfont")
 					rankLabel:Dock(TOP)
-					rankLabel:DockMargin(4, 12 * (ScrH() / 1080), 0, 0)
+					rankLabel:DockMargin(4 * (ScrW() / 1920), 12 * (ScrH() / 1080), 0, 0)
 
 					local reputationLabel = labelBox:Add("DLabel")
 					reputationLabel:SetText("Rep:")
 					reputationLabel:SetTextColor(headcolor)
 					reputationLabel:SetFont("stalkerregularsmallboldfont")
 					reputationLabel:Dock(TOP)
-					reputationLabel:DockMargin(4, 12 * (ScrH() / 1080), 0, 0)
+					reputationLabel:DockMargin(4 * (ScrW() / 1920), 12 * (ScrH() / 1080), 0, 0)
 
 					-- Right box for values
 					local valueBox = infoContainer:Add("DPanel")
 					valueBox:Dock(LEFT)
-					valueBox:SetWidth(((.1) * ScrW()))  -- Adjust width as needed
+					valueBox:SetWidth(210 * (ScrW() / 1920))  -- Adjust width as needed
 					valueBox:SetBackgroundColor(Color(0, 0, 0, 0))  -- Set background color if needed
 
 					-- Override Paint function to avoid borders
@@ -567,7 +565,7 @@ if CLIENT then
 			container:Add("RankingsListFrame")
 		end
 	end)
---[[
+
 	hook.Add("CreateMenuButtons", "ixRankings", function(tabs)
 		local client = LocalPlayer()
 		local character = client:GetCharacter()
@@ -591,7 +589,7 @@ if CLIENT then
 			end
 		end
 	end)
---]]
+
 else
 	netstream.Hook("GetRankListData",function(client)
 		local rankdata = {}

@@ -1,6 +1,15 @@
 
-local animationTime = 0.4
+local animationTime = 1
 local matrixZScale = Vector(1, 1, 0.0001)
+
+local BASE_W, BASE_H = 1920, 1080
+local function UIScale()
+  -- uniform scale, using the minimum axis to avoid stretch
+  return math.min(ScrW() / BASE_W, ScrH() / BASE_H)
+end
+
+local function SW(x) return math.floor(x * UIScale() + 0.5) end
+local function SH(y) return math.floor(y * UIScale() + 0.5) end
 
 DEFINE_BASECLASS("ixSubpanelParent")
 local PANEL = {}
@@ -29,64 +38,49 @@ function PANEL:Init()
 	self.currentAlpha = 0
 	self.currentBlur = 0
 
-	-- Setup
-	local panelWidth = 1800 * (ScrW() / 1920)
-	local panelHeight = 1000 * (ScrH() / 1080)
-	local padding = ScreenScale(12)
-	-- Set the padding
-	self:SetPadding(padding, true)
-	-- Set the size of the panel
-	self:SetSize(panelWidth, panelHeight)
-	-- Center the panel on the screen
-	local screenWidth = ScrW()
-	local screenHeight = ScrH()
-	local panelX = (screenWidth - panelWidth) / 2
-	local panelY = (screenHeight - panelHeight) / 2
-	self:SetPos(panelX, panelY)
-	-- Set left offset if necessary
-	self:SetLeftOffset(panelWidth * 0.15 + self:GetPadding())
+	-- setup
+	self:SetSize(SW(1532), SH(1070))
+	self:Center()
 
 	-- main button panel
 	self.buttons = self:Add("Panel")
-	self.buttons:SetSize(ScrW() * 0.15, 0)
-	self.buttons:Dock(LEFT)
+	self.buttons:SetSize(SW(0), SH(50))
+	self.buttons:Dock(TOP)
 	self.buttons:SetPaintedManually(true)
-	self.buttons:SetWide(450 * (ScrW() / 1920))
-	self.buttons:DockPadding(140 * (ScrW() / 1920), 80 * (ScrH() / 1080), 0, 0)
+	self.buttons:DockMargin(SW(148), SH(115), SW(215), SH(0))
 
-	/*local close = self.buttons:Add("ixMenuButton")
-	close:SetText("return")
-	close:SizeToContents()
-	close:Dock(BOTTOM)
-	close.DoClick = function()
-		self:Remove()
-	end*/
-
-	local characters = self:Add("ixMenuButton")
-	characters:SetText("")
-	characters:SizeToContents()
-	characters:SetPos(self:GetWide() - 208 * (ScrW() / 1920), /*self:GetTall() - characters:GetTall() * 1.2*/ 297 * (ScrH() / 1080))
-	characters:SetSize(60 * (ScrW() / 1920), 60 * (ScrH() / 1080))
-	characters:SetZPos(500)
-	characters.DoClick = function()
-		self:Remove()
-		vgui.Create("ixCharMenu")
+	self.buttons.Paint = function(panel, width, height)
+		surface.SetDrawColor(ColorAlpha(ix.config.Get("color"), 66))
+		surface.DrawRect(0, height - ScreenScale(1), width, ScreenScale(1))
 	end
-	characters.Paint = function(this, w, h)
-		if characters:IsHovered() then
+
+	-- PDA characters menu and exit functions
+	local exitPDA = self:Add("ixMenuButton")
+	exitPDA:SetText("")
+	exitPDA:SizeToContents()
+	exitPDA:SetPos(self:GetWide() - SW(181), SH(320))
+	exitPDA:SetSize(SW(60), SH(60))
+	exitPDA:SetZPos(500)
+	exitPDA.DoClick = function()
+		self:Remove()
+	end
+
+	exitPDA.Paint = function(this, w, h)
+		if exitPDA:IsHovered() then
 			surface.SetMaterial(Material("stalkerSHoC/ui/pda/phone_icon_red.png", "smooth"))
 			surface.SetDrawColor(255, 255, 255)
 			surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, 1.000, 1.000)
 		end
 	end
 
-    local pdaring = self:Add("ixMenuButton")
-    pdaring:SetText("")
-    pdaring:SizeToContents()
-    pdaring:SetPos(self:GetWide() - 206 * (ScrW() / 1920), 635 * (ScrH() / 1080))
-    pdaring:SetSize(60 * (ScrW() / 1920), 60 * (ScrH() / 1080))
-    pdaring:SetZPos(500)
-    pdaring.DoClick = function()
+    local gotoCharMenu = self:Add("ixMenuButton")
+    gotoCharMenu:SetText("")
+    gotoCharMenu:SizeToContents()
+    gotoCharMenu:SetPos(self:GetWide() - SW(180), SH(682))
+    gotoCharMenu:SetSize(SW(60), SH(60))
+    gotoCharMenu:SetZPos(500)
+    gotoCharMenu.DoClick = function()
+		vgui.Create("ixCharMenu")
 		local soundData = {
 			volume = 1,
 			sound = "pda/pda_sos.wav",
@@ -97,25 +91,46 @@ function PANEL:Init()
 		-- Play the sound
 		sound.Play(soundData.sound, LocalPlayer():GetPos(), soundData.pitch, soundData.volume * 100)
 	end
-    pdaring.Paint = function(this, w, h)
-        if pdaring:IsHovered() then
+
+    gotoCharMenu.Paint = function(this, w, h)
+        if gotoCharMenu:IsHovered() then
             surface.SetMaterial(Material("stalkerSHoC/ui/pda/phone_icon_green.png", "smooth"))
             surface.SetDrawColor(255, 255, 255)
             surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, 1.000, 1.000)
         end
     end
 
-	-- @todo make a better way to avoid clicks in the padding PLEASE
-	self.guard = self:Add("Panel")
-	self.guard:SetPos(0, 0)
-	self.guard:SetSize(self:GetPadding(), self:GetTall())
-
 	-- tabs
 	self.tabs = self.buttons:Add("Panel")
 	self.tabs.buttons = {}
 	self.tabs:Dock(FILL)
 	self:PopulateTabs()
+--[[
+	local close = self.buttons:Add("ixMenuSelectionButtonTop")
+	close:SetText("X")
+	close:SetTextInset(0, 0)
+	close:SetContentAlignment(5)
+	close:SizeToContents()
+	close:Dock(RIGHT)
+	close:SetBackgroundColor(derma.GetColor("Error", close))
+	close:SetButtonList(self.tabs.buttons)
+	close.DoClick = function()
+		self:Remove()
+	end
 
+	local characters = self.buttons:Add("ixMenuSelectionButtonTop")
+	characters:SetText("<")
+	characters:SetTextInset(0, 0)
+	characters:SetContentAlignment(5)
+	characters:SizeToContents()
+	characters:Dock(LEFT)
+	characters:SetBackgroundColor(derma.GetColor("Info", close))
+	characters:SetButtonList(self.tabs.buttons)
+	characters.DoClick = function()
+		self:Remove()
+		vgui.Create("ixCharMenu")
+	end
+--]]
 	self:MakePopup()
 	self:OnOpened()
 end
@@ -124,7 +139,7 @@ function PANEL:OnOpened()
 	self:SetAlpha(0)
 	surface.PlaySound("stalkersound/inv_pda_on.ogg")
 
-	self:CreateAnimation(0, {
+	self:CreateAnimation(animationTime, {
 		target = {currentAlpha = 255},
 		easing = "outQuint",
 
@@ -169,9 +184,9 @@ function PANEL:TransitionSubpanel(id)
 		end
 
 		-- only play whoosh sound only when the menu was already open
-		/*if (IsValid(lastSubpanel)) then
+		if (IsValid(lastSubpanel)) then
 			LocalPlayer():EmitSound("Helix.Whoosh")
-		end*/
+		end
 
 		self:SetActiveSubpanel(id)
 	end
@@ -201,7 +216,7 @@ end
 
 function PANEL:SetCharacterOverview(bValue, length)
 	bValue = tobool(bValue)
-	length = 0
+	length = length or animationTime
 
 	if (bValue) then
 		if (!IsValid(self.projectedTexture)) then
@@ -252,8 +267,7 @@ function PANEL:GetOverviewInfo(origin, angles, fov)
 	local target = LocalPlayer():GetObserverTarget()
 	local fraction = self.overviewFraction
 	local bDrawPlayer = ((fraction > 0.2) or (!self.bOverviewOut and (fraction > 0.2))) and !IsValid(target)
-	local forward = originAngles:Forward() * 58 - originAngles:Right() * 16
-	forward.z = 0
+    local forward = originAngles:Forward() * 64 + originAngles:Right() * 32 + originAngles:Up() * 8
 
 	local newOrigin
 
@@ -264,10 +278,11 @@ function PANEL:GetOverviewInfo(origin, angles, fov)
 	end
 
 	local newAngles = originAngles + self.rotationOffset
-	newAngles.pitch = 5
+	newAngles.pitch = -5
 	newAngles.roll = 0
+	newAngles.yaw = newAngles.yaw - 45
 
-	return LerpVector(fraction, origin, newOrigin), LerpAngle(fraction, angles, newAngles), Lerp(fraction, fov, 90), bDrawPlayer
+	return LerpVector(fraction, origin, newOrigin), LerpAngle(fraction, angles, newAngles), Lerp(fraction, fov, 50), bDrawPlayer
 end
 
 function PANEL:HideBackground()
@@ -287,7 +302,8 @@ function PANEL:ShowBackground()
 end
 
 function PANEL:GetStandardSubpanelSize()
-	return self:GetWide() * 0.85 - self:GetPadding() * 3, self:GetTall() - self:GetPadding() * 2.5
+	return ScrW(), SH(900)
+--	return ScrW() - self.padding * 2, ScrH() - self.padding * 2 - self.buttons:GetTall() * 0.5
 end
 
 function PANEL:SetupTab(name, info, sectionParent)
@@ -302,20 +318,19 @@ function PANEL:SetupTab(name, info, sectionParent)
 	subpanel.info = info
 	subpanel.sectionParent = sectionParent and qualifiedName
 	subpanel:SetPaintedManually(true)
-	subpanel:SetTitle(nil)
+	subpanel:SetTitle(ix.config.Get("tabMenuTitle") and name or nil)
 
-	if (sectionParent) then
-		-- hide section subpanels if they haven't been populated to seeing more subpanels than necessary
-		-- fly by as you navigate tabs in the menu
-		subpanel:SetSize(0, 0)
-	else
-		subpanel:SetSize(self:GetStandardSubpanelSize())
+	subpanel:SetSize(self:GetStandardSubpanelSize())
 
-		-- this is called while the subpanel has not been populated
-		subpanel.Paint = function(panel, width, height)
-			derma.SkinFunc("PaintPlaceholderPanel", panel, width, height)
-		end
-	end
+	subpanel:Center()
+	--subpanel:SetY(self:GetTall() - subpanel:GetTall() - self.padding * 0.75)
+
+    if not (sectionParent) then
+        -- this is called while the subpanel has not been populated
+        subpanel.Paint = function(panel, width, height)
+            derma.SkinFunc("PaintPlaceholderPanel", panel, width, height)
+        end
+    end
 
 	local button
 
@@ -323,13 +338,18 @@ function PANEL:SetupTab(name, info, sectionParent)
 		button = sectionParent:AddSection(L(name))
 		name = qualifiedName
 	else
-		button = self.tabs:Add("ixMenuSelectionButton")
+		button = self.tabs:Add("ixMenuSelectionButtonTop")
 		button:SetText(L(name))
-		button:SizeToContents()
-		button:Dock(TOP)
 		button:SetButtonList(self.tabs.buttons)
 		button:SetBackgroundColor(buttonColor)
 	end
+
+	button:SetFont("ixMenuButtonFontSmall") // trust me, u wanna keep it small :skull:
+
+	button:Dock(LEFT)
+	button:SetTextInset(0, 0)
+	button:SetContentAlignment(5)
+	button:SizeToContents()
 
 	button.name = name
 	button.id = id
@@ -360,6 +380,18 @@ function PANEL:PopulateTabs()
 
 	hook.Run("CreateMenuButtons", tabs)
 
+	// remove the shitty line on the settings
+	tabs["settings"].PopulateTabButton = function(info, button)
+		local menu = ix.gui.menu
+
+		if (!IsValid(menu)) then
+			return
+		end
+
+		DEFINE_BASECLASS("ixMenuButton")
+		button:SetZPos(9999)
+	end
+
 	for name, info in SortedPairs(tabs) do
 		local bDefault, button = self:SetupTab(name, info)
 
@@ -389,7 +421,6 @@ function PANEL:PopulateTabs()
 	end
 
 	self.buttons:MoveToFront()
-	self.guard:MoveToBefore(self.buttons)
 end
 
 function PANEL:AddManuallyPaintedChild(panel)
@@ -429,7 +460,7 @@ function PANEL:Think()
 
 	if (bTabDown and (self.noAnchor or CurTime() + 0.4) < CurTime() and self.anchorMode) then
 		self.anchorMode = false
-		
+		surface.PlaySound("buttons/lightswitch2.wav")
 	end
 
 	if ((!self.anchorMode and !bTabDown) or gui.IsGameUIVisible()) then
@@ -437,26 +468,17 @@ function PANEL:Think()
 	end
 end
 
+--local vignette = ix.util.GetMaterial("helix/gui/vignette.png")
 function PANEL:Paint(width, height)
 	derma.SkinFunc("PaintMenuBackground", self, width, height, self.currentBlur)
 
-	local bShouldScale = self.currentAlpha != 255
-
-	if (bShouldScale) then
-		local currentScale = Lerp(self.currentAlpha / 255, 0.9, 1)
-		local matrix = Matrix()
-
-		matrix:Scale(matrixZScale * currentScale)
-		matrix:Translate(Vector(
-			ScrW() * 0.5 - (ScrW() * currentScale * 0.5),
-			ScrH() * 0.5 - (ScrH() * currentScale * 0.5),
-			1
-		))
-
-		cam.PushModelMatrix(matrix)
-	end
+	surface.SetDrawColor(255, 255, 255, 255)
+	--surface.SetMaterial(vignette)
+	surface.DrawTexturedRect(0, 0, width, height)
+	surface.DrawTexturedRect(0, 0, width, height)
 
 	BaseClass.Paint(self, width, height)
+
 	self:PaintSubpanels(width, height)
 	self.buttons:PaintManual()
 
@@ -473,14 +495,6 @@ function PANEL:Paint(width, height)
 			end
 		end
 	end
-
-	if (bShouldScale) then
-		cam.PopModelMatrix()
-	end
-end
-
-function PANEL:PerformLayout()
-	self.guard:SetSize(self.tabs:GetWide() + self:GetPadding() * 2, self:GetTall())
 end
 
 function PANEL:Remove()
@@ -505,13 +519,13 @@ function PANEL:Remove()
 	CloseDermaMenus()
 	gui.EnableScreenClicker(false)
 
-	self:CreateAnimation(0, {
+	self:CreateAnimation(animationTime * 0.5, {
 		index = 2,
 		target = {currentBlur = 0},
 		easing = "outQuint"
 	})
 
-	self:CreateAnimation(0, {
+	self:CreateAnimation(animationTime * 0.5, {
 		target = {currentAlpha = 0},
 		easing = "outQuint",
 
@@ -535,6 +549,10 @@ vgui.Register("ixMenu", PANEL, "ixSubpanelParent")
 
 if (IsValid(ix.gui.menu)) then
 	ix.gui.menu:Remove()
+
+	timer.Simple(0, function()
+		vgui.Create("ixMenu")
+	end)
 end
 
 ix.gui.lastMenuTab = nil
