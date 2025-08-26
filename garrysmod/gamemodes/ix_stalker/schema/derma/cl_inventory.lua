@@ -289,6 +289,49 @@ end
 local function SW(x) return math.floor(x * UIScale() + 0.5) end
 local function SH(y) return math.floor(y * UIScale() + 0.5) end
 
+local moneyLabel
+local weightLabel
+local charbackgroundicon
+
+-- compute "current of max" weight string respecting unit preference and buffs
+local function computeWeightString()
+    local char = LocalPlayer() and LocalPlayer():GetCharacter()
+    if not char then return "" end
+
+    local isImperial = ix.option.Get("imperial", false)
+
+    -- current weight
+    local cur = char:GetData("Weight", 0)
+
+    -- total max = base + over + buffs; fall back to config if character data missing
+    local baseMax = ix.config.Get("maxWeight", 30)
+    local overMax = ix.config.Get("maxOverWeight", 20)
+    local carryBuff = char:GetData("WeightBuffCur") or 0
+    local totalMax = baseMax + overMax + carryBuff
+
+    return ix.weight.WeightString(cur, isImperial) .. " of " .. ix.weight.WeightString(totalMax, isImperial)
+end
+
+local function RefreshMoney()
+    if not IsValid(moneyLabel) then return end
+    local char = LocalPlayer() and LocalPlayer():GetCharacter()
+    if not char then return end
+    moneyLabel:SetText(ix.currency.Get(char:GetMoney() or 0))
+end
+
+local function RefreshWeight()
+    if not IsValid(weightLabel) then return end
+    weightLabel:SetText(computeWeightString())
+end
+
+local function RefreshCharAvatar()
+    if not IsValid(charbackgroundicon) then return end
+    local char = LocalPlayer() and LocalPlayer():GetCharacter()
+    if not char then return end
+    local avatar = char:GetData("pdaavatar") or "vgui/icons/face_31.png"
+    charbackgroundicon:SetImage(avatar)
+end
+
 
 function PANEL:Init()
 	local baseIcon = 50
@@ -778,7 +821,42 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			mainpanel:SetSize(SW(1167), SH(768))
 			mainpanel:SetPos(0, 0) -- adjust as needed to align with your layout
 			mainpanel:SetZPos(-1000) -- ensure it renders behind inventory contents
-			mainpanel:SetAlpha(255)   -- fully opaque; tweak as needed
+			mainpanel:SetAlpha(255)   -- fully opaque
+
+			-- small cached values to avoid redundant SetText/SetImage calls
+			local lastMoney, lastWeightStr, lastAvatar
+
+			-- attach to the inventory root panel so it only runs while visible
+			function mainpanel:Think()
+				-- bail if the inventory tab isn’t active
+				if not IsValid(moneyLabel) or not IsValid(weightLabel) or not IsValid(charbackgroundicon) then
+					return
+				end
+
+				local char = LocalPlayer() and LocalPlayer():GetCharacter()
+				if not char then return end
+
+				-- money
+				local money = char:GetMoney() or 0
+				if money ~= lastMoney then
+					lastMoney = money
+					moneyLabel:SetText(ix.currency.Get(money))
+				end
+
+				-- weight
+				local wStr = computeWeightString()
+				if wStr ~= lastWeightStr then
+					lastWeightStr = wStr
+					weightLabel:SetText(wStr)
+				end
+
+				-- avatar
+				local avatar = char:GetData("pdaavatar") or "vgui/icons/face_31.png"
+				if avatar ~= lastAvatar then
+					lastAvatar = avatar
+					charbackgroundicon:SetImage(avatar)
+				end
+			end
 
 			local panel = mainpanel:Add("ixInventory")
 			panel:SetDraggable(false)
@@ -789,60 +867,60 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			panel:SetPos(SW(844), SH(108))
 
 			-- Playermodel Panel
-			playermodelFrame = mainpanel:Add("DImage")
+			local playermodelFrame = mainpanel:Add("DImage")
 			playermodelFrame:SetSize(SW(483), SH(768))
 			playermodelFrame:SetMaterial(Material("cotz/panels/loot_interface.png", "smooth"))
 			playermodelFrame:Dock(LEFT)
 			playermodelFrame:SetZPos(-1)
 
-			playermodelPanel = playermodelFrame:Add("DPanel")
+			local playermodelPanel = playermodelFrame:Add("DPanel")
 			playermodelPanel:SetSize(SW(483) * 0.95, SH(768) * 0.95)
 			playermodelPanel:Center()
 			playermodelPanel:SetAlpha(0)
 
 			-- Playermodel
-			playermodel = playermodelPanel:Add("ixPlayerModelPanel")	-- Check cl_modelpanel for camera pos etc.
+			local playermodel = playermodelPanel:Add("ixPlayerModelPanel")	-- Check cl_modelpanel for camera pos etc.
 			playermodel.Entity = LocalPlayer()
 			playermodel.OnRemove = nil
 			playermodel:Dock(FILL)
 
 			--Equipment Panel and image
-			equipmentpanel = mainpanel:Add("DImage")
+			local equipmentpanel = mainpanel:Add("DImage")
 			equipmentpanel:SetSize(SW(343), SH(768))
 			equipmentpanel:SetMaterial(Material("stalkerCoP/ui/inventory/equipment.png", "smooth"))
 			equipmentpanel:Dock(FILL)
 			equipmentpanel:SetZPos(-1)
 
 			-- Inventory Panel and image
-			inventorypanel = mainpanel:Add("DImage")
+			local inventorypanel = mainpanel:Add("DImage")
 			inventorypanel:SetSize(SW(341), SH(768))
 			inventorypanel:SetMaterial(Material("stalkerCoP/ui/inventory/inventory.png", "smooth"))
 			inventorypanel:Dock(RIGHT)
 			inventorypanel:SetZPos(-1)
 
 			-- INVENTORY LABELS AND INFO
-			name = inventorypanel:Add("DLabel")
-			name:SetFont("stalkerregularsmallboldfont")
-			name:SetTextColor(color_white)
-			name:SetPos(SW(17), SH(20))
-			name:SetContentAlignment(7)
-			name:SetWide(SW(190))
-			name:SetText(LocalPlayer():GetName())
+			local nameLabel = inventorypanel:Add("DLabel")
+			nameLabel:SetFont("stalkerregularsmallboldfont")
+			nameLabel:SetTextColor(color_white)
+			nameLabel:SetPos(SW(17), SH(20))
+			nameLabel:SetContentAlignment(7)
+			nameLabel:SetWide(SW(190))
+			nameLabel:SetText(LocalPlayer():GetName())
 
-			rep = inventorypanel:Add("DLabel")
-			rep:SetFont("stalkerregularsmallfont")
-			rep:SetTextColor(color_white)
-			rep:SetText("Rank: "..LocalPlayer():getCurrentRankName())
-			rep:SetPos(SW(17), SH(45))
-			rep:SetWide(SW(190))
-			rep:SetContentAlignment(7)
+			local repLabel = inventorypanel:Add("DLabel")
+			repLabel:SetFont("stalkerregularsmallfont")
+			repLabel:SetTextColor(color_white)
+			repLabel:SetText("Rank: "..LocalPlayer():getCurrentRankName())
+			repLabel:SetPos(SW(17), SH(45))
+			repLabel:SetWide(SW(190))
+			repLabel:SetContentAlignment(7)
 
-			money = inventorypanel:Add("DLabel")
-			money:SetFont("stalkerregularsmallboldfont")
-			money:SetPos(SW(7), SH(75))
-			money:SetWide(SW(190))
-			money:SetContentAlignment(6)
-			money:SetText(ix.currency.Get(LocalPlayer():GetCharacter():GetMoney()))
+			moneyLabel = inventorypanel:Add("DLabel")
+			moneyLabel:SetFont("stalkerregularsmallboldfont")
+			moneyLabel:SetPos(SW(7), SH(75))
+			moneyLabel:SetWide(SW(190))
+			moneyLabel:SetContentAlignment(6)
+			moneyLabel:SetText(ix.currency.Get(LocalPlayer():GetCharacter():GetMoney()))
 
 			charbackgroundicon = inventorypanel:Add("DImage")
 			charbackgroundicon:SetSize(SW(124), SH(87))
@@ -855,35 +933,27 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				charbackgroundicon:SetImage( "vgui/icons/face_31.png" )
 			end
 
-			local isImperial = ix.option.Get("imperial", false) -- Get the user's preference for units
-			if LocalPlayer():GetChar() == nil then return end
-			local character = LocalPlayer():GetChar()
-			local weight = character:GetData("Weight", 0)
-			local maxweight = character:GetData("MaxWeight", 30)
-			local weightString = ix.weight.WeightString(weight, isImperial) -- Format the weight string
-			local maxWeightValue = ix.config.Get("maxWeight", 30)
-			local maxOverWeightValue = ix.config.Get("maxOverWeight", 20)
-			local carrybuff = LocalPlayer():GetChar():GetData("WeightBuffCur") or 0
-			local totalMaxWeight = maxWeightValue + maxOverWeightValue + carrybuff
-			local maxWeightString = ix.weight.WeightString(totalMaxWeight, isImperial) -- Format the total max weight string	
-			weight = inventorypanel:Add("DLabel")
-			weight:SetFont("stalkerregularsmallboldfont")
-			weight:SetPos(SW(137), SH(733))
-			weight:SetWide(SW(190))
-			weight:SetContentAlignment(6)
-			weight:SetText(weightString .. " of " .. maxWeightString)
+			weightLabel = inventorypanel:Add("DLabel")
+			weightLabel:SetFont("stalkerregularsmallboldfont")
+			weightLabel:SetPos(SW(137), SH(733))
+			weightLabel:SetWide(SW(190))
+			weightLabel:SetContentAlignment(6)
+			weightLabel:SetText(computeWeightString())
 
 			local client = LocalPlayer()
-			local character = client:GetCharacter()
-			local inv = character:GetInv()
-			local items = inv:GetItems()
+			local character = client and client:GetCharacter()
+			local inv = character and character:GetInventory()
+			if not character or not inv then
+				inv = nil
+			end
+			
+			local items = inv and inv:GetItems() or {}
 			local blocker = Material("stalkerCoP/ui/inventory/blockplate.png", "smooth")
-
-			if not client or not character or not inv then return end
+			local duraImage = Material("stalkerCoP/ui/inventory/durability_bar.png", "smooth") -- Durability bar image
 
 			-- EQUIPMENT PANELS
 			-- Helmet
-			HelmetPanel = equipmentpanel:Add("DPanel")
+			local HelmetPanel = equipmentpanel:Add("DPanel")
 			HelmetPanel:SetSize(SW(96), SH(115))
 			HelmetPanel:SetPos(SW(12), SH(11))
 			function HelmetPanel:Paint(w, h)
@@ -906,10 +976,9 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Helmet Durability
-			HelmetDura = HelmetPanel:Add("DPanel")
+			local HelmetDura = HelmetPanel:Add("DPanel")
 			HelmetDura:SetSize(SW(58), SH(4))
 			HelmetDura:SetPos(SW(19), SH(108))
-			local duraImage = Material("stalkerCoP/ui/inventory/durability_bar.png", "smooth")
 			function HelmetDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
@@ -948,7 +1017,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Gasmask/Headgear
-			HeadgearPanel = equipmentpanel:Add("DPanel")
+			local HeadgearPanel = equipmentpanel:Add("DPanel")
 			HeadgearPanel:SetSize(SW(110), SH(115))
 			HeadgearPanel:SetPos(SW(117), SH(11))
 			function HeadgearPanel:Paint(w, h)
@@ -957,7 +1026,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						if item.isArmor and item.isGasmask then
 							surface.SetMaterial(blocker)
 							surface.SetDrawColor(255, 255, 255, 255) 
-							surface.DrawTexturedRect(0, 0, SW(110), SH(115))
+							surface.DrawTexturedRect(SW(0), SH(0), SW(110), SH(115))
 						elseif not item.isArmor then
 							if (item.isGasmask and item.isHelmet) or item.isGasmask then
 								local headgearImage = item.img
@@ -971,10 +1040,9 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Headgear Durability
-			HeadgearDura = HeadgearPanel:Add("DPanel")
+			local HeadgearDura = HeadgearPanel:Add("DPanel")
 			HeadgearDura:SetSize(SW(58), SH(4))
 			HeadgearDura:SetPos(SW(26), SH(108))
-			local duraImage = Material("stalkerCoP/ui/inventory/durability_bar.png", "smooth")
 			function HeadgearDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
@@ -1013,7 +1081,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Armor
-			ArmorPanel = equipmentpanel:Add("DPanel")
+			local ArmorPanel = equipmentpanel:Add("DPanel")
 			ArmorPanel:SetSize(SW(110), SH(181))
 			ArmorPanel:SetPos(SW(117), SH(135))
 			function ArmorPanel:Paint(w, h)
@@ -1028,10 +1096,9 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Armor Durability
-			ArmorDura = ArmorPanel:Add("DPanel")
+			local ArmorDura = ArmorPanel:Add("DPanel")
 			ArmorDura:SetSize(SW(58), SH(4))
 			ArmorDura:SetPos(SW(26), SH(174))
-			local duraImage = Material("stalkerCoP/ui/inventory/durability_bar.png", "smooth")
 			function ArmorDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
@@ -1069,8 +1136,232 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
+			-- Secondary Weapon (Left)
+			local LWepPanel = equipmentpanel:Add("DPanel")
+			LWepPanel:SetSize(SW(92), SH(248))
+			LWepPanel:SetPos(SW(14), SH(137))
+			function LWepPanel:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
+						local LWepImage = item.img
+						
+						if not LWepImage then return end	-- If nil or non-existent, then no image
+
+						surface.SetMaterial(LWepImage)
+						surface.SetDrawColor(255, 255, 255, 255)
+
+						-- Padding
+						local pad = SW(4)
+						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
+
+						-- Source aspect. If unknown, assume horizontal image (e.g., rifle) -> wider than tall.
+						-- Example: store item.texW/item.texH to be exact. Here we assume 3:1 landscape.
+						local srcW, srcH = 3, 1
+						local aspect = srcW / srcH
+
+						-- When rotating 90°, the on-screen bounding box swaps W/H.
+						-- We want the rotated image to fit inside maxW x maxH.
+						-- Let drawW/drawH be the un-rotated draw size. After rotation, the
+						-- bounding width = drawH, bounding height = drawW.
+						-- So choose drawW/drawH such that:
+						--   drawH <= maxW  and  drawW <= maxH
+						-- With aspect = drawW/drawH => drawW = aspect * drawH.
+						local drawH = math.floor(math.min(maxW, maxH / aspect) + 0.5)
+						local drawW = math.floor(aspect * drawH + 0.5)
+
+						-- Center of the panel
+						local cx = w * 0.5
+						local cy = h * 0.5
+
+						-- Draw rotated 90 degrees
+						surface.DrawTexturedRectRotated(cx, cy, drawW, drawH, 90)
+
+						return
+					end
+				end
+			end
+
+			-- Secondary Weapon Durability
+			local LWepDura = LWepPanel:Add("DPanel")
+			LWepDura:SetSize(SW(58), SH(4))
+			LWepDura:SetPos(SW(16), SH(241))
+			function LWepDura:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
+						local durability = item:GetData("durability")
+						if durability == nil then return end
+
+						local maxDura = 10000
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 6000 then
+							surface.SetDrawColor(115, 180, 130, 200) -- green
+						elseif durability > 4000 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 2000 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
+						return
+					end
+				end
+			end
+
+			-- Sidearm (Center)
+			local SidearmPanel = equipmentpanel:Add("DPanel")
+			SidearmPanel:SetSize(SW(110), SH(60))
+			SidearmPanel:SetPos(SW(117), SH(325))
+			function SidearmPanel:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
+						local SidearmImage = item.img
+						
+						if not SidearmImage then return end
+
+						surface.SetMaterial(SidearmImage)
+						surface.SetDrawColor(255, 255, 255, 255)
+
+						-- Padding
+						local pad = SW(4)
+						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
+
+						-- Landscape
+						local srcW, srcH = 2, 1
+						local aspect = srcW / srcH
+
+						local drawW = math.floor(math.min(maxW, maxH * aspect) + 0.5)
+						local drawH = math.floor(drawW / aspect + 0.5)
+
+						-- Center of the panel
+						local cx = math.floor((w - drawW) * 0.5 + 0.5)
+						local cy = math.floor((h - drawH) * 0.5 + 0.5)
+
+						-- Draw rotated -90 degrees
+						surface.DrawTexturedRect(cx, cy, drawW, drawH)
+
+						return
+					end
+				end
+			end
+
+			-- Sidearm Durability
+			local SidearmDura = SidearmPanel:Add("DPanel")
+			SidearmDura:SetSize(SW(58), SH(4))
+			SidearmDura:SetPos(SW(26), SH(53))
+			function SidearmDura:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
+						local durability = item:GetData("durability")
+						if durability == nil then return end
+
+						local maxDura = 10000
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 6000 then
+							surface.SetDrawColor(115, 180, 130, 200) -- green
+						elseif durability > 4000 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 2000 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
+						return
+					end
+				end
+			end
+
+			-- Primary Weapon (Right)
+			local RWepPanel = equipmentpanel:Add("DPanel")
+			RWepPanel:SetSize(SW(92), SH(248))
+			RWepPanel:SetPos(SW(238), SH(137))
+			function RWepPanel:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "primary" and item:GetData("equip", false) then
+						local RWepImage = item.img
+						
+						if not RWepImage then return end
+
+						surface.SetMaterial(RWepImage)
+						surface.SetDrawColor(255, 255, 255, 255)
+
+						-- Padding
+						local pad = SW(4)
+						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
+
+						-- Landscape
+						local srcW, srcH = 3, 1
+						local aspect = srcW / srcH
+
+						local drawH = math.floor(math.min(maxW, maxH / aspect) + 0.5)
+						local drawW = math.floor(aspect * drawH + 0.5)
+
+						-- Center of the panel
+						local cx = w * 0.5
+						local cy = h * 0.5
+
+						-- Draw rotated -90 degrees
+						surface.DrawTexturedRectRotated(cx, cy, drawW, drawH, -90)
+
+						return
+					end
+				end
+			end
+
+			-- Primary Weapon Durability
+			local RWepDura = RWepPanel:Add("DPanel")
+			RWepDura:SetSize(SW(58), SH(4))
+			RWepDura:SetPos(SW(17), SH(241))
+			function RWepDura:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.weaponCategory == "primary" and item:GetData("equip", false) then
+						local durability = item:GetData("durability")
+						if durability == nil then return end
+
+						local maxDura = 10000
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 6000 then
+							surface.SetDrawColor(115, 180, 130, 200) -- green
+						elseif durability > 4000 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 2000 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
+						return
+					end
+				end
+			end
+
 			-- PDA Panel
-			PDAequip = equipmentpanel:Add("DPanel")
+			local PDAequip = equipmentpanel:Add("DPanel")
 			PDAequip:SetSize(SW(78), SH(67))
 			PDAequip:SetPos(SW(11), SH(395))
 			function PDAequip:Paint(w, h)
@@ -1085,7 +1376,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Geiger Counter Panel
-			Geiger = equipmentpanel:Add("DPanel")
+			local Geiger = equipmentpanel:Add("DPanel")
 			Geiger:SetSize(SW(78), SH(67))
 			Geiger:SetPos(SW(92), SH(395))
 			function Geiger:Paint(w, h)
@@ -1100,7 +1391,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Anomaly Detector Panel
-			AnomDet = equipmentpanel:Add("DPanel")
+			local AnomDet = equipmentpanel:Add("DPanel")
 			AnomDet:SetSize(SW(78), SH(67))
 			AnomDet:SetPos(SW(173), SH(395))
 			function AnomDet:Paint(w, h)
@@ -1115,7 +1406,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Artifact Detector Panel
-			ArtDet = equipmentpanel:Add("DPanel")
+			local ArtDet = equipmentpanel:Add("DPanel")
 			ArtDet:SetSize(SW(78), SH(67))
 			ArtDet:SetPos(SW(254), SH(395))
 			function ArtDet:Paint(w, h)
@@ -1129,10 +1420,83 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
-			local blockercont = Material("stalkerCoP/ui/inventory/blockplate_container.png", "smooth")
+			-- Artifacts panel
+			local ArtifactsPanel = equipmentpanel:Add("DPanel")
+			ArtifactsPanel:SetSize(SW(320), SH(60))
+			ArtifactsPanel:SetPos(SW(12), SH(471))
+			function ArtifactsPanel:Paint(w, h)
+				local client = LocalPlayer()
+				local char = client and client:GetCharacter()
+				if not char then return end
+
+				local inv = char:GetInventory()
+				if not inv then return end
+
+				local items = inv:GetItems()
+
+				-- Layout
+				local totalSlots = 5
+				local slotSize = SW(60)  -- size of a slot (match your texture size so it snaps nicely)
+				local artSize  = SW(50)  -- artifact icon size within a slot
+				local spacing  = SW(5)
+				local startX   = SW(0)   -- leftmost slot X
+				local startY   = SH(0)
+
+				-- Find equipped armor and determine how many artifact containers it grants
+				local armorContainers = 0
+				local equippedArmor
+				for _, it in pairs(items) do
+					if it:GetData("equip", false) and it.isArmor then
+						equippedArmor = it
+						-- artifactcontainers is expected like { "2" } or { 2 }; be defensive
+						local c = it.artifactcontainers
+						if c then
+							local n = tonumber(c[1] or c) or 0
+							armorContainers = math.Clamp(n, 0, totalSlots)
+						end
+						break
+					end
+				end
+
+				-- Collect equipped artifacts
+				local equippedArtifacts = {}
+				for _, it in pairs(items) do
+					if it:GetData("equip", false) and (it.isArtefact or it.isArtifact) then
+						table.insert(equippedArtifacts, it)
+					end
+				end
+
+				-- Draw slots 1..5
+				local blockercont = Material("stalkerCoP/ui/inventory/blockplate_container.png", "smooth")
+
+				local drawnArtifacts = 0
+				for i = 1, totalSlots do
+					local slotX = startX + (i - 1) * (slotSize + spacing)
+					local slotY = 0
+
+					-- If this slot index exceeds the count of armor-provided containers, draw blocker
+					if i > armorContainers then
+						surface.SetMaterial(blockercont)
+						surface.SetDrawColor(255, 255, 255, 255)
+						surface.DrawTexturedRect(slotX, slotY, slotSize, slotSize)
+					else
+						-- There is a container here; draw an equipped artifact if we have one
+						local art = equippedArtifacts[drawnArtifacts + 1]
+						if art and art.img then
+							surface.SetMaterial(art.img)
+							surface.SetDrawColor(255, 255, 255, 255)
+							-- center artifact inside the slot
+							local pad = math.floor((slotSize - artSize) * 0.5 + 0.5)
+							surface.DrawTexturedRect(slotX + pad, startY + pad, artSize, artSize)
+							drawnArtifacts = drawnArtifacts + 1
+						end
+						-- If no artifact for this container, leave it empty (no blocker shown)
+					end
+				end
+			end
 
 			-- Health Panel
-			healthImage = equipmentpanel:Add("DPanel")
+			local healthImage = equipmentpanel:Add("DPanel")
 			healthImage:SetSize(SW(214), SH(16))
 			healthImage:SetPos(SW(14), SH(570))
 
@@ -1158,7 +1522,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local char = lp:GetCharacter()
 
 			-- Bleed Icon Panel
-			BleedIcon = equipmentpanel:Add("DPanel")
+			local BleedIcon = equipmentpanel:Add("DImage")
 			BleedIcon:SetSize(45, 45)
 			BleedIcon:SetPos(SW(238), SH(545))
 
@@ -1168,13 +1532,16 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local bleedImage4 = Material("stalkerCoP/ui/inventory/bleed4.png", "smooth")
 
 			function BleedIcon:Paint(w, h)
-				local bleeding = character:GetData("Bleeding", 0) > 0
+				local lp = LocalPlayer()
+				local char = lp and lp:GetCharacter()
+				if not char then return end
+
+				local bleeding = char:GetData("Bleeding", 0) > 0
 				local time = CurTime() * heartbeatSpeed
 				local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
-				local health = LocalPlayer():Health()
+				local health = lp:Health()
 
-				if bleeding or (timer.Exists(client:Name().."res_bleed")) then
-					surface.SetMaterial(bleedImage)
+				if bleeding or timer.Exists(lp:Name() .. "res_bleed") then
 					if health == 100 then
 						surface.SetMaterial(bleedImage)
 						surface.SetDrawColor(Color(0, 0, 0, 0))
@@ -1187,7 +1554,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 					elseif health < 60 and health >= 25 then
 						surface.SetMaterial(bleedImage3)
 						surface.SetDrawColor(Color(255, 255, 255, alpha))
-					elseif health < 25 and health >= 0 then
+					else -- health < 25
 						surface.SetMaterial(bleedImage4)
 						surface.SetDrawColor(Color(255, 255, 255, alpha))
 					end
@@ -1197,7 +1564,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Radiation Icon Panel
-			RadIcon = equipmentpanel:Add("DImage")
+			local RadIcon = equipmentpanel:Add("DImage")
 			RadIcon:SetSize(45, 45)
 			RadIcon:SetPos(SW(288), SH(545))
 
@@ -1233,7 +1600,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- RESISTANCES PANEL
-			ResPanel = equipmentpanel:Add("DPanel")
+			local ResPanel = equipmentpanel:Add("DPanel")
 			ResPanel:SetSize(SW(282), SH(100))
 			ResPanel:SetPos(SW(40), SH(612))
 			ResPanel:SetPaintBackgroundEnabled(false)
@@ -1302,15 +1669,15 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Create resistances bars using the unified function
-			radiationBar = CreateResistanceBar(ResPanel, resbarImage, "Radiation", SW(0), 	SH(0))
-			chemicalBar  = CreateResistanceBar(ResPanel, resbarImage, "Chemical",  SW(0), 	SH(28))
-			shockBar     = CreateResistanceBar(ResPanel, resbarImage, "Shock",     SW(0), 	SH(56))
-			burnBar      = CreateResistanceBar(ResPanel, resbarImage, "Burn",      SW(0), 	SH(84))
-			psiBar       = CreateResistanceBar(ResPanel, resbarImage, "Psi",       SW(159), 	SH(0))
-			slashBar     = CreateResistanceBar(ResPanel, resbarImage, "Slash",     SW(159), 	SH(28))
-			fallBar      = CreateResistanceBar(ResPanel, resbarImage, "Fall",      SW(159), 	SH(56))
+			local radiationBar = CreateResistanceBar(ResPanel, resbarImage, "Radiation", SW(0), 	SH(0))
+			local chemicalBar  = CreateResistanceBar(ResPanel, resbarImage, "Chemical",  SW(0), 	SH(28))
+			local shockBar     = CreateResistanceBar(ResPanel, resbarImage, "Shock",     SW(0), 	SH(56))
+			local burnBar      = CreateResistanceBar(ResPanel, resbarImage, "Burn",      SW(0), 	SH(84))
+			local psiBar       = CreateResistanceBar(ResPanel, resbarImage, "Psi",       SW(159), 	SH(0))
+			local slashBar     = CreateResistanceBar(ResPanel, resbarImage, "Slash",     SW(159), 	SH(28))
+			local fallBar      = CreateResistanceBar(ResPanel, resbarImage, "Fall",      SW(159), 	SH(56))
 
-			local inventory = LocalPlayer():GetCharacter():GetInventory()
+			local inventory = inv or (LocalPlayer():GetCharacter() and LocalPlayer():GetCharacter():GetInventory())
 
 			if (inventory) then
 				panel:SetInventory(inventory)
@@ -1335,11 +1702,35 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 	}
 end)
 
-hook.Add("PostRenderVGUI", "ixInvHelper", function()
-	local pnl = ix.gui.inv1
-
-	hook.Run("PostDrawInventory", pnl)
+hook.Add("CreateMenuButtons", "ixCharInfo", function(tabs)	--Removes You tab
+	tabs["you"] = nil
 end)
 
-hook.Add("CreateMenuButtons", "ixCharInfo", function(tabs)	--Removes You tab
+-- Update hooks for money, weight and pdaavatar
+hook.Add("CharacterVarChanged", "ixInv_UpdateMoney", function(character, key, old, new)
+    if character ~= LocalPlayer():GetCharacter() then return end
+    if key == "money" then
+        RefreshMoney()
+    end
+end)
+
+hook.Add("CharacterDataChanged", "ixInv_UpdateWeight", function(character, key, old, new)
+    if character ~= LocalPlayer():GetCharacter() then return end
+    if key == "Weight" or key == "MaxWeight" or key == "WeightBuffCur" then
+        RefreshWeight()
+    end
+end)
+
+-- also respond to unit preference changes
+hook.Add("HelixOptionChanged", "ixInv_UnitPrefChanged", function(client, key, old, new)
+    if key == "imperial" then
+        RefreshWeight()
+    end
+end)
+
+hook.Add("CharacterDataChanged", "ixInv_UpdateAvatar", function(character, key, old, new)
+    if character ~= LocalPlayer():GetCharacter() then return end
+    if key == "pdaavatar" then
+        RefreshCharAvatar()
+    end
 end)
