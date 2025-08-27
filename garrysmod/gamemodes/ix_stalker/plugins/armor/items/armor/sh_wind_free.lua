@@ -9,19 +9,18 @@ ITEM.weight = 3
 ITEM.flag = "V"
 
 ITEM.res = {
-	["Bullet"] = 0.15,
-	["Blast"] = 0.15,
+	["Bullet"] = 0.07,
+	["Impact"] = 0.04,
 	["Slash"] = 0.15,
-	["Fall"] = 0.15,
-	["Burn"] = 0.105,
-	["Shock"] = 0.105,
-	["Chemical"] = 0.105,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.20,
+	["Burn"] = 0.20,
+	["Shock"] = 0.14,
+	["Chemical"] = 0.10,
+	["Radiation"] = 0.12,
+	["Psi"] = 0.08,
 }
 
-ITEM.ballisticlevels = {"0", "0", "l", "ll-a", "l"}
-ITEM.artifactcontainers = {"2"}
+ITEM.BRC = 21
+ITEM.artifactcontainers = {"3"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_wind_v.png")
 

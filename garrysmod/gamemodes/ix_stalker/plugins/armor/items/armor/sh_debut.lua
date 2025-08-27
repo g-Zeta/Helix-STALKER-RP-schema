@@ -1,26 +1,25 @@
-ITEM.name = "Debut"
+ITEM.name = "Debut Suit"
 ITEM.model = "models/flaymi/anomaly/equipments/novice_suit.mdl"
 ITEM.description = "A reinforced jacket."
 ITEM.longdesc = "Basically a jacket reinforced with aramid fibers and nylon thread, complemented with a basic load-bearing system. It serves as the bare minimum for survival. This suit doesn't protect against anomalies and won't stop a bullet, but its simplicity and cost-effectiveness make it a practical choice."
 
-ITEM.price = 13500
+ITEM.price = 7500
 ITEM.weight = 3
 
 ITEM.flag = "1"
 
 ITEM.res = {
-	["Bullet"] = 0.15,
-	["Blast"] = 0.15,
-	["Slash"] = 0.15,
-	["Fall"] = 0.15,
-	["Burn"] = 0.08,
-	["Shock"] = 0.07,
-	["Chemical"] = 0.085,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.10,
+	["Bullet"] = 0.07,
+	["Impact"] = 0.01,
+	["Slash"] = 0.14,
+	["Burn"] = 0.15,
+	["Shock"] = 0.06,
+	["Chemical"] = 0.04,
+	["Radiation"] = 0.02,
+	["Psi"] = 0,
 }
 
-ITEM.ballisticlevels = {"0", "0", "l", "ll-a", "l"}
+ITEM.BRC = 15
 ITEM.artifactcontainers = {"1"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_debut.png")

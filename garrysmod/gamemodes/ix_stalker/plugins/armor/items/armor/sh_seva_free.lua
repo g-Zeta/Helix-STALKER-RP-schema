@@ -11,25 +11,21 @@ ITEM.flag = "V"
 ITEM.radProt = 4
 
 ITEM.res = {
-	["Bullet"] = 0.25,
-	["Blast"] = 0.25,
-	["Slash"] = 0.25,
-	["Fall"] = 0.25,
+	["Bullet"] = 0.10,
+	["Impact"] = 0.12,
+	["Slash"] = 0.23,
 	["Burn"] = 0.20,
-	["Shock"] = 0.26,
-	["Chemical"] = 0.29,
-	["Psi"] = 0.20,
-	["Radiation"] = 0.70,
+	["Shock"] = 0.24,
+	["Chemical"] = 0.20,
+	["Radiation"] = 0.36,
+	["Psi"] = 0.25,
 }
 
-ITEM.ballisticlevels = {"ll", "ll", "ll-a", "lll-a", "ll-a"}
+ITEM.BRC = 31
 ITEM.artifactcontainers = {"4"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_seva_v.png")
 ITEM.overlayPath = "vgui/overlays/hud_sci"
-
-ITEM.isGasmask = true
-ITEM.isHelmet = true
 
 ITEM.OnGetReplacement = function(self, player)
     local player = self.player

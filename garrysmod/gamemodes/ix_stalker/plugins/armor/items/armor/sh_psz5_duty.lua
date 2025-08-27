@@ -1,27 +1,26 @@
-ITEM.name = "PSZ-5D Universal Protection" 
+ITEM.name = "PSZ-5d Universal Protection" 
 ITEM.model = "models/flaymi/anomaly/dynamics/outfit/dolg_outfit.mdl"
 ITEM.description = "A PSZ-5 suit commissioned by Duty." 
-ITEM.longdesc = "This bodysuit was produced by one of Kiev's defense research institutes and was primarily commissioned by the Duty faction, who issue it as their standard uniform. Its use of cutting-edge materials provides decent protection against low-calibre firearms. Meanwhile, it provides adequate protection against anomalies, making it a well-rounded suit."
+ITEM.longdesc = "The typical 'medium' suit used by members of Duty. For their tasks that usually involve hunting bandits and hunting mutants, it's quite good."
 
 ITEM.price = 36500
-ITEM.weight = 7
+ITEM.weight = 6
 
 ITEM.flag = "D"
 
 ITEM.res = {
-	["Bullet"] = 0.25,
-	["Blast"] = 0.25,
-	["Slash"] = 0.25,
-	["Fall"] = 0.25,
-	["Burn"] = 0.11,
-	["Shock"] = 0.13,
-	["Chemical"] = 0.13,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.30,
+	["Bullet"] = 0.16,
+	["Impact"] = 0.19,
+	["Slash"] = 0.33,
+	["Burn"] = 0.10,
+	["Shock"] = 0.02,
+	["Chemical"] = 0.02,
+	["Radiation"] = 0.02,
+	["Psi"] = 0.02,
 }
 
 ITEM.ballisticlevels = {"0", "0", "ll-a", "lll-a", "ll-a"}
-ITEM.artifactcontainers = {"3"}
+ITEM.artifactcontainers = {"1"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_psz_5d.png")
 

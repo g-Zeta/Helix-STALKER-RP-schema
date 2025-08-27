@@ -9,19 +9,18 @@ ITEM.weight = 9
 ITEM.flag = "V"
 
 ITEM.res = {
-	["Bullet"] = 0.30,
-	["Blast"] = 0.30,
-	["Slash"] = 0.30,
-	["Fall"] = 0.30,
-	["Burn"] = 0.195,
-	["Shock"] = 0.14,
-	["Chemical"] = 0.16,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.50,
+	["Bullet"] = 0.23,
+	["Impact"] = 0.23,
+	["Slash"] = 0.28,
+	["Burn"] = 0.39,
+	["Shock"] = 0.18,
+	["Chemical"] = 0.12,
+	["Radiation"] = 0.12,
+	["Psi"] = 0.05
 }
 
-ITEM.ballisticlevels = {"0", "0", "ll", "lll", "ll"}
-ITEM.artifactcontainers = {"4"}
+ITEM.BRC = 40
+ITEM.artifactcontainers = {"3"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_psz_12v_bulat.png")
 
