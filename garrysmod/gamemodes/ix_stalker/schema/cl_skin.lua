@@ -174,7 +174,6 @@ function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
 	surface.SetMaterial(pdabackground)
 	surface.DrawTexturedRect(0, 0, width, height)
 
-	--ix.util.DrawBlur(panel, alphaFraction * 15, nil, 0)
 end
 
 function SKIN:PaintPlaceholderPanel(panel, width, height, barWidth, padding)

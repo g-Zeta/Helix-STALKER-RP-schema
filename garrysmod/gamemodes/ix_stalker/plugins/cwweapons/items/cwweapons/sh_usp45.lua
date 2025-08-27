@@ -3,7 +3,7 @@ ITEM.description = "The USP is a semi-automatic pistol developed in Germany by H
 ITEM.model = "models/silver/stalker/weapons/w_usp45.mdl"
 ITEM.class = "cw_sil_usp45"
 ITEM.weaponCategory = "sidearm"
-ITEM.width = 1
+ITEM.width = 2
 ITEM.height = 1
 ITEM.price = 9600
 ITEM.flag = "2"
@@ -17,3 +17,5 @@ ITEM.Range = 50
 ITEM.Pen = 4
 ITEM.Mag = 12
 ITEM.barrel = "short"
+
+ITEM.img = Material("stalker2/ui/weapons/usp45.png")

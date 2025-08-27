@@ -4,7 +4,7 @@ ITEM.longdesc = "The MP5 is an iconic German submachinegun developed in the 1960
 ITEM.model = "models/silver/stalker/weapons/w_mp5sd.mdl"
 ITEM.class = "cw_sil_mp5sd"
 ITEM.weaponCategory = "secondary"
-ITEM.width = 3
+ITEM.width = 4
 ITEM.price = 20000
 ITEM.height = 2
 ITEM.flag = "2"
@@ -22,3 +22,5 @@ ITEM.iconCam = {
 	ang = Angle(0, 270, 0),
 	fov = 70
 }
+
+ITEM.img = Material("stalker2/ui/weapons/mp5.png")

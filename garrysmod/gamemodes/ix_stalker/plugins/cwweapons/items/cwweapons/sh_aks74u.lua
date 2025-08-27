@@ -4,7 +4,7 @@ ITEM.longdesc = "The AKS-74U bridges the gap between a submachine gun and an ass
 ITEM.model = "models/silver/stalker/weapons/w_aks74u.mdl"
 ITEM.class = "cw_sil_aks74u"
 ITEM.weaponCategory = "primary"
-ITEM.width = 2
+ITEM.width = 4
 ITEM.price = 25000
 ITEM.img = Material("stalker2/ui/weapons/aks74.png")
 ITEM.imgEquipped = Material("stalker2/ui/weapons/equipped/aks74_v.png")
@@ -24,3 +24,5 @@ ITEM.iconCam = {
 	ang = Angle(0, 270, 0),
 	fov = 70
 }
+
+ITEM.img = Material("stalker2/ui/weapons/aks74.png")
