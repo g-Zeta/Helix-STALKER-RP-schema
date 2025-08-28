@@ -1,4 +1,4 @@
-ITEM.name = "PSZ-5I Hawk Suit"
+ITEM.name = "PSZ-5I Hawk Suit" 
 ITEM.model = "models/flaymi/anomaly/dynamics/outfit/stalker_outfit.mdl"
 ITEM.description = "A PSZ-5 suit modified by Spark." 
 ITEM.longdesc = "Made in cooperation with the folks at Malachite, Spark's standard issue is quite apt at exploration."

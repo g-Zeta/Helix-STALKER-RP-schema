@@ -43,7 +43,8 @@ function PLUGIN:OnCharacterCreated(client, character)
 	local charsheetinfo = character:GetData("charsheetinfo", nil) or {}
 	charsheetinfo["Full Name"] = {left = "Full Name", right = character:GetData("sheetFullName", nil) or character:GetName(), nonadmin = false}
 	charsheetinfo["Nickname"] = {left = "Nickname", right = character:GetData("sheetFullName", nil) or "None", nonadmin = true}
-	charsheetinfo["Age"] = {left = "Age", right = character:GetData("sheetAge", nil) or "Fill me.", nonadmin = false}
+	charsheetinfo["Date of Birth"] = {left = "Date of Birth", right = character:GetData("sheetDOBText", nil) or "MM/DD/YYYY", nonadmin = false}
+	--charsheetinfo["Age"] = {left = "Age", right = character:GetData("sheetAge", nil) or "Fill me.", nonadmin = false}
 	charsheetinfo["Race"] = {left = "Race", right = character:GetData("sheetRace", nil) or "Fill me.", nonadmin = false}
 	charsheetinfo["Nationality"] = {left = "Nationality", right = character:GetData("sheetNationality", nil) or "Fill me.", nonadmin = false}
 
@@ -68,6 +69,108 @@ do
 	ix.command.Add("Selfdesc", COMMAND)
 end
 --]]
+
+ix.char.RegisterVar("dob", {
+    field = "dob",
+    fieldType = ix.type.text,
+    category = "charsheet",
+    default = "",
+    index = 6,
+    OnValidate = function(self, value, payload)
+        local raw = string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", "")))
+
+        -- Expect MM/DD/YYYY
+        if not raw:match("^%d%d/%d%d/%d%d%d%d$") then
+            return false, "Date of Birth must be in MM/DD/YYYY format."
+        end
+
+        -- Parse numbers
+        local month, day, year = raw:match("^(%d%d)/(%d%d)/(%d%d%d%d)$")
+        month, day, year = tonumber(month), tonumber(day), tonumber(year)
+
+        -- Basic range checks
+        if month < 1 or month > 12 then
+            return false, "Invalid month in Date of Birth."
+        end
+        if day < 1 or day > 31 then
+            return false, "Invalid day in Date of Birth."
+        end
+        if year < 1900 then
+            return false, "Year must be 1900 or later."
+        end
+
+        -- Validate actual calendar date using os.time (handles month/day overflow)
+        local okTime = os.time({year = year, month = month, day = day, hour = 12, min = 0, sec = 0, isdst = false})
+        if not okTime then
+            return false, "Invalid calendar date for Date of Birth."
+        end
+
+        -- Date cannot be in the future
+        local today = os.time()
+        if okTime > today then
+            return false, "Date of Birth cannot be in the future."
+        end
+
+        -- Enforce minimum/maximum age (example: 20–99)
+        -- Calculate age roughly
+        local now = os.date("*t")
+        local age = now.year - year
+        if (now.month < month) or (now.month == month and now.day < day) then
+            age = age - 1
+        end
+        local minAge, maxAge = 20, 99
+        if age < minAge then
+            return false, "You can't be below the age of " .. tostring(minAge) .. "."
+        elseif age > maxAge then
+            return false, "You can't be above the age of " .. tostring(maxAge) .. "."
+        end
+
+        -- If all good, return canonical MM/DD/YYYY string
+        return string.format("%02d/%02d/%04d", month, day, year)
+    end,
+    OnPostSetup = function(self, panel, payload)
+        panel:SetMultiline(false)
+        panel:SetFont("ixMenuButtonFont")
+        panel:SetTall(panel:GetTall())
+        panel:SetPlaceholderText("MM/DD/YYYY")
+        panel.AllowInput = function(_, character)
+            -- Disallow newline
+            if (character == "\n" or character == "\r") then
+                return true
+            end
+        end
+    end,
+    OnAdjust = function(self, client, data, value, newData)
+        -- Persist both the raw DOB and a friendly formatted text for the sheet
+        local month, day, year = value:match("^(%d%d)/(%d%d)/(%d%d%d%d)$")
+        month, day, year = tonumber(month), tonumber(day), tonumber(year)
+
+        local suffix = function(d)
+            if d % 10 == 1 and d ~= 11 then return "st"
+            elseif d % 10 == 2 and d ~= 12 then return "nd"
+            elseif d % 10 == 3 and d ~= 13 then return "rd"
+            else return "th" end
+        end
+
+        local monthNames = {
+            [1] = "January", [2] = "February", [3] = "March", [4] = "April",
+            [5] = "May", [6] = "June", [7] = "July", [8] = "August",
+            [9] = "September", [10] = "October", [11] = "November", [12] = "December"
+        }
+
+        local display = string.format("%s %d%s, %d", monthNames[month], day, suffix(day), year)
+
+        newData = newData or {}
+        newData.data = newData.data or {}
+        newData.data.sheetDOB = value              -- "04/26/1986"
+        newData.data.sheetDOBText = display        -- "April 26th, 1986"
+        return newData
+    end,
+    ShouldDisplay = function(self, container, payload)
+        return true
+    end
+})
+--[[
 ix.char.RegisterVar("age", {
     field = "age",
     fieldType = ix.type.text,
@@ -108,7 +211,7 @@ ix.char.RegisterVar("age", {
         return true
     end
 })
-
+--]]
 ix.char.RegisterVar("race", {
 	field = "race",
 	fieldType = ix.type.text,
@@ -193,4 +296,99 @@ ix.char.RegisterVar("nationality", {
 	ShouldDisplay = function(self, container, payload)
 		return true --!table.IsEmpty(ix.perks.list)
 	end
+})
+
+ix.command.Add("charsetdob", {
+    description = "Set a character's Date of Birth.",
+	adminOnly = true,
+    arguments = {
+        ix.type.string, -- target (name/steamid)
+        ix.type.text    -- MM/DD/YYYY
+    },
+    OnRun = function(self, client, targetArg, dobArg)
+        local target = ix.util.FindPlayer(targetArg)
+        if not IsValid(target) then
+            client:Notify("Player not found")
+            return
+        end
+
+        local function validateAndNormalizeDOB(raw)
+            raw = string.Trim((tostring(raw):gsub("\r\n", ""):gsub("\n", "")))
+            if not raw:match("^%d%d/%d%d/%d%d%d%d$") then
+                return false, "Date of Birth must be in MM/DD/YYYY format."
+            end
+
+            local m, d, y = raw:match("^(%d%d)/(%d%d)/(%d%d%d%d)$")
+            m, d, y = tonumber(m), tonumber(d), tonumber(y)
+
+            if m < 1 or m > 12 then return false, "Invalid month in Date of Birth." end
+            if d < 1 or d > 31 then return false, "Invalid day in Date of Birth." end
+            if y < 1900 then return false, "Year must be 1900 or later." end
+
+            local t = os.time({year = y, month = m, day = d, hour = 12, min = 0, sec = 0, isdst = false})
+            if not t then return false, "Invalid calendar date for Date of Birth." end
+            if t > os.time() then return false, "Date of Birth cannot be in the future." end
+
+            -- Enforce same age range as creation (20–99). Remove if you want admins unrestricted.
+            local now = os.date("*t")
+            local age = now.year - y
+            if (now.month < m) or (now.month == m and now.day < d) then
+                age = age - 1
+            end
+            local minAge, maxAge = 20, 99
+            if age < minAge then
+                return false, "You can't be below the age of " .. tostring(minAge) .. "."
+            elseif age > maxAge then
+                return false, "You can't be above the age of " .. tostring(maxAge) .. "."
+            end
+
+            local canonical = string.format("%02d/%02d/%04d", m, d, y)
+
+            local function suffix(day)
+                if day % 10 == 1 and day ~= 11 then return "st"
+                elseif day % 10 == 2 and day ~= 12 then return "nd"
+                elseif day % 10 == 3 and day ~= 13 then return "rd"
+                else return "th" end
+            end
+
+            local monthNames = {
+                [1] = "January", [2] = "February", [3] = "March", [4] = "April",
+                [5] = "May", [6] = "June", [7] = "July", [8] = "August",
+                [9] = "September", [10] = "October", [11] = "November", [12] = "December"
+            }
+            local display = string.format("%s %d%s, %d", monthNames[m], d, suffix(d), y)
+
+            return true, canonical, display
+        end
+
+        local ok, canonical, displayOrErr = validateAndNormalizeDOB(dobArg)
+        if not ok then
+            client:Notify(displayOrErr)
+            return
+        end
+        local display = displayOrErr
+
+        local character = target:GetCharacter()
+        if not character then
+            client:Notify("Target has no character")
+            return
+        end
+
+        -- Persist raw and display DOB values used by your UI
+        character:SetData("sheetDOB", canonical)
+        character:SetData("sheetDOBText", display)
+
+        -- Also update the stored charsheetinfo row so viewers see it immediately
+        local info = character:GetData("charsheetinfo", {}) or {}
+        info["Date of Birth"] = { left = "Date of Birth", right = display, nonadmin = false }
+        character:SetData("charsheetinfo", info)
+
+        -- Keep char var in sync for any other systems using it
+        character:SetVar("dob", canonical, true)
+
+        client:Notify("Set Date of Birth to " .. display .. " for " .. target:Name() .. ".")
+        if IsValid(target) then
+            target:Notify("Your Date of Birth was set to " .. display .. " by an administrator.")
+        end
+    end
 })
