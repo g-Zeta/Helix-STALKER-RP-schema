@@ -143,8 +143,9 @@ if (CLIENT) then
 
 	function ITEM:PopulateTooltip(tooltip)
 		if !self.entity then
+			
 			local ballistictitle = tooltip:AddRowAfter("description", "ballistictitle")
-			ballistictitle:SetText("\nBRC: " .. self.BRC)
+			ballistictitle:SetText("\nBRC: " .. self.BRC or 0)
 			ballistictitle:SizeToContents()
 
 			local anomPtitle = tooltip:AddRowAfter("ballistictitle", "anomPtitle")
