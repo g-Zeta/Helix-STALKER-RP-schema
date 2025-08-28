@@ -69,45 +69,44 @@ do
 end
 --]]
 ix.char.RegisterVar("age", {
-	field = "age",
-	fieldType = ix.type.text,
-	category = "charsheet",
-	default = "",
-	index = 6,
-	OnValidate = function(self, value, payload)
-		value = tonumber(string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", ""))))
-
-		if !isnumber(value) then
-			return false, "Age is not a number"
-		end
-
-		local minLength = 20
-		local maxLength = 99
-
-		if (value < minLength) then
-			return false, "You can't be below the age of 20.", minLength
-		elseif (value > maxLength) then
-			return false, "You can't be above the age of 99.", maxLength
-		end
-
-		return value
-	end,
-	OnPostSetup = function(self, panel, payload)
-		panel:SetMultiline(true)
-		panel:SetFont("ixMenuButtonFont")
-		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
-		panel.AllowInput = function(_, character)
-			if (character == "\n" or character == "\r") then
-				return true
-			end
-		end
-	end,
-	OnAdjust = function(self, client, data, value, newData)
-		newData.data.sheetAge = value
-	end,
-	ShouldDisplay = function(self, container, payload)
-		return true --!table.IsEmpty(ix.perks.list)
-	end
+    field = "age",
+    fieldType = ix.type.text,
+    category = "charsheet",
+    default = "",
+    index = 6,
+    OnValidate = function(self, value, payload)
+        value = tonumber(string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", ""))))
+        if !isnumber(value) then
+            return false, "Age is not a number"
+        end
+        local minLength = 20
+        local maxLength = 99
+        if (value < minLength) then
+            return false, "You can't be below the age of 20.", minLength
+        elseif (value > maxLength) then
+            return false, "You can't be above the age of 99.", maxLength
+        end
+        return value
+    end,
+    OnPostSetup = function(self, panel, payload)
+        panel:SetMultiline(true)
+        panel:SetFont("ixMenuButtonFont")
+        panel:SetTall(panel:GetTall() * 1 + 6)
+        panel.AllowInput = function(_, character)
+            if (character == "\n" or character == "\r") then
+                return true
+            end
+        end
+    end,
+    OnAdjust = function(self, client, data, value, newData)
+        newData = newData or {}
+        newData.data = newData.data or {}
+        newData.data.sheetAge = value
+        return newData
+    end,
+    ShouldDisplay = function(self, container, payload)
+        return true
+    end
 })
 
 ix.char.RegisterVar("race", {
@@ -143,7 +142,10 @@ ix.char.RegisterVar("race", {
 		end
 	end,
 	OnAdjust = function(self, client, data, value, newData)
+		newData = newData or {}
+		newData.data = newData.data or {}
 		newData.data.sheetRace = value
+		return newData
 	end,
 	ShouldDisplay = function(self, container, payload)
 		return true --!table.IsEmpty(ix.perks.list)
@@ -183,7 +185,10 @@ ix.char.RegisterVar("nationality", {
 		end
 	end,
 	OnAdjust = function(self, client, data, value, newData)
+		newData = newData or {}
+		newData.data = newData.data or {}
 		newData.data.sheetNationality = value
+		return newData
 	end,
 	ShouldDisplay = function(self, container, payload)
 		return true --!table.IsEmpty(ix.perks.list)
