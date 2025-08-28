@@ -3,7 +3,7 @@ ITEM.description = "The Izh-43 is a double barrel, breech-loading shotgun built 
 ITEM.model = "models/weapons/ethereal/w_sawnoff_db.mdl"
 ITEM.class = "cw_sil_toz66_sawed"
 ITEM.weaponCategory = "secondary"
-ITEM.width = 2
+ITEM.width = 3
 ITEM.height = 1
 ITEM.price = 3000
 ITEM.flag = "1"
@@ -16,3 +16,5 @@ ITEM.Range = 30
 ITEM.Pen = 2
 ITEM.Mag = 2
 ITEM.barrel = "short"
+
+ITEM.img = Material("stalker2/ui/weapons/izh43_sawed_off.png", "smooth")

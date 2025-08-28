@@ -90,6 +90,7 @@ function PANEL:Init()
 
 		-- Play the sound
 		sound.Play(soundData.sound, LocalPlayer():GetPos(), soundData.pitch, soundData.volume * 100)
+		self:Remove()
 	end
 
     gotoCharMenu.Paint = function(this, w, h)
@@ -344,7 +345,7 @@ function PANEL:SetupTab(name, info, sectionParent)
 		button:SetBackgroundColor(buttonColor)
 	end
 
-	button:SetFont("ixMenuButtonFontSmall") // trust me, u wanna keep it small :skull:
+	button:SetFont("stalkerregularsmallboldfont") // trust me, u wanna keep it small :skull:
 
 	button:Dock(LEFT)
 	button:SetTextInset(0, 0)

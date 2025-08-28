@@ -18,6 +18,8 @@ ITEM.flag = "?"	--Set the flag according to the faction or trade tier
 ITEM.radProt = 0.00	--Only add this line if the suit includes a gasmask
 --]]
 
+ITEM.BRC = 0
+
 ITEM.res = {
 	["Bullet"] = 0.00,
 	["Blast"] = 0.00,
@@ -143,7 +145,6 @@ if (CLIENT) then
 
 	function ITEM:PopulateTooltip(tooltip)
 		if !self.entity then
-			
 			local ballistictitle = tooltip:AddRowAfter("description", "ballistictitle")
 			ballistictitle:SetText("\nBRC: " .. self.BRC or 0)
 			ballistictitle:SizeToContents()

@@ -902,7 +902,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local nameLabel = inventorypanel:Add("DLabel")
 			nameLabel:SetFont("stalkerregularsmallboldfont")
 			nameLabel:SetTextColor(color_white)
-			nameLabel:SetPos(SW(17), SH(20))
+			nameLabel:SetPos(SW(15), SH(20))
 			nameLabel:SetContentAlignment(7)
 			nameLabel:SetWide(SW(190))
 			nameLabel:SetText(LocalPlayer():GetName())
@@ -911,7 +911,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			repLabel:SetFont("stalkerregularsmallfont")
 			repLabel:SetTextColor(color_white)
 			repLabel:SetText("Rank: "..LocalPlayer():getCurrentRankName())
-			repLabel:SetPos(SW(17), SH(45))
+			repLabel:SetPos(SW(15), SH(45))
 			repLabel:SetWide(SW(190))
 			repLabel:SetContentAlignment(7)
 
@@ -921,6 +921,94 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			moneyLabel:SetWide(SW(190))
 			moneyLabel:SetContentAlignment(6)
 			moneyLabel:SetText(ix.currency.Get(LocalPlayer():GetCharacter():GetMoney()))
+
+			local factionbanner = inventorypanel:Add("DPanel")
+			factionbanner:SetSize(SW(190), SH(60))
+			factionbanner:SetPos(SW(12), SH(10))
+			factionbanner:SetZPos(-1)
+
+--[[ Add gradient based on faction color if you want
+			local grad = Material("vgui/gradient-r") -- fades (pick l/r/u/d as you like)
+
+			function factionbanner:Paint(w, h)
+				local col = Color(40, 40, 40)
+
+				local ply = LocalPlayer()
+				local char = ply and ply:GetCharacter()
+				if char and char.GetFaction then
+					local facVal = char:GetFaction()
+					local fac
+
+					if isnumber(facVal) then
+						fac = ix.faction.Get(facVal)
+					elseif istable(facVal) then
+						fac = facVal
+					end
+
+					if fac and fac.color then
+						col = fac.color
+					else
+						-- fallback to team color if available
+						if IsValid(ply) and ply.Team then
+							local tcol = team.GetColor(ply:Team())
+							if tcol then col = tcol end
+						end
+					end
+				end
+
+				-- tint the gradient with the faction color; adjust alpha for intensity
+				surface.SetMaterial(grad)
+				surface.SetDrawColor(col.r, col.g, col.b, 40) -- alpha controls strength of the tint
+				surface.DrawTexturedRect(0, 0, w, h)
+			end
+--]]
+
+			local factionpatch = factionbanner:Add("DImage")
+			factionpatch:SetPos(SW(134), SH(2))
+			factionpatch:SetSize(SW(56), SH(56))
+			factionpatch:SetAlpha(200)
+
+			-- Check faction indexes in schema/factions/
+			local FACTION_PATCHES = {
+				[FACTION_STALKERS] = "stalkerSHoC/ui/faction patches/loners.png",
+				[FACTION_DUTY]     = "stalkerSHoC/ui/faction patches/duty.png",
+				[FACTION_FREEDOM]     = "stalkerSHoC/ui/faction patches/freedom.png",
+				[FACTION_MONOLITH]  = "stalkerSHoC/ui/faction patches/monolith.png",
+				[FACTION_ECOLOGISTS]  = "stalkerSHoC/ui/faction patches/ecologists.png",
+				[FACTION_MERCS]  = "stalkerSHoC/ui/faction patches/mercenaries.png",
+				[FACTION_MILITARY]  = "stalkerSHoC/ui/faction patches/ukm.png",
+			}
+
+			local function SetFactionPatchImage(imgPanel)
+				if not IsValid(imgPanel) then return end
+
+				local ply = LocalPlayer()
+				if not IsValid(ply) then return end
+
+				local char = ply.GetCharacter and ply:GetCharacter()
+				if not char then return end
+
+				-- faction index
+				local factionIdx = char.GetFaction and char:GetFaction()
+				if not isnumber(factionIdx) then
+					-- if it isn't a number, clear and hide
+					imgPanel:SetMaterial(nil)
+					imgPanel:SetVisible(false)
+					return
+				end
+
+				local path = FACTION_PATCHES[factionIdx] -- default is nil, no image
+
+				if path then
+					imgPanel:SetMaterial(Material(path, "smooth"))
+					imgPanel:SetVisible(true)
+				else
+					imgPanel:SetMaterial(nil)
+					imgPanel:SetVisible(false)
+				end
+			end
+
+			SetFactionPatchImage(factionpatch)
 
 			charbackgroundicon = inventorypanel:Add("DImage")
 			charbackgroundicon:SetSize(SW(124), SH(87))
@@ -1155,8 +1243,11 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
 
 						-- Source aspect. If unknown, assume horizontal image (e.g., rifle) -> wider than tall.
-						-- Example: store item.texW/item.texH to be exact. Here we assume 3:1 landscape.
-						local srcW, srcH = 3, 1
+						-- Example: store item.width/item.height to be exact. Here we assume 3:1 landscape.
+						local srcW, srcH
+						if item.width and item.height then
+							srcW, srcH = item.width, item.height
+						end
 						local aspect = srcW / srcH
 
 						-- When rotating 90°, the on-screen bounding box swaps W/H.
@@ -1235,7 +1326,10 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
 
 						-- Landscape
-						local srcW, srcH = 2, 1
+						local srcW, srcH
+						if item.width and item.height then
+							srcW, srcH = item.width, item.height
+						end
 						local aspect = srcW / srcH
 
 						local drawW = math.floor(math.min(maxW, maxH * aspect) + 0.5)
@@ -1307,7 +1401,10 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
 
 						-- Landscape
-						local srcW, srcH = 3, 1
+						local srcW, srcH
+						if item.width and item.height then
+							srcW, srcH = item.width, item.height
+						end
 						local aspect = srcW / srcH
 
 						local drawH = math.floor(math.min(maxW, maxH / aspect) + 0.5)

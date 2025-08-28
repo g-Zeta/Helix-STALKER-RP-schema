@@ -15,6 +15,8 @@ ITEM.flag = "?"	--Set the flag according to the faction or trade tier
 
 ITEM.radProt = 0.00 --Add this line if the item is a Gasmask
 
+ITEM.BRC = 0
+
 ITEM.res = {
 	["Bullet"] = 0.00,
 	["Blast"] = 0.00,

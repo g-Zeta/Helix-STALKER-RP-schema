@@ -10,7 +10,6 @@ ITEM.flag = "2"
 ITEM.isWeapon = true
 ITEM.isPLWeapon = true
 ITEM.isCW = true
-ITEM.img = Material("stalker2/ui/weapons/usp45.png")
 ITEM.modifier = 13
 ITEM.weight = 0.789
 ITEM.Range = 50
@@ -18,4 +17,4 @@ ITEM.Pen = 4
 ITEM.Mag = 12
 ITEM.barrel = "short"
 
-ITEM.img = Material("stalker2/ui/weapons/usp45.png")
+ITEM.img = Material("stalker2/ui/weapons/usp45.png", "smooth")
