@@ -105,39 +105,8 @@ if (CLIENT) then
 	function ITEM:PopulateTooltip(tooltip)
 		if !self.entity then
 			local ballistictitle = tooltip:AddRowAfter("description", "ballistictitle")
-			ballistictitle:SetText("\nBALLISTIC PROTECTION LEVELS:")
+			ballistictitle:SetText("\nBRC: " .. self.BRC or 0)
 			ballistictitle:SizeToContents()
-
-			for i = 1, #self.ballisticlevels do				
-				local ballisticdesc = tooltip:AddRowAfter("ballistictitle", "ballisticdesc")
-				ballisticdesc:SetText(self.ballisticareas[i])
-				ballisticdesc:SizeToContents()
-
-				local brighttext = ballisticdesc:Add("DLabel")
-				brighttext:MoveRightOf(ballisticdesc)
-				brighttext:SetText(self.ballisticlevels[i])
-				brighttext:SetContentAlignment(1)
-				if self.ballisticlevels[i] == "0" then
-					brighttext:SetTextColor(Color(255, 0, 0))
-				elseif self.ballisticlevels[i] == "l" then		--0.010
-					brighttext:SetTextColor(Color(255, 80, 0))
-				elseif self.ballisticlevels[i] == "ll-a" then	--0.015
-					brighttext:SetTextColor(Color(255, 160, 0))
-				elseif self.ballisticlevels[i] == "ll" then		--0.020
-					brighttext:SetTextColor(Color(255, 255, 0))
-				elseif self.ballisticlevels[i] == "lll-a" then	--0.025
-					brighttext:SetTextColor(Color(130, 255, 0))
-				elseif self.ballisticlevels[i] == "lll" then	--0.030
-					brighttext:SetTextColor(Color(0, 255, 0))
-				elseif self.ballisticlevels[i] == "lll+" then	--0.035
-					brighttext:SetTextColor(Color(0, 255, 130))
-				elseif self.ballisticlevels[i] == "lV" then		--0.040
-					brighttext:SetTextColor(Color(0, 255, 255))
-				elseif self.ballisticlevels[i] == "V" then		--0.045
-					brighttext:SetTextColor(Color(0, 135, 255))
-				end
-				brighttext:SetFont("ixSmallFont")
-			end
 
 			local anomPtitle = tooltip:AddRowAfter("ballisticdesc", "anomPtitle")
 			anomPtitle:SetText("\nANOMALOUS PROTECTION LEVELS:")
@@ -146,12 +115,14 @@ if (CLIENT) then
 			-- Calculate resistances
 			if self.res then
 				local resistances = {
-					["Fall"] = 0,
+					["Bullet"] = 0,
+					["Impact"] = 0,
+					["Slash"] = 0,
 					["Burn"] = 0,
 					["Shock"] = 0,
 					["Chemical"] = 0,
-					["Psi"] = 0,
 					["Radiation"] = 0,
+					["Psi"] = 0,
 				}
 
 				-- Add base resistances
