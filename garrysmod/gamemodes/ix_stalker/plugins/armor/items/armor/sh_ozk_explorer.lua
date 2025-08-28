@@ -9,18 +9,17 @@ ITEM.weight = 6
 ITEM.flag = "1"
 
 ITEM.res = {
-	["Bullet"] = 0.30,
-	["Blast"] = 0.30,
-	["Slash"] = 0.30,
-	["Fall"] = 0.30,
-	["Burn"] = 0.097,
-	["Shock"] = 0.13,
-	["Chemical"] = 0.16,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.10,
+	["Bullet"] = 0.09,
+	["Impact"] = 0.14,
+	["Slash"] = 0.21,
+	["Burn"] = 0.15,
+	["Shock"] = 0.07,
+	["Chemical"] = 0.06,
+	["Radiation"] = 0.07,
+	["Psi"] = 0.06,
 }
 
-ITEM.ballisticlevels = {"0", "0", "ll-a", "lll", "ll-a"}
+ITEM.BRC = 26
 ITEM.artifactcontainers = {"2"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_ozk_explorer.png")
@@ -28,7 +27,7 @@ ITEM.img = Material("stalker2/ui/armor/suit_ozk_explorer.png")
 ITEM.OnGetReplacement = function(self, player)
     local player = self.player
 	if player:IsFemale() then
-        return "models/silver/stalker/female_cs3a_lone.mdl"
+        return "models/nasca/stalker/female_expedition.mdl"
     end;
     return "models/nasca/stalker/male_expedition.mdl"
 end

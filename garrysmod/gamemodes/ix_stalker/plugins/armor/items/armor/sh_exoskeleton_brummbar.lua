@@ -11,18 +11,17 @@ ITEM.flag = "K"
 ITEM.radProt = 3
 
 ITEM.res = {
-	["Bullet"] = 0.50,
-	["Blast"] = 0.50,
-	["Slash"] = 0.50,
-	["Fall"] = 0.50,
-	["Burn"] = 0.305,
-	["Shock"] = 0.305,
-	["Chemical"] = 0.345,
-	["Psi"] = 0.20,
-	["Radiation"] = 0.60,
+	["Bullet"] = 0.38,
+	["Impact"] = 0.34,
+	["Slash"] = 0.48,
+	["Burn"] = 0.10,
+	["Shock"] = 0.12,
+	["Chemical"] = 0.08,
+	["Radiation"] = 0.32,
+	["Psi"] = 0.33,
 }
 
-ITEM.ballisticlevels = {"lll+", "lll-a", "lll", "V", "lll"}
+ITEM.BRC = 60
 ITEM.artifactcontainers = {"4"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_exo_brummbar.png")

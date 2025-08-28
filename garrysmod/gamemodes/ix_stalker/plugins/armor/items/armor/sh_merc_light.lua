@@ -1,26 +1,25 @@
-ITEM.name = "Mercenary's Light Suit"
+ITEM.name = "Light Mercenary Suit"
 ITEM.model = "models/flaymi/anomaly/dynamics/outfit/merc_outfit.mdl"
 ITEM.description = "A light mercenary outfit."
-ITEM.longdesc = "A suit upgraded for the Rostok bar bouncers. High-molecular polyethylene plates reduce weight, along with bullet resistance."
+ITEM.longdesc = "A lighter version of the Mercenary Suit, issued to new operators or ones that prefer the lighter burden."
 
-ITEM.price = 19600
+ITEM.price = 16000
 ITEM.weight = 2
 
 ITEM.flag = "K"
 
 ITEM.res = {
-	["Bullet"] = 0.25,
-	["Blast"] = 0.25,
-	["Slash"] = 0.25,
-	["Fall"] = 0.25,
-	["Burn"] = 0.08,
-	["Shock"] = 0.10,
-	["Chemical"] = 0.10,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.30,
+	["Bullet"] = 0.09,
+	["Impact"] = 0.06,
+	["Slash"] = 0.11,
+	["Burn"] = 0.04,
+	["Shock"] = 0.06,
+	["Chemical"] = 0.06,
+	["Radiation"] = 0.06,
+	["Psi"] = 0,
 }
 
-ITEM.ballisticlevels = {"0", "0", "l", "lll-a", "l"}
+ITEM.BRC = 18
 ITEM.artifactcontainers = {"1"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_merc_light.png")

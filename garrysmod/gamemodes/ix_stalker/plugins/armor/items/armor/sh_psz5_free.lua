@@ -1,27 +1,26 @@
 ITEM.name = "PSZ-5V Guardian of Freedom"
 ITEM.model = "models/flaymi/anomaly/dynamics/outfit/freeheavy_outfit.mdl"
 ITEM.description = "A Freedom variant of the PSZ-5 series."
-ITEM.longdesc = "The Freedom version of one of the Zone's most popular armored suits. This modification prioritizes all-around versatility without any specific focus. It is roughly comparable to the suits used by many stalkers, along with those of their rivals in Duty."
+ITEM.longdesc = "The Freedom version of one of the Zone's most popular armored suits. This modification prioritizes comfort and environmental protection, but holds up in a gunfight. "
 
 ITEM.price = 36000
-ITEM.weight = 7
+ITEM.weight = 5
 
 ITEM.flag = "V"
 
 ITEM.res = {
-	["Bullet"] = 0.25,
-	["Blast"] = 0.25,
-	["Slash"] = 0.25,
-	["Fall"] = 0.25,
-	["Burn"] = 0.16,
-	["Shock"] = 0.13,
-	["Chemical"] = 0.17,
-	["Psi"] = 0.00,
-	["Radiation"] = 0.40,
+	["Bullet"] = 0.10,
+	["Impact"] = 0.12,
+	["Slash"] = 0.23,
+	["Burn"] = 0.20,
+	["Shock"] = 0.14,
+	["Chemical"] = 0.14,
+	["Radiation"] = 0.12,
+	["Psi"] = 0.08,
 }
 
-ITEM.ballisticlevels = {"0", "0", "ll-a", "lll-a", "ll-a"}
-ITEM.artifactcontainers = {"2"}
+ITEM.BRC = 29
+ITEM.artifactcontainers = {"3"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_psz_5v_guardian.png")
 

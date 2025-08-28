@@ -87,12 +87,13 @@ ix.command.Add("CheckCharResistances", {
 		
 		local inventory = char:GetInv()
 		local resistances = {
-			["Fall"] = 0,
+			["Impact"] = 0,
 			["Burn"] = 0,
 			["Shock"] = 0,
 			["Chemical"] = 0,
 			["Psi"] = 0,
 			["Radiation"] = 0,
+			["Bullet"] = 0,
 		}
 		
 		for k, v in pairs(inventory:GetItems()) do

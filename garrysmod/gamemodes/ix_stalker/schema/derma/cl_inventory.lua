@@ -1653,8 +1653,10 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						surface.SetDrawColor(85, 0, 140, 255) -- purple for psi
 					elseif resistanceType == "Slash" then
 						surface.SetDrawColor(150, 150, 150, 255) -- gray for slash
-					elseif resistanceType == "Fall" then
-						surface.SetDrawColor(150, 150, 150, 255) -- gray for fall
+					elseif resistanceType == "Bullet" then
+						surface.SetDrawColor(150, 150, 150, 255) -- gray for bullet
+					elseif resistanceType == "Impact" then
+						surface.SetDrawColor(150, 150, 150, 255) -- gray for impact
 					end
 
 					surface.SetMaterial(resbarImage)
@@ -1675,7 +1677,8 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local burnBar      = CreateResistanceBar(ResPanel, resbarImage, "Burn",      SW(0), 	SH(84))
 			local psiBar       = CreateResistanceBar(ResPanel, resbarImage, "Psi",       SW(159), 	SH(0))
 			local slashBar     = CreateResistanceBar(ResPanel, resbarImage, "Slash",     SW(159), 	SH(28))
-			local fallBar      = CreateResistanceBar(ResPanel, resbarImage, "Fall",      SW(159), 	SH(56))
+			local bulletBar      = CreateResistanceBar(ResPanel, resbarImage, "Bullet",      SW(159), 	SH(56))
+			local impactBar      = CreateResistanceBar(ResPanel, resbarImage, "Impact",      SW(159), 	SH(84))
 
 			local inventory = inv or (LocalPlayer():GetCharacter() and LocalPlayer():GetCharacter():GetInventory())
 
