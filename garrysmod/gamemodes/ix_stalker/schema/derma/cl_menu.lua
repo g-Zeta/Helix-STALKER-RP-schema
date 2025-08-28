@@ -90,6 +90,7 @@ function PANEL:Init()
 
 		-- Play the sound
 		sound.Play(soundData.sound, LocalPlayer():GetPos(), soundData.pitch, soundData.volume * 100)
+		self:Remove()
 	end
 
     gotoCharMenu.Paint = function(this, w, h)
