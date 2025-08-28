@@ -17,3 +17,5 @@ ITEM.Range = 100
 ITEM.Pen = 12
 ITEM.Mag = 35
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/rpg7.png", "smooth")

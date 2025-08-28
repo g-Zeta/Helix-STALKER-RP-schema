@@ -6,8 +6,6 @@ ITEM.class = "cw_sil_aks74u"
 ITEM.weaponCategory = "primary"
 ITEM.width = 4
 ITEM.price = 25000
-ITEM.img = Material("stalker2/ui/weapons/aks74.png")
-ITEM.imgEquipped = Material("stalker2/ui/weapons/equipped/aks74_v.png")
 ITEM.height = 2
 ITEM.flag = "2"
 ITEM.Range = 50
@@ -25,4 +23,4 @@ ITEM.iconCam = {
 	fov = 70
 }
 
-ITEM.img = Material("stalker2/ui/weapons/aks74.png")
+ITEM.img = Material("stalker2/ui/weapons/aks74u.png", "smooth")
