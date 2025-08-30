@@ -41,8 +41,8 @@ end
 
 function PLUGIN:OnCharacterCreated(client, character)
 	local charsheetinfo = character:GetData("charsheetinfo", nil) or {}
-	charsheetinfo["Full Name"] = {left = "Full Name", right = character:GetData("sheetFullName", nil) or character:GetName(), nonadmin = false}
-	charsheetinfo["Nickname"] = {left = "Nickname", right = character:GetData("sheetFullName", nil) or "None", nonadmin = true}
+	charsheetinfo["Name"] = {left = "Name", right = character:GetData("sheetName", nil) or character:GetName(), nonadmin = false}
+	--charsheetinfo["Nickname"] = {left = "Nickname", right = character:GetData("sheetFullName", nil) or "None", nonadmin = true}
 	charsheetinfo["Date of Birth"] = {left = "Date of Birth", right = character:GetData("sheetDOBText", nil) or "MM/DD/YYYY", nonadmin = false}
 	--charsheetinfo["Age"] = {left = "Age", right = character:GetData("sheetAge", nil) or "Fill me.", nonadmin = false}
 	charsheetinfo["Race"] = {left = "Race", right = character:GetData("sheetRace", nil) or "Fill me.", nonadmin = false}
@@ -212,55 +212,12 @@ ix.char.RegisterVar("age", {
     end
 })
 --]]
-ix.char.RegisterVar("race", {
-	field = "race",
-	fieldType = ix.type.text,
-	category = "charsheet",
-	default = "Caucasian",
-	index = 7,
-	OnValidate = function(self, value, payload)
-		value = string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", "")))
-		
-		local minLength = 4
-		local maxLength = 30
-
-		if (#value < minLength) then
-			return false, "Invalid Race", minLength
-		elseif (!value:find("%S")) then
-			return false, "invalid", "race"
-		elseif (#value:gsub("%s", "") > maxLength) then
-			return false, "Invalid Race", maxLength
-		end
-
-		return value
-	end,
-	OnPostSetup = function(self, panel, payload)
-		panel:SetMultiline(true)
-		panel:SetFont("ixMenuButtonFont")
-		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
-		panel.AllowInput = function(_, character)
-			if (character == "\n" or character == "\r") then
-				return true
-			end
-		end
-	end,
-	OnAdjust = function(self, client, data, value, newData)
-		newData = newData or {}
-		newData.data = newData.data or {}
-		newData.data.sheetRace = value
-		return newData
-	end,
-	ShouldDisplay = function(self, container, payload)
-		return true --!table.IsEmpty(ix.perks.list)
-	end
-})
-
 ix.char.RegisterVar("nationality", {
 	field = "nationality",
 	fieldType = ix.type.text,
 	category = "charsheet",
 	default = "Ukranian",
-	index = 8,
+	index = 7,
 	OnValidate = function(self, value, payload)
 		value = string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", "")))
 		
@@ -281,6 +238,7 @@ ix.char.RegisterVar("nationality", {
 		panel:SetMultiline(true)
 		panel:SetFont("ixMenuButtonFont")
 		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
+        panel:SetPlaceholderText("Ukranian/Russian/Belorussian/Polish/Romanian/Other")
 		panel.AllowInput = function(_, character)
 			if (character == "\n" or character == "\r") then
 				return true
@@ -291,6 +249,50 @@ ix.char.RegisterVar("nationality", {
 		newData = newData or {}
 		newData.data = newData.data or {}
 		newData.data.sheetNationality = value
+		return newData
+	end,
+	ShouldDisplay = function(self, container, payload)
+		return true --!table.IsEmpty(ix.perks.list)
+	end
+})
+
+ix.char.RegisterVar("race", {
+	field = "race",
+	fieldType = ix.type.text,
+	category = "charsheet",
+	default = "Caucasian",
+	index = 8,
+	OnValidate = function(self, value, payload)
+		value = string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", "")))
+		
+		local minLength = 4
+		local maxLength = 30
+
+		if (#value < minLength) then
+			return false, "Invalid Race", minLength
+		elseif (!value:find("%S")) then
+			return false, "invalid", "race"
+		elseif (#value:gsub("%s", "") > maxLength) then
+			return false, "Invalid Race", maxLength
+		end
+
+		return value
+	end,
+	OnPostSetup = function(self, panel, payload)
+		panel:SetMultiline(true)
+		panel:SetFont("ixMenuButtonFont")
+		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
+        panel:SetPlaceholderText("Slavic/European/Caucasian/Hispanic/Other")
+		panel.AllowInput = function(_, character)
+			if (character == "\n" or character == "\r") then
+				return true
+			end
+		end
+	end,
+	OnAdjust = function(self, client, data, value, newData)
+		newData = newData or {}
+		newData.data = newData.data or {}
+		newData.data.sheetRace = value
 		return newData
 	end,
 	ShouldDisplay = function(self, container, payload)

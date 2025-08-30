@@ -4,6 +4,7 @@ local gradientUp = surface.GetTextureID("vgui/gradient-u")
 local gradientLeft = surface.GetTextureID("vgui/gradient-l")
 local gradientRadial = Material("helix/gui/radial-gradient.png")
 local chatboxbg = Material("cotz/panels/frame1.png")
+local menubg = Material("stalker2/ui/menu/main_menu", "smooth")
 local pdabackground = Material("stalkerSHoC/ui/pda/pda_on.png")
 local menubuttonbackground = Material("cotz/panels/button2.png")
 local defaultBackgroundColor = Color(30, 30, 30, 200)
@@ -165,6 +166,45 @@ function SKIN:PaintPanel(panel)
 		surface.SetDrawColor(0, 0, 0, 150)
 		surface.DrawOutlinedRect(0, 0, width, height)
 	end
+end
+
+-- Draw animated fullscreen background
+function SKIN:DrawFullscreenVideo(mat, w, h)
+    if not (mat and not mat:IsError()) then
+        surface.SetDrawColor(10, 10, 10, 255)
+        surface.DrawRect(0, 0, w, h)
+        return
+    end
+
+    surface.SetDrawColor(255, 255, 255, 255)
+    surface.SetMaterial(mat)
+
+    local tw, th = mat:Width(), mat:Height()
+    if tw <= 0 or th <= 0 then
+        surface.DrawTexturedRect(0, 0, w, h)
+        return
+    end
+
+    local scale = math.max(w / tw, h / th)
+    local rw, rh = math.floor(tw * scale), math.floor(th * scale)
+    local rx = math.floor((w - rw) * 0.5)
+    local ry = math.floor((h - rh) * 0.5)
+    surface.DrawTexturedRect(rx, ry, rw, rh)
+end
+
+-- Draw in Main menu
+function SKIN:PaintMainMenuBackground(panel, w, h)
+    self:DrawFullscreenVideo(menubg, w, h)
+end
+
+-- Draw in Character create menu
+function SKIN:PaintCharacterCreateBackground(panel, w, h)
+    self:DrawFullscreenVideo(menubg, w, h)
+end
+
+-- Draw in Character load screen
+function SKIN:PaintCharacterLoadBackground(panel, w, h)
+    self:DrawFullscreenVideo(menubg, w, h)
 end
 
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)

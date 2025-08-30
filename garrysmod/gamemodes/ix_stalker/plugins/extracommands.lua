@@ -427,6 +427,7 @@ hook.Add("PopulateScoreboardPlayerMenu", "ixAdmin", function(client, menu)
 end)
 
 ix.chat.Register("adminchat", {
+	description = "Send messages to the Admin chat.",
 	format = "whocares",
 	--font = "nutRadioFont",
 	OnGetColor = function(self, speaker, text)
@@ -477,6 +478,7 @@ end
 
 
 ix.command.Add("coinflip", {
+	description = "Heads or tails?",
 	OnRun = function(self, client, arguments)
 		local coinSide = math.random(0, 1);
 		if (coinSide > 0) then
@@ -526,6 +528,70 @@ nut.command.add("giveitemmenu", {
 	end
 })
 */
+
+ix.command.Add("PlyWhitelistAllFactions", {
+    description = "Whitelist someone to all factions.",
+    adminOnly = true,
+    arguments = { ix.type.character },
+    OnRun = function(self, client, targetChar)
+        if not IsValid(client) or not targetChar then return end
+
+        local ply = targetChar:GetPlayer()
+        if not IsValid(ply) then
+            return "Target player is not valid or not online."
+        end
+
+        local added = 0
+
+        for _, faction in pairs(ix.faction.indices) do
+            -- only process factions that actually require a whitelist
+            if faction.isWhitelist == true then
+                if not ply:HasWhitelist(faction.index) then
+                    ply:SetWhitelisted(faction.index, true)
+                    added = added + 1
+                end
+            end
+        end
+
+        if added > 0 then
+            client:Notify("Whitelisted " .. targetChar:GetName() .. " to " .. tostring(added) .. " factions.")
+            ply:Notify("You have been whitelisted to additional factions by an admin.")
+        else
+            client:Notify(targetChar:GetName() .. " was already whitelisted to all applicable factions.")
+        end
+    end
+})
+
+ix.command.Add("PlyRemoveAllWhitelists", {
+    description = "Remove all faction whitelists from someone.",
+    adminOnly = true,
+    arguments = { ix.type.character },
+    OnRun = function(self, client, targetChar)
+        if not IsValid(client) or not targetChar then return end
+
+        local ply = targetChar:GetPlayer()
+        if not IsValid(ply) then
+            return "Target player is not valid or not online."
+        end
+
+        local removed = 0
+
+        for _, faction in pairs(ix.faction.indices) do
+            if ply:HasWhitelist(faction.index) then
+                ply:SetWhitelisted(faction.index, false)
+                removed = removed + 1
+            end
+        end
+
+        if removed > 0 then
+            client:Notify("Removed " .. tostring(removed) .. " whitelists from " .. targetChar:GetName() .. ".")
+            ply:Notify("Your faction whitelists have been updated by an admin.")
+        else
+            client:Notify(targetChar:GetName() .. " has no whitelists to remove.")
+        end
+    end
+})
+
 if (CLIENT) then
 	local PANEL = {}
 

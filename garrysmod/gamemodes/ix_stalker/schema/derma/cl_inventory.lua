@@ -968,47 +968,26 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			factionpatch:SetSize(SW(56), SH(56))
 			factionpatch:SetAlpha(200)
 
-			-- Check faction indexes in schema/factions/
-			local FACTION_PATCHES = {
-				[FACTION_STALKERS] = "stalkerSHoC/ui/faction patches/loners.png",
-				[FACTION_DUTY]     = "stalkerSHoC/ui/faction patches/duty.png",
-				[FACTION_FREEDOM]     = "stalkerSHoC/ui/faction patches/freedom.png",
-				[FACTION_MONOLITH]  = "stalkerSHoC/ui/faction patches/monolith.png",
-				[FACTION_ECOLOGISTS]  = "stalkerSHoC/ui/faction patches/ecologists.png",
-				[FACTION_MERCS]  = "stalkerSHoC/ui/faction patches/mercenaries.png",
-				[FACTION_MILITARY]  = "stalkerSHoC/ui/faction patches/ukm.png",
-			}
-
-			local function SetFactionPatchImage(imgPanel)
-				if not IsValid(imgPanel) then return end
-
+			local function GetLocalFactionPatchPath()
 				local ply = LocalPlayer()
-				if not IsValid(ply) then return end
-
-				local char = ply.GetCharacter and ply:GetCharacter()
-				if not char then return end
-
-				-- faction index
-				local factionIdx = char.GetFaction and char:GetFaction()
-				if not isnumber(factionIdx) then
-					-- if it isn't a number, clear and hide
-					imgPanel:SetMaterial(nil)
-					imgPanel:SetVisible(false)
-					return
+				if not IsValid(ply) then
+					return "placeholders/patch_nofaction.png"
 				end
 
-				local path = FACTION_PATCHES[factionIdx] -- default is nil, no image
-
-				if path then
-					imgPanel:SetMaterial(Material(path, "smooth"))
-					imgPanel:SetVisible(true)
-				else
-					imgPanel:SetMaterial(nil)
-					imgPanel:SetVisible(false)
+				local factionIndex = ply:Team()
+				local fac = (ix.faction.GetByID and ix.faction.GetByID(factionIndex)) or ix.faction.indices[factionIndex]
+				if fac and fac.patch and fac.patch ~= "" then
+					return fac.patch
 				end
+
+				return "placeholders/patch_nofaction.png"
 			end
 
-			SetFactionPatchImage(factionpatch)
+			-- Drawing/creating the patch icon:
+			local patchPath = GetLocalFactionPatchPath()
+			local patchMat = Material(patchPath, "smooth")
+
+			factionpatch:SetMaterial(patchMat)
 
 			charbackgroundicon = inventorypanel:Add("DImage")
 			charbackgroundicon:SetSize(SW(124), SH(87))

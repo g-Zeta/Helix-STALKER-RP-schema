@@ -259,7 +259,7 @@ if CLIENT then
 					name = v
 				
 				elseif k == "dob" then
-					age = v
+					dob = v
 					
 				elseif k == "nationality" then
 					nationality = v
@@ -341,7 +341,7 @@ if CLIENT then
 			end
 			-- Now you can create the labels using the unified function
 			createLabel(valueBox, name)
-			createLabel(valueBox, age)
+			createLabel(valueBox, dob)
 			createLabel(valueBox, nationality)
 			createLabel(valueBox, race)
 			

@@ -39,7 +39,7 @@ function PANEL:Init()
 		local url = self.photo:GetValue()
 		local character = LocalPlayer():GetCharacter()
 		local sheet = character:GetData("charsheetinfo", {})
-		sheet["Full Name"].right = charsheetfullnameright:GetValue()
+		sheet["Name"].right = charsheetnameright:GetValue()
 		sheet["Nickname"].right = charsheetnicknameright:GetValue()
 		sheet["Age"].right = charsheetageright:GetValue()
 		sheet["Race"].right = charsheetraceright:GetValue()
@@ -62,27 +62,27 @@ end
 function PANEL:buildSheet(client, isadmin)
 	local sheetdata = client:GetCharacter():GetData("charsheetinfo", nil)
 
-	--Full Name
-	charsheetfullnameleft = self.titles:Add("DLabel")
-	charsheetfullnameleft:Dock(TOP)
-	charsheetfullnameleft:SetText(sheetdata["Full Name"].left..": ")
-	charsheetfullnameleft:SizeToContents()
-	charsheetfullnameleft:SetContentAlignment(7)
-	charsheetfullnameleft:SetFont("stalkerregularfont")
-	charsheetfullnameleft:SetTall(ScrH()*0.020)
+	-- Name
+	charsheetnameleft = self.titles:Add("DLabel")
+	charsheetnameleft:Dock(TOP)
+	charsheetnameleft:SetText(sheetdata["Name"].left..": ")
+	charsheetnameleft:SizeToContents()
+	charsheetnameleft:SetContentAlignment(7)
+	charsheetnameleft:SetFont("stalkerregularfont")
+	charsheetnameleft:SetTall(ScrH()*0.020)
 
-	charsheetfullnameright = self.titlesright:Add("DTextEntry")
-	charsheetfullnameright:SetMultiline(true)
-	if sheetdata["Full Name"].nonadmin == true or isadmin == true then
-		charsheetfullnameright:SetEditable(true)
+	charsheetnameright = self.titlesright:Add("DTextEntry")
+	charsheetnameright:SetMultiline(true)
+	if sheetdata["Name"].nonadmin == true or isadmin == true then
+		charsheetnameright:SetEditable(true)
 	else
-		charsheetfullnameright:SetEditable(false)
+		charsheetnameright:SetEditable(false)
 	end
-	charsheetfullnameright:Dock(TOP)
-	charsheetfullnameright:SetText(sheetdata["Full Name"].right)
-	charsheetfullnameright:SizeToContents()
-	charsheetfullnameright:SetTall(ScrH()*0.020)
-	charsheetfullnameright:SetFont("stalkerregularsmallfont")
+	charsheetnameright:Dock(TOP)
+	charsheetnameright:SetText(sheetdata["Name"].right)
+	charsheetnameright:SizeToContents()
+	charsheetnameright:SetTall(ScrH()*0.020)
+	charsheetnameright:SetFont("stalkerregularsmallfont")
 
 	--Nickname
 	charsheetnicknameleft = self.titles:Add("DLabel")
