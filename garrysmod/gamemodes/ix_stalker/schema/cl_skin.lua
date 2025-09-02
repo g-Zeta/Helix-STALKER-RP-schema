@@ -168,43 +168,88 @@ function SKIN:PaintPanel(panel)
 	end
 end
 
--- Draw animated fullscreen background
-function SKIN:DrawFullscreenVideo(mat, w, h)
-    if not (mat and not mat:IsError()) then
-        surface.SetDrawColor(10, 10, 10, 255)
-        surface.DrawRect(0, 0, w, h)
-        return
+-- Animated background DHTML with a VP8 .webm
+local WEBM_BG_HTML = [[
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body {
+    margin: 0; padding: 0; background: #0a0a0a; overflow: hidden;
+    width: 100%; height: 100%;
+  }
+  video {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
+    object-fit: cover;
+    background: #0a0a0a;
+  }
+</style>
+</head>
+<body>
+  <video id="bg" autoplay playsinline muted loop preload="auto">
+    <source src="asset://garrysmod/materials/stalker2/ui/menu/main_menu.webm" type="video/webm; codecs=vp8,vorbis">
+  </video>
+</body>
+</html>
+]]
+
+local DHTMLBackground = nil
+
+local function EnsureBackgroundDHTML(parent)
+    if IsValid(DHTMLBackground) then
+        if parent and DHTMLBackground:GetParent() ~= parent then
+            DHTMLBackground:SetParent(parent)
+        end
+        return DHTMLBackground
     end
 
-    surface.SetDrawColor(255, 255, 255, 255)
-    surface.SetMaterial(mat)
+    DHTMLBackground = vgui.Create("DHTML", parent or nil)
+    DHTMLBackground:SetPos(0, 0)
+    DHTMLBackground:SetSize(ScrW(), ScrH())
+    DHTMLBackground:SetHTML(WEBM_BG_HTML)
+    DHTMLBackground:SetKeyboardInputEnabled(false)
+    DHTMLBackground:SetMouseInputEnabled(false)
+    DHTMLBackground:SetAllowLua(false) -- safer
+    DHTMLBackground:MoveToBack()
 
-    local tw, th = mat:Width(), mat:Height()
-    if tw <= 0 or th <= 0 then
-        surface.DrawTexturedRect(0, 0, w, h)
-        return
-    end
+    -- Keep it fullscreen on resolution changes
+    hook.Add("OnScreenSizeChanged", "ixWebmBGResize", function()
+        if IsValid(DHTMLBackground) then
+            DHTMLBackground:SetSize(ScrW(), ScrH())
+        end
+    end)
 
-    local scale = math.max(w / tw, h / th)
-    local rw, rh = math.floor(tw * scale), math.floor(th * scale)
-    local rx = math.floor((w - rw) * 0.5)
-    local ry = math.floor((h - rh) * 0.5)
-    surface.DrawTexturedRect(rx, ry, rw, rh)
+    return DHTMLBackground
+end
+
+-- Expose helper for skin usage
+ix = ix or {}
+ix.webmBackground = ix.webmBackground or {}
+function ix.webmBackground.Show(parent)
+    local pnl = EnsureBackgroundDHTML(parent)
+    if IsValid(pnl) then pnl:SetVisible(true) pnl:MoveToBack() end
+end
+function ix.webmBackground.Hide()
+    if IsValid(DHTMLBackground) then DHTMLBackground:SetVisible(false) end
 end
 
 -- Draw in Main menu
 function SKIN:PaintMainMenuBackground(panel, w, h)
-    self:DrawFullscreenVideo(menubg, w, h)
+    ix.webmBackground.Show(panel)
 end
 
 -- Draw in Character create menu
 function SKIN:PaintCharacterCreateBackground(panel, w, h)
-    self:DrawFullscreenVideo(menubg, w, h)
+    ix.webmBackground.Show(panel)
 end
 
 -- Draw in Character load screen
 function SKIN:PaintCharacterLoadBackground(panel, w, h)
-    self:DrawFullscreenVideo(menubg, w, h)
+    ix.webmBackground.Show(panel)
 end
 
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
