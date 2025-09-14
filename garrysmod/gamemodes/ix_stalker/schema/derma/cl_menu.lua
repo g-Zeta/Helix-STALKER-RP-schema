@@ -1,4 +1,3 @@
-
 local animationTime = 1
 local matrixZScale = Vector(1, 1, 0.0001)
 
@@ -50,7 +49,7 @@ function PANEL:Init()
 	self.buttons:DockMargin(SW(148), SH(115), SW(215), SH(0))
 
 	self.buttons.Paint = function(panel, width, height)
-		surface.SetDrawColor(ColorAlpha(ix.config.Get("color"), 66))
+		surface.SetDrawColor(ColorAlpha(ix.GetFactionColor(), 66))
 		surface.DrawRect(0, height - ScreenScale(1), width, ScreenScale(1))
 	end
 
@@ -105,40 +104,15 @@ function PANEL:Init()
 	self.tabs = self.buttons:Add("Panel")
 	self.tabs.buttons = {}
 	self.tabs:Dock(FILL)
-	self:PopulateTabs()
---[[
-	local close = self.buttons:Add("ixMenuSelectionButtonTop")
-	close:SetText("X")
-	close:SetTextInset(0, 0)
-	close:SetContentAlignment(5)
-	close:SizeToContents()
-	close:Dock(RIGHT)
-	close:SetBackgroundColor(derma.GetColor("Error", close))
-	close:SetButtonList(self.tabs.buttons)
-	close.DoClick = function()
-		self:Remove()
-	end
 
-	local characters = self.buttons:Add("ixMenuSelectionButtonTop")
-	characters:SetText("<")
-	characters:SetTextInset(0, 0)
-	characters:SetContentAlignment(5)
-	characters:SizeToContents()
-	characters:Dock(LEFT)
-	characters:SetBackgroundColor(derma.GetColor("Info", close))
-	characters:SetButtonList(self.tabs.buttons)
-	characters.DoClick = function()
-		self:Remove()
-		vgui.Create("ixCharMenu")
-	end
---]]
+	self:PopulateTabs()
 	self:MakePopup()
 	self:OnOpened()
 end
 
 function PANEL:OnOpened()
 	self:SetAlpha(0)
-	surface.PlaySound("stalkersound/inv_pda_on.ogg")
+	surface.PlaySound("stalker/pda/pda_on.ogg")
 
 	self:CreateAnimation(animationTime, {
 		target = {currentAlpha = 255},
@@ -304,12 +278,11 @@ end
 
 function PANEL:GetStandardSubpanelSize()
 	return ScrW(), SH(900)
---	return ScrW() - self.padding * 2, ScrH() - self.padding * 2 - self.buttons:GetTall() * 0.5
 end
 
 function PANEL:SetupTab(name, info, sectionParent)
 	local bTable = istable(info)
-	local buttonColor = (bTable and info.buttonColor) or (ix.config.Get("color") or Color(140, 140, 140, 255))
+	local buttonColor = (bTable and info.buttonColor) or (ix.GetFactionColor() or Color(140, 140, 140, 255))
 	local bDefault = (bTable and info.bDefault) or false
 	local qualifiedName = sectionParent and (sectionParent.name .. "/" .. name) or name
 
@@ -461,7 +434,6 @@ function PANEL:Think()
 
 	if (bTabDown and (self.noAnchor or CurTime() + 0.4) < CurTime() and self.anchorMode) then
 		self.anchorMode = false
-		surface.PlaySound("buttons/lightswitch2.wav")
 	end
 
 	if ((!self.anchorMode and !bTabDown) or gui.IsGameUIVisible()) then
@@ -469,14 +441,10 @@ function PANEL:Think()
 	end
 end
 
---local vignette = ix.util.GetMaterial("helix/gui/vignette.png")
 function PANEL:Paint(width, height)
 	derma.SkinFunc("PaintMenuBackground", self, width, height, self.currentBlur)
 
 	surface.SetDrawColor(255, 255, 255, 255)
-	--surface.SetMaterial(vignette)
-	surface.DrawTexturedRect(0, 0, width, height)
-	surface.DrawTexturedRect(0, 0, width, height)
 
 	BaseClass.Paint(self, width, height)
 
@@ -503,7 +471,7 @@ function PANEL:Remove()
 	self:SetMouseInputEnabled(false)
 	self:SetKeyboardInputEnabled(false)
 	self:SetCharacterOverview(false, animationTime * 0.5)
-	surface.PlaySound("stalkersound/inv_pda_off.ogg")
+	surface.PlaySound("stalker/pda/pda_off.ogg")
 
 	-- remove input from opened child panels since they grab focus
 	if (IsValid(ix.gui.inv1) and ix.gui.inv1.childPanels) then

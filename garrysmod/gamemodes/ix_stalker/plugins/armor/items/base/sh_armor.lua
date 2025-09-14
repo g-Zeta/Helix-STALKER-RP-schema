@@ -499,19 +499,13 @@ ITEM.functions.Equip = {
 			end
 		end
 
-		if (item.attribBoosts) then
-			for k, v in pairs(item.attribBoosts) do
-				character:AddBoost(item.uniqueID, k, v)
-			end
-		end
-		
-		local articont = item.artifactcontainers[1]
+		local articont = tonumber(item.artifactcontainers[1]) or 0
 		local mods = item:GetData("mod")
 		
 		if mods then
 			for k,v in pairs(mods) do
 				local upgitem = ix.item.Get(v[1])
-				if upgitem.articontainer then
+				if upgitem and upgitem.articontainer then
 					articont = articont + upgitem.articontainer
 				end
 			end
@@ -519,6 +513,12 @@ ITEM.functions.Equip = {
 		
 		character:SetData("ArtiSlots",articont)
 		item:OnEquipped()
+
+		if (item.attribBoosts) then
+			for k, v in pairs(item.attribBoosts) do
+				character:AddBoost(item.uniqueID, k, v)
+			end
+		end
 		return false
 	end,
 	OnCanRun = function(item)
@@ -747,13 +747,13 @@ function ITEM:OnLoadout()
 			client:SetSkin( self.newSkin )
 		end
 		
-		local articont = self.artifactcontainers[1]
+		local articont = tonumber(self.artifactcontainers[1]) or 0
 		local mods = self:GetData("mod")
 		
 		if mods then
 			for k,v in pairs(mods) do
 				local upgitem = ix.item.Get(v[1])
-				if upgitem.articontainer then
+				if upgitem and upgitem.articontainer then
 					articont = articont + upgitem.articontainer
 				end
 			end

@@ -53,7 +53,7 @@ local function attachment(item, data, combine)
         return false
     else
         
-        if target:GetData("durability", 100) < 100 then
+        if target:GetData("durability", 10000) < 10000 then
             client:NotifyLocalized("Must Repair Armor.")
             return false
         end

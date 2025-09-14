@@ -53,86 +53,6 @@ surface.CreateFont("AmmoFont", {
 	extended = true,
 	weight = 500,
 })
---end
-surface.CreateFont("stalkermainmenufont", {	--Main Menu
-	font = "stalker2",
-	size = ScreenScale(8),
-	extended = true,
-	weight = 500,
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularsmallfont", {	--Regular Small
-	font = "arial",
-	size = ScreenScale(6),
-	extended = true,
-	weight = 500,
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularsmallboldfont", {	--Regular Small Bold
-	font = "arial",
-	size = ScreenScale(6),
-	extended = true,
-	weight = 600,
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularfont", {	--Regular
-	font = "arial",
-	size = ScreenScale(8),
-	extended = true,
-	weight = 500,
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularboldfont", {	--Regular Bold
-	font = "arial",
-	size = ScreenScale(8),
-	extended = true,
-	weight = 600,
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularfont2", {	--Regular 2
-	font = "arial",
-	size = ScreenScale(10),
-	extended = true,
-	weight = 500, 
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularboldfont2", {	--Regular 2 Bold
-	font = "arial",
-	size = ScreenScale(10),
-	extended = true,
-	weight = 600, 
-	antialias = true
-})
-
-surface.CreateFont("stalkerregularfont3", {	--Regular 3
-	font = "arial",
-	size = ScreenScale(11),
-	extended = true,
-	weight = 500, 
-	antialias = true
-})
-
-surface.CreateFont("stalkerregulartitlefont", {	--Regular Title
-	font = genericFont,
-	size = ScreenScale(8),
-	extended = true,
-	weight = 500,
-	antialias = true
-})
-
-surface.CreateFont("stalkertitlefont", {	--Title
-	font = "alsina",
-	size = ScreenScale(13),
-	extended = true,
-	weight = 500,
-	antialias = true
-})
 
 local color = {}
 color["$pp_colour_addr"] = 0
@@ -144,10 +64,6 @@ color["$pp_colour_colour"] = 0.75
 color["$pp_colour_mulr"] = 0
 color["$pp_colour_mulg"] = 0
 color["$pp_colour_mulb"] = 0
-
-function PLUGIN:RenderScreenspaceEffects()
-	DrawColorModify(color)
-end
 
 local function cursorDraw()
 	if ix.option.Get("cursor", false) then
@@ -175,7 +91,8 @@ hook.Add("DrawOverlay", "Draw_Cursor_Function_FGSHAR", cursorDraw)
 hook.Add("Think", "Cursor_Think_Function_FGSHAR", cursorThink)
 
 function PLUGIN:HUDPaint()
-	if ix.option.Get("DisableHUD", false) then
+	-- Also hide the HUD if the tab menu is open and our custom blur is active.
+	if ix.option.Get("DisableHUD", false) or (not ix.option.Get("cheapBlur", false) and IsValid(ix.gui.menu)) then
 		return false
 	else
 
@@ -249,10 +166,10 @@ function PLUGIN:SHoCHUDPaint()
 	--Ammo display
 	if IsValid( wep ) then
 		if wep:HasAmmo() and wep:Clip1() >= 0 then
-			draw.DrawText( tostring(wep:Clip1()) .. " / " .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalkermainmenufont", ScrW()-120 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
+			draw.DrawText( tostring(wep:Clip1()) .. " / " .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalker2regularfont", ScrW()-120 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
 			if wep:GetPrimaryAmmoType() then
 				if string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()) or "no", -1) == "-" then
-					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalkermainmenufont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
+					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalker2regularfont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
 				end
 			end
 		end
@@ -488,10 +405,7 @@ function PLUGIN:S2HUDPaint()
 --// End HUD Code //--
 end
 
-ix.option.Add("StalkerHUD", ix.type.bool, false, {
-    category = "STALKER Settings",
-	description = "Choose between SHoC and STALKER 2 HUD."
-})
+ix.option.Add("StalkerHUD", ix.type.bool, false, { category = "STALKER Settings", })
 
 --// STATUS HUD ICONS //--
 
@@ -841,5 +755,36 @@ function PLUGIN:PsyhealthIconHUDPaint()
 			surface.SetDrawColor(Color(255, 255, 255, alpha))
 		end
 		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-250 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+	end
+end
+
+if (CLIENT) then
+	local blurMaterial = Material("pp/blurscreen")
+
+	function PLUGIN:RenderScreenspaceEffects()
+		-- Apply color correction from earlier in the file.
+		DrawColorModify(color)
+
+		-- Add a high-quality blur overlay for the tab menu when cheapBlur is disabled,
+		-- replacing the default Helix blur.
+		if (not ix.option.Get("cheapBlur", false) and IsValid(ix.gui.menu)) then
+			local blurAmount = (ix.gui.menu.currentBlur or 0) * 5
+			if (blurAmount > 0) then
+				-- Use pp/blurscreen material directly to force a real blur effect.
+				surface.SetMaterial(blurMaterial)
+				surface.SetDrawColor(255, 255, 255, 255)
+
+				local scrW, scrH = ScrW(), ScrH()
+
+				-- This loop mimics the blur passes from ix.util.DrawBlurAt for a quality effect.
+				for i = -0.2, 1, 0.2 do
+					blurMaterial:SetFloat("$blur", i * blurAmount)
+					blurMaterial:Recompute()
+
+					render.UpdateScreenEffectTexture()
+					surface.DrawTexturedRect(0, 0, scrW, scrH)
+				end
+			end
+		end
 	end
 end

@@ -174,7 +174,7 @@ function PANEL:Init()
 		button:SetFont("ixMediumFont")
 		button:SetExpensiveShadow(1, Color(0, 0, 0, 150))
 		button.Paint = function(this, w, h)
-			surface.SetDrawColor(self.selected == this and ix.config.Get("color") or dark)
+			surface.SetDrawColor(self.selected == this and ix.GetFactionColor() or dark)
 			surface.DrawRect(0, 0, w, h)
 
 			surface.SetDrawColor(0, 0, 0, 50)

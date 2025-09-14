@@ -122,11 +122,13 @@ function PANEL:SizeToContents()
 	local wide = 0
 	local tall = 0
 	for k, v in pairs(self:GetCanvas():GetChildren()) do
-		if (IsValid(v)) then
+		if (IsValid(v) and v:IsVisible()) then
 			v:SizeToContents()
 			
 			wide = math.max(wide, v:GetWide())
-			tall = tall + v:GetTall()
+			local _, top, _, bottom = v:GetDockMargin()
+
+			tall = tall + v:GetTall() + top + bottom
 		end
 	end
 
@@ -162,7 +164,7 @@ function PANEL:Init()
 	titleLabel:SetPos(padding, self:GetTall() * 0.5 - padding * 2)
 	titleLabel:SetText(L2("schemaName") or Schema.name or L"unknown")
 	titleLabel:SetTextColor(ix.config.Get("mainMenuTitleColor") and ix.config.Get("color") or color_white)
-	titleLabel:SetFont("ixTitleFont")
+	titleLabel:SetFont("mainenutitlefont")
 	titleLabel:SizeToContents()
 
 	local subtitle = L2("schemaDesc") or Schema.description
@@ -172,7 +174,7 @@ function PANEL:Init()
 		subtitleLabel:SetX(padding)
 		subtitleLabel:SetText(subtitle)
 		subtitleLabel:SetTextColor(color_white)
-		subtitleLabel:SetFont("ixSubTitleFont")
+		subtitleLabel:SetFont("mainenutitledescfont")
 		subtitleLabel:SizeToContents()
 	end
 
@@ -214,6 +216,7 @@ function PANEL:Init()
 	end
 
 	if (!bHasCharacter) then
+		self.loadButton:SetVisible(false)
 		self.loadButton:SetDisabled(true)
 	end
 
@@ -281,7 +284,13 @@ function PANEL:UpdateReturnButton(bValue)
     -- Return should be visible only when using a character
     if (IsValid(self.returnButton)) then
         self.returnButton:SetVisible(self.bUsingCharacter)
+        self.returnButton:SetEnabled(self.bUsingCharacter)
     end
+
+	-- After changing visibility, we need to update the layout.
+	if (IsValid(self.mainButtonList)) then
+		self.mainButtonList:SizeToContents()
+	end
 end
 
 function PANEL:OnDim()
@@ -298,6 +307,13 @@ function PANEL:OnUndim()
 	-- we may have just deleted a character so update the status of the return button
 	self.bUsingCharacter = LocalPlayer().GetCharacter and LocalPlayer():GetCharacter()
 	self:UpdateReturnButton()
+
+	-- deselect all of the main menu buttons so they don't appear selected when we return
+	if (self.buttons) then
+		for _, v in ipairs(self.buttons) do
+			v:SetSelected(false)
+		end
+	end
 end
 
 function PANEL:OnClose()

@@ -307,3 +307,5 @@ function Schema:PurchaseItems(client,x,y)
 		y = y - 1
 	end
 end
+
+ix.config.Add("characterCreationBudget", 50000, "Budget for character creation loadout.", nil, { data = { min = 0, max = 100000, step = 1000 }, category = "Main menu" })

@@ -1,93 +1,33 @@
-PLUGIN.name = "PDA chatting system"
-PLUGIN.author = "verne & taylor"
-PLUGIN.description = "PDA chatting system, supporting avatars and nicknames"
+PLUGIN.name = "PDA"
+PLUGIN.author = "Zeta & Gemini Code Assist"
+PLUGIN.description = "Adds a PDA with messaging and other features."
 
-ix.chat.Register("gpda", {
-	CanSay = function(self, speaker, text)
-		local pda = speaker:GetCharacter():GetData("pdaequipped", false)
-		if pda then
-			return true
-		else 
-			return false
-		end
-		return true
-	end,
-	OnChatAdd = function(self, speaker, text, bAnonymous, data)
-		chat.AddText(Color(0,191,255), Material(data[2]), "[GPDA-"..data[1].."]", color_white, ": "..text)
-	end,
+ix.pda = ix.pda or {}
+ix.pda.messages = ix.pda.messages or {} -- Client-side cache
 
-	CanHear = function(self, speaker, listener)
-		local pda = listener:GetCharacter():GetData("pdaequipped", false)
-		if pda then
-			listener:EmitSound( "stalker/pda/pda_beep_1.ogg", 50, 100, 1, CHAN_AUTO )
-			return true
-		else
-			return false
-		end
-	end,
-})
+if (SERVER) then
+    -- Include server-side logic
+    ix.util.Include("sv_messaging.lua") 
+    ix.util.Include("sv_contacts.lua")
 
-ix.chat.Register("pda", {
-	CanSay = function(self, speaker, text)
-		local pda = speaker:GetCharacter():GetData("pdaequipped", false)
-		if pda then
-			return true
-		else 
-			return false
-		end
-	end,
-	OnChatAdd = function(self, speaker, text, bAnonymous, data)
-		chat.AddText(Color(255, 180, 51), Material(data[2]), "[PDA-"..data[1].."] ", color_white, ": "..text)
-	end,
-	
-	CanHear = function(speaker, listener)
-		local pda = listener:GetCharacter():GetData("pdaequipped", false)
-		if pda then
-			listener:EmitSound( "stalker/pda/pda_beep_1.ogg", 50, 100, 1, CHAN_AUTO )
-			return true
-		else
-			return false
-		end
-	end,
-})
+    -- Network strings for messaging
+    util.AddNetworkString("ixPDASendMessage")
+    util.AddNetworkString("ixPDAReceiveMessage")
+    util.AddNetworkString("ixPDAReceiveHistory")
+    util.AddNetworkString("ixPDAAddContact")
+    util.AddNetworkString("ixPDAUpdateContacts")
+    util.AddNetworkString("ixPDAContactStatusUpdate")
+    util.AddNetworkString("ixPDARemoveContact")
+    util.AddNetworkString("ixPDAAcceptRequest")
+    util.AddNetworkString("ixPDADeclineRequest")
+else
+    -- Include client-side derma
+    ix.util.Include("derma/cl_messages.lua")
+end
 
-ix.command.Add("gpda", {
-	description = "Sends a message on the global PDA network.",
-	arguments = ix.type.text,
-	OnRun = function(self, client, text)
-		maximum = math.Clamp(maximum or 100, 0, 1000000)
-
-		ix.chat.Send(client, "gpda", text, nil, nil, {
-			client:GetCharacter():GetData("pdanickname") or client:GetCharacter():GetName(), client:GetCharacter():GetData("pdaavatar") or "vgui/icons/face_31.png"
-		})
-	end
-})
-
-ix.command.Add("pda", {
-	description = "Sends a message to a specific user on the network.",
-	arguments = {
-		ix.type.string,
-		ix.type.text
-	},
-	OnRun = function(self, client, target, text)
-		local targetplayer = ix.util.FindPlayer(target)
-		
-		if not targetplayer then
-			for k,v in pairs(player.GetAll()) do
-				if ix.util.StringMatches(v:GetCharacter():GetData("pdanickname",""),target) then
-					targetplayer = v
-				end
-			end
-		elseif not targetplayer:IsPlayer() then
-			for k,v in pairs(player.GetAll()) do
-				if ix.util.StringMatches(v:GetCharacter():GetData("pdanickname",""),target) then
-					targetplayer = v
-				end
-			end
-		end
-		
-		ix.chat.Send(client, "pda", text, nil, {client, targetplayer}, {
-			client:GetCharacter():GetData("pdanickname") or client:GetCharacter():GetName(), client:GetCharacter():GetData("pdaavatar") or "vgui/icons/face_31.png"
-		})
-	end
+ix.option.Add("PDAvolume", ix.type.number, 0.4, {
+    category = "STALKER Settings",
+    min = 0,
+    max = 1,
+    decimals = 1,
 })

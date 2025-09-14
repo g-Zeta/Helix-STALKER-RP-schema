@@ -8,6 +8,7 @@ local PANEL = {}
 
 AccessorFunc(PANEL, "backgroundColor", "BackgroundColor")
 AccessorFunc(PANEL, "backgroundAlpha", "BackgroundAlpha")
+AccessorFunc(PANEL, "gradientDirection", "GradientDirection")
 
 function PANEL:Init()
 	self:SetFont("ixMenuButtonFont")
@@ -47,8 +48,12 @@ function PANEL:SizeToContents()
 end
 
 function PANEL:PaintBackground(width, height)
-	surface.SetDrawColor(ColorAlpha(self.backgroundColor, self.currentBackgroundAlpha))
-	surface.DrawRect(0, 0, width, height)
+	-- Use a configurable gradient
+	local materialName = "vgui/gradient-" .. (self:GetGradientDirection() or "d")
+	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
+	surface.SetMaterial(Material(materialName))
+	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
+	surface.DrawTexturedRect(0, 0, width, height)
 end
 
 function PANEL:Paint(width, height)
@@ -152,6 +157,8 @@ AccessorFunc(PANEL, "selected", "Selected", FORCE_BOOL)
 AccessorFunc(PANEL, "buttonList", "ButtonList")
 
 function PANEL:Init()
+	BaseClass.Init(self)
+
 	self.backgroundColor = color_white
 	self.selected = false
 	self.buttonList = {}
@@ -159,10 +166,13 @@ function PANEL:Init()
 end
 
 function PANEL:PaintBackground(width, height)
-	local alpha = self.selected and 255 or self.currentBackgroundAlpha
+	-- Use the animated alpha for hover effect, but be more visible when selected.
+	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
 
+	-- Draw a gradient background.
+	surface.SetMaterial(Material("vgui/gradient-l"))
 	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
-	surface.DrawRect(0, 0, ScreenScale(1), height)
+	surface.DrawTexturedRect(0, 0, width, height)
 end
 
 function PANEL:SetSelected(bValue, bSelectedSection)
@@ -303,9 +313,11 @@ AccessorFunc(PANEL, "selected", "Selected", FORCE_BOOL)
 AccessorFunc(PANEL, "buttonList", "ButtonList")
 
 function PANEL:Init()
+	BaseClass.Init(self)
+
 	self:DockMargin(0, 0, 0, 0)
 
-	self.padding = {16, 8, 16, 8}
+	self.padding = {10, 8, 10, 8}
 	self.backgroundColor = color_white
 	self.selected = false
 	self.buttonList = {}
@@ -313,10 +325,18 @@ function PANEL:Init()
 end
 
 function PANEL:PaintBackground(width, height)
-	local alpha = self.selected and 255 or self.currentBackgroundAlpha
+	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
 
+	-- Draw a gradient background.
+	surface.SetMaterial(Material("vgui/gradient-d"))
 	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
-	surface.DrawRect(0, height - ScreenScale(1), width, ScreenScale(1))
+	surface.DrawTexturedRect(0, 0, width, height)
+
+	-- Keep the selection indicator bar at the bottom.
+	if (self.selected) then
+		surface.SetDrawColor(ColorAlpha(self.backgroundColor, 255))
+		surface.DrawRect(0, height - ScreenScale(1), width, ScreenScale(1))
+	end
 end
 
 function PANEL:SetSelected(bValue, bSelectedSection)

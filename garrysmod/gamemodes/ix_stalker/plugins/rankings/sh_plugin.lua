@@ -2,13 +2,53 @@ PLUGIN.name = "Rankings"
 PLUGIN.author = "Lt. Taylor and Zeta"
 PLUGIN.desc = "Ranking list plugin."
 
+local function FindEquippedPDA(character)
+    if not character then return nil end
+    local inv = character:GetInventory()
+    if not inv then return nil end
+    for _, item in pairs(inv:GetItems()) do
+        if item.isPDA and item:GetData("equip", false) then
+            return item
+        end
+    end
+    return nil
+end
+
 if SERVER then
     -- Hook to update the avatar image
     netstream.Hook("UpdatePDAAvatar", function(client)
         local character = client:GetCharacter()
-        local image = character:GetData("pdaavatar", "vgui/icons/face_31.png")
+        local image = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png")
         netstream.Start(client, "UpdatePDAAvatar", image)
     end)
+
+	netstream.Hook("RequestProfileStatus", function(client)
+		local character = client:GetCharacter()
+		if not character then return end
+
+		local pdaItem = FindEquippedPDA(character)
+		if not pdaItem then
+			character:SetData("RankPublic", false)
+			character:SetData("RankPrivate", false)
+			character:SetData("pdaavatar", "stalker/ui/avatars/nodata.png")
+		else
+			-- If neither flag is set, default to Private
+			local isPublic = character:GetData("RankPublic", false)
+			local isPrivate = character:GetData("RankPrivate", false)
+			if not isPublic and not isPrivate then
+				character:SetData("RankPublic", false)
+				character:SetData("RankPrivate", true)
+				-- keep existing avatar if any, otherwise nodata is fine
+			end
+		end
+
+		netstream.Start(client, "ProfileStatusChanged", {
+			public = character:GetData("RankPublic", false),
+			private = character:GetData("RankPrivate", false),
+			avatar = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png"),
+			hasPDA = FindEquippedPDA(character) ~= nil,
+		})
+	end)
 end
 
 local BASE_W, BASE_H = 1920, 1080
@@ -24,6 +64,26 @@ local PANEL = {}
 local headcolor = Color(104, 104, 104)
 local repcolor = Color(107,104,175)
 local stndcolor = Color(255,255,255)
+
+if not Rankings_ProfileStatusChanged_Hooked then
+    netstream.Hook("ProfileStatusChanged", function(state)
+        -- Use a safe global lookup to the current open panel if you have one
+        local pnl = Rankings_CurrentPanel
+        if not IsValid(pnl) then return end
+        local imageDisplay = pnl._imageDisplay
+        local publicButton = pnl._publicButton
+        local privateButton = pnl._privateButton
+        if not (IsValid(imageDisplay) and IsValid(publicButton) and IsValid(privateButton)) then return end
+
+        imageDisplay:SetImage(state.avatar or "stalker/ui/avatars/nodata.png")
+        publicButton:SetImage(state.public and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
+        privateButton:SetImage(state.private and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
+    
+	    -- Refresh the rank list box after status changes
+        netstream.Start("GetRankListData")
+	end)
+    Rankings_ProfileStatusChanged_Hooked = true
+end
 
 if CLIENT then
 	
@@ -51,12 +111,12 @@ if CLIENT then
 	function PANEL:Init()
 		local client = LocalPlayer()
 		local character = client:GetCharacter()
-		local image = character:GetData("pdaavatar","vgui/icons/face_31.png")
+		local image = character:GetData("pdaavatar","stalker/ui/avatars/nodata.png")
 		local rank = client:getCurrentRankName()
 		local reputation = client:getReputation()
 		local public = character:GetData("RankPublic",false)
 		local private = character:GetData("RankPrivate",false)
-		
+
 		self:SetSize(SW(1165), SH(770)) --Adjust size of the whole panel
 		--self:Center()
 		self:SetPos(SW(54), SH(86)) --Adjust position of the whole panel
@@ -75,7 +135,7 @@ if CLIENT then
 		profbox:SetSize(SW(1165), SH(140))
 		profbox:Dock(TOP)
 		profbox:DockMargin(0, 0, 0, 0)
-		profbox:SetImage("stalker/ui/rankings/profile.png")
+		profbox:SetImage("stalker/ui/pda/rankings/profile.png")
 		profbox:SetMouseInputEnabled(true)
 		
 		-- Create a horizontal layout for the six boxes
@@ -86,15 +146,14 @@ if CLIENT then
 		-- Create the first box for the profile image
 		local imageBox = boxLayout:Add("DPanel")
 		imageBox:Dock(LEFT)
-		imageBox:SetSize(SW(124), SH(124)) -- Adjust size as needed
+		imageBox:SetSize(SW(177), SH(124)) -- Adjust size as needed
 		imageBox:SetPaintBackground(false)
 		imageBox:DockMargin(SW(7), 0, 0, 0)
 
-		local profimage = Material(image)
 		local imageDisplay = imageBox:Add("DImage")
 		imageDisplay:SetImage(image)
 		imageDisplay:Dock(TOP)
-		imageDisplay:SetSize(SW(124), SH(124)) -- Adjust size if needed
+		imageDisplay:SetSize(SW(177), SH(124)) -- Adjust size if needed
 		imageDisplay:SetPaintBackground(false) -- Ensure background is not painted
 		imageDisplay:Center()
 		imageDisplay:DockMargin(0, SH(9), 0, 0)
@@ -160,7 +219,7 @@ if CLIENT then
 		reputationBox:SetSize(SW(250), SH(124)) -- Adjust size as needed
 		reputationBox:SetPaintBackground(false)
 
-		local reputationValues = {character:GetData("pdanickname", "No PDA Name"), rank, reputation}
+		local reputationValues = {character:GetData("pdausername", "No PDA Name"), rank, reputation}
 		for _, value in ipairs(reputationValues) do
 			local reputationLabel = reputationBox:Add("DLabel")
 			reputationLabel:SetText(value)
@@ -194,38 +253,47 @@ if CLIENT then
 		-- Public Button
 		publicButton:SetText("PUBLIC")
 		publicButton:SetFont("stalkerregularsmallboldfont")
-		publicButton:SetImage("stalker/ui/pda/pda_button.png") -- Default image
+		publicButton:SetImage(public and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
 		publicButton:Dock(TOP)
 		publicButton:DockMargin(0, SH(10), 0, 0)
 		publicButton.DoClick = function()
-			if string.match(publicButton:GetImage(), "pda_button.png") then
-				publicButton:SetImage("stalker/ui/pda/pda_button_click.png")
-			else
-				publicButton:SetImage("stalker/ui/pda/pda_button.png")
-			end
 			netstream.Start("ProfileChange", "public")
-			-- Update RankListData and pdaavatar
-			netstream.Start("GetRankListData")
-			netstream.Start("UpdatePDAAvatar")
+			LocalPlayer():EmitSound("Helix.Press")
 		end 
 
 		-- Private Button
 		privateButton:SetText("PRIVATE")
 		privateButton:SetFont("stalkerregularsmallboldfont")
-		privateButton:SetImage("stalker/ui/pda/pda_button.png") -- Default image
+		privateButton:SetImage(private and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
 		privateButton:Dock(TOP)
 		privateButton:DockMargin(0, SH(10), 0, 0)
 		privateButton.DoClick = function()
-			if string.match(privateButton:GetImage(), "pda_button.png") then
-				privateButton:SetImage("stalker/ui/pda/pda_button_click.png")
-			else
-				privateButton:SetImage("stalker/ui/pda/pda_button.png")
-			end
 			netstream.Start("ProfileChange", "private")
-			-- Update RankListData and pdaavatar
-			netstream.Start("GetRankListData")
-			netstream.Start("UpdatePDAAvatar")
+			LocalPlayer():EmitSound("Helix.Press")
 		end
+
+		self._imageDisplay = imageDisplay
+		self._publicButton = publicButton
+		self._privateButton = privateButton
+		Rankings_CurrentPanel = self
+
+		-- Receive status and update UI so only the active one shows selected
+		netstream.Hook("ProfileStatusChanged", function(state)
+			if not IsValid(imageDisplay) or not IsValid(publicButton) or not IsValid(privateButton) then return end
+
+			imageDisplay:SetImage(state.avatar or "stalker/ui/avatars/nodata.png")
+			publicButton:SetImage(state.public and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
+			privateButton:SetImage(state.private and "stalker/ui/pda/button_selected.png" or "stalker/ui/pda/button.png")
+
+			local enabled = state.hasPDA ~= false
+			publicButton:SetEnabled(enabled)
+			privateButton:SetEnabled(enabled)
+			publicButton:SetAlpha(enabled and 255 or 120)
+			privateButton:SetAlpha(enabled and 255 or 120)
+		
+			-- Refresh rank list whenever status changes
+    		netstream.Start("GetRankListData")
+		end)
 
 		-- Hook to update the avatar image
 		netstream.Hook("UpdatePDAAvatar", function(image)
@@ -234,10 +302,10 @@ if CLIENT then
 
 		-- PLAYER INFO PANEL
 		local rankinfo = pdabg:Add("DImage")
-		rankinfo:SetSize(SW(800), SH(655))	--Panel on the LEFT
+		rankinfo:SetSize(SW(840), SH(655))	--Panel on the LEFT
 		rankinfo:Dock(LEFT)
 		rankinfo:DockMargin(0, SH(5), 0, 0)
-		rankinfo:SetImage("stalker/ui/rankings/rank_display.png")
+		rankinfo:SetImage("stalker/ui/pda/rankings/rank_display.png")
 		rankinfo:SetMouseInputEnabled(true)
 		
 		netstream.Hook("SetupInfoPanel", function(plydata)
@@ -295,15 +363,15 @@ if CLIENT then
 			
 			local infoimageBox = infoboxLayout:Add("DPanel")
 			infoimageBox:Dock(LEFT)
-			infoimageBox:SetSize(SW(124), SH(124)) -- Adjust size as needed
+			infoimageBox:SetSize(SW(177), SH(124)) -- Adjust size as needed
 			infoimageBox:SetPaintBackground(false)
 			infoimageBox:DockMargin(SW(7), 0, 0, 0)			
 
-			local infoimage = Material(image or "vgui/icons/face_31.png")
+			local infoimage = Material(image or "stalker/ui/avatars/nodata.png")
 			local imageDisplay = infoimageBox:Add("DImage")
-			imageDisplay:SetImage(image or "vgui/icons/face_31.png")
+			imageDisplay:SetImage(image or "stalker/ui/avatars/nodata.png")
 			imageDisplay:Dock(TOP)
-			imageDisplay:SetSize(SW(124), SH(124)) -- Adjust size if needed
+			imageDisplay:SetSize(SW(177), SH(124)) -- Adjust size if needed
 			imageDisplay:SetPaintBackground(false) -- Ensure background is not painted
 			imageDisplay:Center()
 			imageDisplay:DockMargin(0, SH(9), 0, 0)
@@ -369,7 +437,7 @@ if CLIENT then
 			-- Create the fifth box for rank and reputation values
 			local reputationBox = infoboxLayout:Add("DPanel")
 			reputationBox:Dock(LEFT)
-			reputationBox:SetSize(SW(145), SH(124)) -- Adjust size as needed
+			reputationBox:SetSize(SW(190), SH(124)) -- Adjust size as needed
 			reputationBox:SetPaintBackground(false)
 
 			-- Function to create a DLabel with common properties
@@ -392,10 +460,10 @@ if CLIENT then
 		
 		-- RANK LIST PANEL
 		local ranklistbox = pdabg:Add("DImage")
-		ranklistbox:SetSize(SW(360), SH(655)) --Panel on the RIGHT
+		ranklistbox:SetSize(SW(320), SH(655)) --Panel on the RIGHT
 		ranklistbox:Dock(LEFT)
 		ranklistbox:DockMargin(SW(5), SH(5), 0, 0)
-		ranklistbox:SetImage("stalker/ui/rankings/rank_list.png")
+		ranklistbox:SetImage("stalker/ui/pda/rankings/rank_list.png")
 		ranklistbox:SetName("RankListBox")
 		ranklistbox:SetMouseInputEnabled(true)
 		
@@ -448,7 +516,7 @@ if CLIENT then
 				plyrankbox:SetSize(SW(380), SH(92))
 				plyrankbox:Dock(TOP)
 				plyrankbox:DockMargin(0, 0, SW(5), 0)
-				plyrankbox:SetImage("stalker/ui/rankings/rank_list_box.png")
+				plyrankbox:SetImage("stalker/ui/pda/rankings/rank_list_box.png")
 				plyrankbox:SetMouseInputEnabled(true)
 				plyrankbox.Player = plyr
 					
@@ -457,7 +525,6 @@ if CLIENT then
 					rankings:SetText(count..". ")
 					rankings:SetTextColor(Color(255,255,255))
 					rankings:SetFont("stalkerregularsmallboldfont")
-					rankings:SetPos(SW(524), SH(3))
 					rankings:SetAutoStretchVertical(true)
 					rankings:SizeToContentsX()
 					rankings:Dock(LEFT)
@@ -465,16 +532,16 @@ if CLIENT then
 
 					local imageBox = plyrankbox:Add("DPanel")
 					imageBox:Dock(LEFT)
-					imageBox:SetSize(SW(82), SH(82)) -- Adjust size as needed
+					imageBox:SetSize(SW(100), SH(70)) -- Adjust size as needed
 					imageBox:SetPaintBackground(false)
-					imageBox:DockMargin(0, SH(5), 0, 0)
+					imageBox:DockMargin(0, SH(11), 0, 0)
 					imageBox:SetMouseInputEnabled(false)
 
-					local infoimage = Material(image or "vgui/icons/face_31.png")
+					local infoimage = Material(img or "stalker/ui/avatars/nodata.png")
 					local imageDisplay = imageBox:Add("DImage")
-					imageDisplay:SetImage(image or "vgui/icons/face_31.png")
+					imageDisplay:SetImage(img or "stalker/ui/avatars/nodata.png")
 					imageDisplay:Dock(TOP)
-					imageDisplay:SetSize(SW(82), SH(82)) -- Adjust size if needed
+					imageDisplay:SetSize(SW(100), SH(70)) -- Adjust size if needed
 					imageDisplay:SetPaintBackground(false) -- Ensure background is not painted
 					imageDisplay:Center()
 					imageDisplay:DockMargin(0, 0, 0, 0)
@@ -518,7 +585,7 @@ if CLIENT then
 					-- Right box for values
 					local valueBox = infoContainer:Add("DPanel")
 					valueBox:Dock(LEFT)
-					valueBox:SetWidth(SW(210))  -- Adjust width as needed
+					valueBox:SetWidth(SW(140))  -- Adjust width as needed
 					valueBox:SetBackgroundColor(Color(0, 0, 0, 0))  -- Set background color if needed
 
 					-- Override Paint function to avoid borders
@@ -559,10 +626,12 @@ if CLIENT then
 						else
 							LocalPlayer():Notify("Error Referencing Player")
 						end
+						LocalPlayer():EmitSound("Helix.Press")
 					end
 				end
 			end
 		end)
+		netstream.Start("RequestProfileStatus")
 	end
 	
 	vgui.Register("RankingsListFrame", PANEL, "DPanel")
@@ -596,112 +665,105 @@ if CLIENT then
 			end
 		end
 	end)
-
 else
-	netstream.Hook("GetRankListData",function(client)
+	netstream.Hook("GetRankListData", function(client)
 		local rankdata = {}
-		local plylist = player.GetAll()
-		
-		for k,v in pairs(plylist) do
+		for _, v in pairs(player.GetAll()) do
 			local character = v:GetCharacter()
 			if character then
-				if character:GetData("RankPublic",false) or character:GetData("RankPrivate",false) then
-					rankdata[k] = {
+				local hasPDA = FindEquippedPDA(character) ~= nil
+				local isVisible = hasPDA and (character:GetData("RankPublic", false) or character:GetData("RankPrivate", false))
+				if isVisible then
+					rankdata[#rankdata + 1] = {
 						["player"] = v,
-						["pdaimage"] = character:GetData("pdaavatar","vgui/icons/face_31.png"),
-						["pdaname"] = character:GetData("pdanickname","Unknown"),
+						["pdaimage"] = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png"),
+						["pdaname"] = character:GetData("pdausername", "Unknown"),
 						["rank"] = v:getCurrentRankName() or "Tourist",
 						["reputation"] = v:getReputation() or 0,
 					}
 				end
 			end
 		end
-		
-		if not table.IsEmpty(rankdata) then
-			
-			local counter = 1
-			local newrankdata = {}
-			
-			if not table.IsSequential(rankdata) then
-				for k,v in pairs(rankdata) do
-					newrankdata[counter] = v
-					counter = counter + 1
-				end
-				rankdata = newrankdata
-			end
-			
-			if #rankdata >= 2 then
-				table.sort(rankdata, function(a, b)
-					return a["reputation"] > b["reputation"]
-				end)
-			end
-			
+
+		if #rankdata > 0 then
+			table.sort(rankdata, function(a, b)
+				return (a["reputation"] or 0) > (b["reputation"] or 0)
+			end)
 			netstream.Start(client, "RankListData", rankdata)
 		end
 	end)
 
 	netstream.Hook("ProfileChange", function(client, pubtype)
 		local character = client:GetCharacter()
+		if not character then return end
 
-		-- Check if the PDA item is equipped
-		local items = character:GetInventory():GetItems()
-		for _, item in pairs(items) do
-			if item.isPDA and item:GetData("equip") then
-				if pubtype == "private" then
-					if character:GetData("RankPrivate", false) then
-						character:SetData("RankPrivate", false)
-					else
-						character:SetData("RankPrivate", true)
-						character:SetData("RankPublic", false)
-						character:SetData("pdaavatar", "vgui/icons/face_31.png")
-					end
-				elseif pubtype == "public" then
-					if character:GetData("RankPublic", false) then
-						character:SetData("RankPublic", false)
-					else
-						character:SetData("RankPublic", true)
-						character:SetData("RankPrivate", false)
-						character:SetData("pdaavatar", item:GetData("avatar", "vgui/icons/face_31.png"))
-					end
-				end
+		local pdaItem = FindEquippedPDA(character)
+
+		if not pdaItem then
+			-- Force hidden if no PDA equipped
+			character:SetData("RankPublic", false)
+			character:SetData("RankPrivate", false)
+			character:SetData("pdaavatar", "stalker/ui/avatars/nodata.png")
+		else
+			-- If neither set yet, consider defaulting to Private here too
+			local hadState = character:GetData("RankPublic", false) or character:GetData("RankPrivate", false)
+
+			if pubtype == "public" then
+				character:SetData("RankPublic", true)
+				character:SetData("RankPrivate", false)
+				character:SetData("pdaavatar", pdaItem:GetData("avatar", "stalker/ui/avatars/nodata.png"))
+			elseif pubtype == "private" then
+				character:SetData("RankPublic", false)
+				character:SetData("RankPrivate", true)
+				character:SetData("pdaavatar", "stalker/ui/avatars/nodata.png")
+			elseif pubtype == "hidden" then
+				character:SetData("RankPublic", false)
+				character:SetData("RankPrivate", false)
+				character:SetData("pdaavatar", "stalker/ui/avatars/nodata.png")
 			end
 		end
+
+		-- Push a confirmation to the client so it can sync button visuals
+		netstream.Start(client, "ProfileStatusChanged", {
+			public = character:GetData("RankPublic", false),
+			private = character:GetData("RankPrivate", false),
+			avatar = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png"),
+			hasPDA = FindEquippedPDA(character) ~= nil,
+		})
 	end)
 	
 	netstream.Hook("SetInfoPanel", function(client, ply)
-		local plylist = player.GetAll()
-		local target
-		local plydata = {}
-		
-		for k,v in pairs(plylist) do
-			if v == ply then
-				target = v
-			end
+		if not IsValid(ply) then return end
+		local character = ply:GetCharacter()
+		if not character then return end
+
+		if not FindEquippedPDA(character) then
+			return -- hidden if no PDA
 		end
-		
-		local character = target:GetCharacter()
-		
-		if character:GetData("RankPublic",false) then
+
+		local plydata
+		if character:GetData("RankPublic", false) then
 			plydata = {
 				--[[["description"] = character:GetDescription() or "Unknown",--]]
 				["name"] = character:GetName() or "Unknown",
 				["dob"] = character:GetData("sheetDOBText"),
-				["nationality"] = character:GetData("sheetNationality","Unknown"),
+				["nationality"] = character:GetData("sheetNationality", "Unknown"),
 				["race"] = character:GetData("sheetRace"),
-				["pdaimage"] = character:GetData("pdaavatar","vgui/icons/face_31.png"),
-				["pdaname"] = character:GetData("pdanickname","Unknown"),
-				["rank"] = target:getCurrentRankName() or "Tourist",
-				["reputation"] = target:getReputation() or 0,
+				["pdaimage"] = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png"),
+				["pdaname"] = character:GetData("pdausername", "Unknown"),
+				["rank"] = ply:getCurrentRankName() or "Tourist",
+				["reputation"] = ply:getReputation() or 0,
 			}
-		elseif character:GetData("RankPrivate",false) then
+		elseif character:GetData("RankPrivate", false) then
 			plydata = {
-				["pdaimage"] = character:GetData("pdaavatar","vgui/icons/face_31.png"),
-				["pdaname"] = character:GetData("pdanickname","Unknown"),
-				["rank"] = target:getCurrentRankName() or "Tourist",
-				["reputation"] = target:getReputation() or 0,
+				["pdaimage"] = character:GetData("pdaavatar", "stalker/ui/avatars/nodata.png"),
+				["pdaname"] = character:GetData("pdausername", "Unknown"),
+				["rank"] = ply:getCurrentRankName() or "Tourist",
+				["reputation"] = ply:getReputation() or 0,
 			}
 		end
-		if not table.IsEmpty(plydata) then
+
+		if plydata then
 			netstream.Start(client, "SetupInfoPanel", plydata)
 		end
 	end)

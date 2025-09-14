@@ -168,7 +168,10 @@ function PANEL:Init()
 	self.setting.nextUpdate = 0
 	self.setting:Dock(RIGHT)
 	self.setting.OnValueChanged = function(panel)
-		self:OnValueChanged(self:GetValue())
+		local steppedValue = self:GetValue()
+		self:SetValue(steppedValue, true)
+
+		self:OnValueChanged(steppedValue)
 	end
 	self.setting.OnValueUpdated = function(panel)
 		local fraction = panel:GetFraction()
@@ -209,6 +212,10 @@ function PANEL:OpenEntry()
 	self.entry.OnValueChanged = function(panel)
 		local value = math.Round(panel:GetValue(), self:GetDecimals())
 
+		if (self.step) then
+			value = math.floor(value / self.step + 0.5) * self.step
+		end
+
 		if (value != self:GetValue()) then
 			self:SetValue(value, true)
 			self:OnValueChanged(value)
@@ -221,7 +228,13 @@ function PANEL:SetValue(value, bNoNotify)
 end
 
 function PANEL:GetValue()
-	return self.setting:GetValue()
+	local value = self.setting:GetValue()
+
+	if (self.step) then
+		return math.floor(value / self.step + 0.5) * self.step
+	end
+
+	return value
 end
 
 function PANEL:SetMin(value)
@@ -234,6 +247,10 @@ end
 
 function PANEL:SetDecimals(value)
 	self.setting:SetDecimals(value)
+end
+
+function PANEL:SetStep(value)
+	self.step = value
 end
 
 function PANEL:GetDecimals()

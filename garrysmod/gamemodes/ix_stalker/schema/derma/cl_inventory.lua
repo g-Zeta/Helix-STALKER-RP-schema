@@ -172,7 +172,7 @@ function PANEL:DoRightClick()
 						InventoryAction("drop", itemTable.id, inventory)
 					end
 				itemTable.player = nil
-			end):SetImage("icon16/stalker/drop.png")
+			end):SetImage("stalkerCoP/ui/icons/misc/drop.png")
 		end
 
 		menu:Open()
@@ -324,14 +324,38 @@ local function RefreshWeight()
     weightLabel:SetText(computeWeightString())
 end
 
-local function RefreshCharAvatar()
-    if not IsValid(charbackgroundicon) then return end
-    local char = LocalPlayer() and LocalPlayer():GetCharacter()
-    if not char then return end
-    local avatar = char:GetData("pdaavatar") or "vgui/icons/face_31.png"
-    charbackgroundicon:SetImage(avatar)
+local function GetEquippedPDAAvatar()
+    local client = LocalPlayer()
+    local char = client and client:GetCharacter()
+    if not char then return nil end
+
+    local inv = char:GetInventory()
+    if not inv then return nil end
+
+    for _, item in pairs(inv:GetItems()) do
+        if item.isPDA and item:GetData("equip", false) then
+            -- PDA stores its own "avatar"
+            return item:GetData("avatar")
+        end
+    end
+
+    return nil
 end
 
+local function ResolveAvatarPath()
+    local char = LocalPlayer() and LocalPlayer():GetCharacter()
+    if not char then return "stalker/ui/avatars/nodata.png" end
+
+    return GetEquippedPDAAvatar()
+        or char:GetData("pdaavatar")
+        or char:GetData("avatar")
+        or "stalker/ui/avatars/nodata.png"
+end
+
+local function RefreshCharAvatar()
+    if not IsValid(charbackgroundicon) then return end
+    charbackgroundicon:SetImage(ResolveAvatarPath())
+end
 
 function PANEL:Init()
 	local baseIcon = 50
@@ -851,7 +875,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 
 				-- avatar
-				local avatar = char:GetData("pdaavatar") or "vgui/icons/face_31.png"
+				local avatar = ResolveAvatarPath()
 				if avatar ~= lastAvatar then
 					lastAvatar = avatar
 					charbackgroundicon:SetImage(avatar)
@@ -994,10 +1018,10 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			charbackgroundicon:SetPos(SW(208), SH(11))
 			charbackgroundicon:SetZPos(-1)
 
-			if LocalPlayer():GetCharacter():GetData("pdaavatar") then 
-				charbackgroundicon:SetImage( LocalPlayer():GetCharacter():GetData("pdaavatar") )
+			if LocalPlayer():GetCharacter():GetData("avatar") then 
+				charbackgroundicon:SetImage(ResolveAvatarPath())
 			else
-				charbackgroundicon:SetImage( "vgui/icons/face_31.png" )
+				charbackgroundicon:SetImage( "stalker/ui/avatars/nodata.png" )
 			end
 
 			weightLabel = inventorypanel:Add("DLabel")
@@ -1785,7 +1809,7 @@ hook.Add("CreateMenuButtons", "ixCharInfo", function(tabs)	--Removes You tab
 	tabs["you"] = nil
 end)
 
--- Update hooks for money, weight and pdaavatar
+-- Update hooks for money, weight and pda avatar
 hook.Add("CharacterVarChanged", "ixInv_UpdateMoney", function(character, key, old, new)
     if character ~= LocalPlayer():GetCharacter() then return end
     if key == "money" then
@@ -1807,9 +1831,17 @@ hook.Add("HelixOptionChanged", "ixInv_UnitPrefChanged", function(client, key, ol
     end
 end)
 
-hook.Add("CharacterDataChanged", "ixInv_UpdateAvatar", function(character, key, old, new)
-    if character ~= LocalPlayer():GetCharacter() then return end
-    if key == "pdaavatar" then
+-- Refresh when equipped items change (covers PDA equip/unequip)
+hook.Add("ItemEquipped", "ixInv_PDAAvatar_OnEquip", function(client, item)
+    if client ~= LocalPlayer() then return end
+    if item and item.isPDA then
+        RefreshCharAvatar()
+    end
+end)
+
+hook.Add("ItemUnequipped", "ixInv_PDAAvatar_OnUnequip", function(client, item)
+    if client ~= LocalPlayer() then return end
+    if item and item.isPDA then
         RefreshCharAvatar()
     end
 end)

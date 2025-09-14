@@ -58,9 +58,10 @@ ALWAYS_RAISED["detector_bear"] = true
 ALWAYS_RAISED["detector_veles"] = true
 ALWAYS_RAISED["guitar"] = true
 
-ix.currency.symbol = "₽"
-ix.currency.singular = "ruble"
-ix.currency.plural = "rubles"
+ix.currency.symbol = "Ꝁ"
+ix.currency.singular = "koupon"
+ix.currency.plural = "koupons"
+
 
 -- We will use this better later
 local stalker_models = { 	

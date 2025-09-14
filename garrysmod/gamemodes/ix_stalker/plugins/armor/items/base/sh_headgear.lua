@@ -272,17 +272,6 @@ ITEM.functions.Equip = {
 			end
 		end
 
-		local mods = item:GetData("mod")
-		
-		if mods then
-			for k,v in pairs(mods) do
-				local upgitem = ix.item.Get(v[1])
-				if upgitem.articontainer then
-					articont = articont + upgitem.articontainer
-				end
-			end
-		end
-
 		item:OnEquipped()
 		return false
 	end,

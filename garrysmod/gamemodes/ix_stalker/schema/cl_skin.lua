@@ -9,6 +9,31 @@ local pdabackground = Material("stalkerSHoC/ui/pda/pda_on.png")
 local menubuttonbackground = Material("cotz/panels/button2.png")
 local defaultBackgroundColor = Color(30, 30, 30, 200)
 
+-- A default color to use when no character/faction is available.
+local defaultColor = Color(127, 111, 63)
+
+---
+-- Returns the current character's faction color, or a default color.
+-- This allows the UI theme to be dynamic based on the player's faction.
+-- @return color The faction color or a default.
+function ix.GetFactionColor()
+	if (CLIENT) then
+		local client = LocalPlayer()
+		if (IsValid(client)) then
+			local character = client:GetCharacter()
+			if (character) then
+				local faction = ix.faction.indices[character:GetFaction()]
+				if (faction and faction.color) then
+					return faction.color
+				end
+			end
+		end
+	end
+
+	-- Fallback for main menu or if something goes wrong.
+	return defaultColor
+end
+
 local SKIN = {}
 derma.DefineSkin("helix", "The base skin for the Helix framework.", SKIN)
 
@@ -254,11 +279,10 @@ end
 
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
 	alphaFraction = alphaFraction or 1
-
-	surface.SetDrawColor(ColorAlpha(color_transparent, alphaFraction * 255))
+ 
+	surface.SetDrawColor(255, 255, 255, alphaFraction * 255)
 	surface.SetMaterial(pdabackground)
 	surface.DrawTexturedRect(0, 0, width, height)
-
 end
 
 function SKIN:PaintPlaceholderPanel(panel, width, height, barWidth, padding)
@@ -276,7 +300,7 @@ end
 
 function SKIN:PaintCategoryPanel(panel, text, color)
 	text = text or ""
-	color = color or ix.config.Get("color")
+	color = color or ix.GetFactionColor()
 
 	surface.SetFont(self.fontCategoryBlur)
 
@@ -435,7 +459,7 @@ function SKIN:PaintComboDownArrow(panel, width, height)
 	local textWidth, textHeight = surface.GetTextSize("r")
 	local alpha = (panel.ComboBox:IsMenuOpen() or panel.ComboBox.Hovered) and 200 or 100
 
-	surface.SetTextColor(ColorAlpha(ix.config.Get("color"), alpha))
+	surface.SetTextColor(ColorAlpha(ix.GetFactionColor(), alpha))
 	surface.SetTextPos(width * 0.5 - textWidth * 0.5, height * 0.5 - textHeight * 0.5)
 	surface.DrawText("r")
 end
@@ -624,12 +648,30 @@ do
 	})
 
 	sound.Add({
+		name = "STALKER.Rollover.MainMenu",
+		channel = CHAN_STATIC,
+		volume = 1.0,
+		level = 80,
+		pitch = {99, 101},
+		sound = "stalker/menu/button_rollover.wav"
+	})
+
+	sound.Add({
+		name = "STALKER.Press.MainMenu",
+		channel = CHAN_STATIC,
+		volume = 1.0,
+		level = 80,
+		pitch = {99, 101},
+		sound = "stalker/menu/button_select.wav"
+	})
+	
+	sound.Add({
 		name = "Helix.Rollover",
 		channel = CHAN_STATIC,
 		volume = 0.2,
 		level = 80,
 		pitch = {99, 101},
-		sound = bRollover and "stalkerdetectors/contact.wav" or "ui/buttonrollover.wav"
+		sound = bRollover and "stalker/detectors/contact.wav" or "ui/buttonrollover.wav"
 	})
 
 	sound.Add({
@@ -638,7 +680,7 @@ do
 		volume = 0.5,
 		level = 80,
 		pitch = bPress and {99, 101} or 100,
-		sound = bPress and "stalkersound/inv_geiger.ogg" or "ui/buttonclickrelease.wav"
+		sound = bPress and "stalker/pda/pda_select.ogg" or "ui/buttonclickrelease.wav"
 	})
 
 	sound.Add({
@@ -647,8 +689,159 @@ do
 		volume = 0.35,
 		level = 80,
 		pitch = 100,
-		sound = bNotify and "helix/ui/REPLACEME.wav" or "stalkersound/pda/pda_alarm.wav"
+		sound = bNotify and "helix/ui/REPLACEME.wav" or "stalker/pda/pda_alarm.wav"
 	})
 end
 
+--
+-- Custom sound logic for menu buttons
+-- This section overrides the default OnCursorEntered for ixMenuButton
+-- to play different sounds depending on the active menu.
+--
+do
+	local PANEL = vgui.GetControlTable("ixMenuButton")
+	if not PANEL then return end
+
+	-- Override the function to add conditional sound logic.
+	function PANEL:OnCursorEntered()
+		if (self:GetDisabled()) then
+			return
+		end
+
+		-- Replicate the visual/animation part of the original function.
+		local color = self:GetTextColor()
+		self:SetTextColorInternal(Color(math.max(color.r - 25, 0), math.max(color.g - 25, 0), math.max(color.b - 25, 0)))
+
+		self:CreateAnimation(0.15, {
+			target = {currentBackgroundAlpha = self.backgroundAlpha}
+		})
+
+		-- Play sound based on the current menu context.
+		if (IsValid(ix.gui.characterMenu)) then
+			LocalPlayer():EmitSound("STALKER.Rollover.MainMenu")
+		else
+			LocalPlayer():EmitSound("Helix.Rollover")
+		end
+	end
+
+	-- Override the function to add conditional sound logic for clicks.
+	function PANEL:OnMousePressed(code)
+		if (self:GetDisabled()) then
+			return
+		end
+
+		if (self.color) then
+			self:SetTextColor(self.color)
+		else
+			self:SetTextColor(ix.config.Get("color"))
+		end
+
+		-- Play sound based on the current menu context.
+		if (IsValid(ix.gui.characterMenu)) then
+			LocalPlayer():EmitSound("STALKER.Press.MainMenu")
+		else
+			LocalPlayer():EmitSound("Helix.Press")
+		end
+
+		if (code == MOUSE_LEFT and self.DoClick) then
+			self:DoClick(self)
+		elseif (code == MOUSE_RIGHT and self.DoRightClick) then
+			self:DoRightClick(self)
+		end
+	end
+end
+
+--
+-- Custom sound logic for selection menu buttons
+-- This section overrides the default OnMousePressed for selection buttons
+-- to play different sounds depending on the active menu. This is needed
+-- because these buttons have their own OnMousePressed which calls the
+-- original base function, bypassing our override on ixMenuButton.
+--
+do
+	-- This local function contains the shared logic for both selection button types.
+	local function CustomSelectionButtonMousePressed(panel, code)
+		if (panel:GetDisabled()) then
+			return
+		end
+
+		-- Replicate the original selection logic from cl_menubutton.lua
+		for _, v in pairs(panel.buttonList or {}) do
+			if (IsValid(v) and v != panel) then
+				v:SetSelected(false, panel.sectionParent == v)
+			end
+		end
+		panel:SetSelected(true)
+
+		-- Replicate the logic from our ixMenuButton override
+		if (panel.color) then
+			panel:SetTextColor(panel.color)
+		else
+			panel:SetTextColor(ix.config.Get("color"))
+		end
+
+		if (IsValid(ix.gui.characterMenu)) then
+			LocalPlayer():EmitSound("STALKER.Press.MainMenu")
+		else
+			LocalPlayer():EmitSound("Helix.Press")
+		end
+
+		if (code == MOUSE_LEFT and panel.DoClick) then
+			panel:DoClick(panel)
+		elseif (code == MOUSE_RIGHT and panel.DoRightClick) then
+			panel:DoRightClick(panel)
+		end
+	end
+
+	-- Override for the standard selection button
+	local PANEL_SEL = vgui.GetControlTable("ixMenuSelectionButton")
+	if PANEL_SEL then
+		PANEL_SEL.OnMousePressed = CustomSelectionButtonMousePressed
+	end
+
+	-- Override for the top-bar selection button
+	local PANEL_TOP = vgui.GetControlTable("ixMenuSelectionButtonTop")
+	if PANEL_TOP then
+		PANEL_TOP.OnMousePressed = CustomSelectionButtonMousePressed
+	end
+end
+
 derma.RefreshSkins()
+
+--
+-- Tooltip Overrides for Faction Colors
+-- This section overrides core Helix tooltip functions to use the dynamic
+-- ix.GetFactionColor() without modifying core framework files.
+--
+
+-- Override for the main tooltip row's "important" style.
+local PANEL_ROW = vgui.GetControlTable("ixTooltipRow")
+if (PANEL_ROW) then
+	function PANEL_ROW:SetImportant()
+		self:SetFont("ixSmallTitleFont")
+		self:SetExpensiveShadow(1, color_black)
+		self:SetBackgroundColor(ix.GetFactionColor())
+	end
+end
+
+-- Override for the minimal tooltip row's "important" style.
+local PANEL_MINIMAL_ROW = vgui.GetControlTable("ixTooltipMinimalRow")
+if (PANEL_MINIMAL_ROW) then
+	function PANEL_MINIMAL_ROW:SetImportant()
+		self:SetFont("ixMinimalTitleFont")
+		self:SetBackgroundColor(ix.GetFactionColor())
+	end
+end
+
+-- Override for the container entity's tooltip, as it sets its own color.
+timer.Simple(0, function() -- Use a timer to ensure the entity script has loaded.
+	local ENTITY = scripted_ents.Get("ix_container")
+	if (ENTITY and ENTITY.OnPopulateEntityInfo) then
+		local base_OnPopulateEntityInfo = ENTITY.OnPopulateEntityInfo
+		function ENTITY:OnPopulateEntityInfo(tooltip)
+			base_OnPopulateEntityInfo(self, tooltip)
+			local nameRow = tooltip:GetRow("name")
+			if (IsValid(nameRow)) then nameRow:SetBackgroundColor(ix.GetFactionColor()) end
+		end
+	end
+end)

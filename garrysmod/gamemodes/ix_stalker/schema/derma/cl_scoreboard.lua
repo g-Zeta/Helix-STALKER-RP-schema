@@ -17,7 +17,7 @@ AccessorFunc(PANEL, "model", "Model", FORCE_STRING)
 AccessorFunc(PANEL, "bHidden", "Hidden", FORCE_BOOL)
 
 function PANEL:Init()
-	self:SetSize(80 * ScrW() / 1920, 80 * ScrH() / 1080)
+	self:SetSize(114 * ScrW() / 1920, 80 * ScrH() / 1080)
 	self.bodygroups = BODYGROUPS_EMPTY
 end
 
@@ -203,7 +203,7 @@ function PANEL:Update()
 	
 	self.icon.Paint = function(this, w, h)
 		local client = self.player
-		surface.SetMaterial(Material(client:GetCharacter():GetData("pdaavatar") or "vgui/icons/face_31.png"))
+		surface.SetMaterial(Material(client:GetCharacter():GetData("pdaavatar") or "stalker/ui/avatars/nodata.png"))
 		surface.SetDrawColor(255, 255, 255)
 		surface.DrawTexturedRect(0, 0, w, h)
 	end
@@ -351,7 +351,7 @@ end
 vgui.Register("ixScoreboard", PANEL, "DScrollPanel")
 
 hook.Add("CreateMenuButtons", "ixScoreboard", function(tabs)
-	tabs["STALKERnet"] = function(container)
+	tabs["STALKER.net"] = function(container)
 		container:Add("ixScoreboard")
 	end
 end)

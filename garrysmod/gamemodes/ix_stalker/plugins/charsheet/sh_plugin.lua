@@ -4,76 +4,19 @@ PLUGIN.author = "Subleader"
 PLUGIN.desc = "Another description with more capacity."
 DESCRIPTIONLIMIT = 2000
 
-if (CLIENT) then
-	netstream.Hook("ixReceiveDescription", function(client, contents, url, sheetdata, isadmin)
-		local description = vgui.Create("ixDescriptionEn")
-		local character = client:GetCharacter()
-		local content = character:GetData("sheetPhysDesc", contents)
-		local url = character:GetData("UrlDesc", url)
+-- A default color to use when no character/faction is available.
+local defaultColor = Color(127, 111, 63)
 
-		description:buildSheet(client, isadmin)
-		description:setText(content, url)
-	end)
-	
-	netstream.Hook("ixReceiveViewDescription", function(target, contents, url, playerdata, isadmin)
-		local description = vgui.Create("ixDescriptionEnView")
-		local character = target:GetCharacter()
-		local content = character:GetData("sheetPhysDesc", contents)
-		local url = character:GetData("UrlDesc", url)
-
-		description:buildSheet(target, isadmin, playerdata)
-		description:setText(content, url)
-	end)
-else	
-	netstream.Hook("ixDescriptionSendText", function(client, contents, url, sheetdata)
-		local character = client:GetCharacter()
-		character:SetData("sheetDesc", contents)
-		character:SetData("UrlDesc", url)
-		character:SetData("charsheetinfo", sheetdata)
-	end)
-
-	netstream.Hook("ixDescriptionTargetSendText", function(client, target, sheet)
-		local character = target:GetCharacter()
-
-		character:SetData("charsheetinfo", sheet)
-	end)
-end
-
-function PLUGIN:OnCharacterCreated(client, character)
-	local charsheetinfo = character:GetData("charsheetinfo", nil) or {}
-	charsheetinfo["Name"] = {left = "Name", right = character:GetData("sheetName", nil) or character:GetName(), nonadmin = false}
-	--charsheetinfo["Nickname"] = {left = "Nickname", right = character:GetData("sheetFullName", nil) or "None", nonadmin = true}
-	charsheetinfo["Date of Birth"] = {left = "Date of Birth", right = character:GetData("sheetDOBText", nil) or "MM/DD/YYYY", nonadmin = false}
-	--charsheetinfo["Age"] = {left = "Age", right = character:GetData("sheetAge", nil) or "Fill me.", nonadmin = false}
-	charsheetinfo["Race"] = {left = "Race", right = character:GetData("sheetRace", nil) or "Fill me.", nonadmin = false}
-	charsheetinfo["Nationality"] = {left = "Nationality", right = character:GetData("sheetNationality", nil) or "Fill me.", nonadmin = false}
-
-	character:SetData("charsheetinfo", charsheetinfo)
-end
-
---[[
-do
-	local COMMAND = {}
-	COMMAND.description = "Edit your own description"
-	COMMAND.adminOnly = false
-
-	function COMMAND:OnRun(client)
-			if (IsValid(client)) then
-			local character = client:GetCharacter()
-				netstream.Start(client, "ixReceiveDescription",client, character:GetData("sheetPhysDesc", contents), character:GetData("UrlDesc", url), character:GetData("charsheetinfo", nil), client:IsAdmin())
-			else
-				return "Not a valid player"
-			end
-	end
-
-	ix.command.Add("Selfdesc", COMMAND)
-end
---]]
+-- Override the default Helix color config to make it dynamic.
+-- We set it to hidden so it doesn't appear in the F1 menu.
+ix.config.Add("color", defaultColor, "The main color theme for the framework.", nil, {
+	hidden = true
+})
 
 ix.char.RegisterVar("dob", {
     field = "dob",
     fieldType = ix.type.text,
-    category = "charsheet",
+    category = "profile",
     default = "",
     index = 6,
     OnValidate = function(self, value, payload)
@@ -99,26 +42,28 @@ ix.char.RegisterVar("dob", {
             return false, "Year must be 1900 or later."
         end
 
-        -- Validate actual calendar date using os.time (handles month/day overflow)
-        local okTime = os.time({year = year, month = month, day = day, hour = 12, min = 0, sec = 0, isdst = false})
-        if not okTime then
+        -- Manual date validation to avoid os.time issues with pre-1970 dates
+        local daysInMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+        if (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0) then
+            daysInMonth[2] = 29
+        end
+        if day > daysInMonth[month] then
             return false, "Invalid calendar date for Date of Birth."
         end
 
         -- Date cannot be in the future
-        local today = os.time()
-        if okTime > today then
+        local now = os.date("*t")
+        if year > now.year or (year == now.year and month > now.month) or (year == now.year and month == now.month and day > now.day) then
             return false, "Date of Birth cannot be in the future."
         end
 
-        -- Enforce minimum/maximum age (example: 20–99)
-        -- Calculate age roughly
-        local now = os.date("*t")
+        -- Enforce minimum/maximum age
+        -- Calculate age
         local age = now.year - year
         if (now.month < month) or (now.month == month and now.day < day) then
             age = age - 1
         end
-        local minAge, maxAge = 20, 99
+        local minAge, maxAge = 20, 120
         if age < minAge then
             return false, "You can't be below the age of " .. tostring(minAge) .. "."
         elseif age > maxAge then
@@ -174,7 +119,7 @@ ix.char.RegisterVar("dob", {
 ix.char.RegisterVar("age", {
     field = "age",
     fieldType = ix.type.text,
-    category = "charsheet",
+    category = "profile",
     default = "",
     index = 6,
     OnValidate = function(self, value, payload)
@@ -215,13 +160,13 @@ ix.char.RegisterVar("age", {
 ix.char.RegisterVar("nationality", {
 	field = "nationality",
 	fieldType = ix.type.text,
-	category = "charsheet",
+	category = "profile",
 	default = "Ukranian",
 	index = 7,
 	OnValidate = function(self, value, payload)
 		value = string.Trim((tostring(value):gsub("\r\n", ""):gsub("\n", "")))
 		
-		local minLength = 1
+		local minLength = 4
 		local maxLength = 30
 
 		if (#value < minLength) then
@@ -259,7 +204,7 @@ ix.char.RegisterVar("nationality", {
 ix.char.RegisterVar("race", {
 	field = "race",
 	fieldType = ix.type.text,
-	category = "charsheet",
+	category = "profile",
 	default = "Caucasian",
 	index = 8,
 	OnValidate = function(self, value, payload)
@@ -327,17 +272,27 @@ ix.command.Add("charsetdob", {
             if d < 1 or d > 31 then return false, "Invalid day in Date of Birth." end
             if y < 1900 then return false, "Year must be 1900 or later." end
 
-            local t = os.time({year = y, month = m, day = d, hour = 12, min = 0, sec = 0, isdst = false})
-            if not t then return false, "Invalid calendar date for Date of Birth." end
-            if t > os.time() then return false, "Date of Birth cannot be in the future." end
+            -- Manual date validation
+            local daysInMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+            if (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0) then
+                daysInMonth[2] = 29
+            end
+            if d > daysInMonth[m] then
+                return false, "Invalid calendar date for Date of Birth."
+            end
 
-            -- Enforce same age range as creation (20–99). Remove if you want admins unrestricted.
+            -- Future date check
             local now = os.date("*t")
+            if y > now.year or (y == now.year and m > now.month) or (y == now.year and m == now.month and d > now.day) then
+                return false, "Date of Birth cannot be in the future."
+            end
+
+            -- Enforce same age range as creation (20–120). Remove if you want admins unrestricted.
             local age = now.year - y
             if (now.month < m) or (now.month == m and now.day < d) then
                 age = age - 1
             end
-            local minAge, maxAge = 20, 99
+            local minAge, maxAge = 20, 120
             if age < minAge then
                 return false, "You can't be below the age of " .. tostring(minAge) .. "."
             elseif age > maxAge then
@@ -394,3 +349,143 @@ ix.command.Add("charsetdob", {
         end
     end
 })
+
+ix.command.Add("charsetnationality", {
+    description = "Set a character's Nationality.",
+	adminOnly = true,
+    arguments = {
+        ix.type.character,
+        ix.type.text
+    },
+    OnRun = function(self, client, character, nationalityArg)
+        local nationalityVar = ix.char.vars.nationality
+        local result, fault = nationalityVar:OnValidate(nationalityArg)
+
+        if result == false then
+            client:Notify(fault)
+            return
+        end
+
+        local value = result
+        local target = character:GetPlayer()
+
+        -- Persist value
+        character:SetData("sheetNationality", value)
+
+        -- Also update the stored charsheetinfo row so viewers see it immediately
+        local info = character:GetData("charsheetinfo", {}) or {}
+        info["Nationality"] = { left = "Nationality", right = value, nonadmin = false }
+        character:SetData("charsheetinfo", info)
+
+        -- Keep char var in sync for any other systems using it
+        character:SetVar("nationality", value, true)
+
+        client:Notify("Set Nationality to '" .. value .. "' for " .. character:GetName() .. ".")
+        if IsValid(target) then
+            target:Notify("Your Nationality was set to '" .. value .. "' by an administrator.")
+        end
+    end
+})
+
+ix.command.Add("charsetrace", {
+    description = "Set a character's Race.",
+	adminOnly = true,
+    arguments = {
+        ix.type.character,
+        ix.type.text
+    },
+    OnRun = function(self, client, character, raceArg)
+        local raceVar = ix.char.vars.race
+        local result, fault = raceVar:OnValidate(raceArg)
+
+        if result == false then
+            client:Notify(fault)
+            return
+        end
+
+        local value = result
+        local target = character:GetPlayer()
+
+        -- Persist value
+        character:SetData("sheetRace", value)
+
+        -- Also update the stored charsheetinfo row so viewers see it immediately
+        local info = character:GetData("charsheetinfo", {}) or {}
+        info["Race"] = { left = "Race", right = value, nonadmin = false }
+        character:SetData("charsheetinfo", info)
+
+        -- Keep char var in sync for any other systems using it
+        character:SetVar("race", value, true)
+
+        client:Notify("Set Race to '" .. value .. "' for " .. character:GetName() .. ".")
+        if IsValid(target) then
+            target:Notify("Your Race was set to '" .. value .. "' by an administrator.")
+        end
+    end
+})
+
+if (CLIENT) then
+	netstream.Hook("ixReceiveDescription", function(client, contents, url, sheetdata, isadmin)
+		local description = vgui.Create("ixDescriptionEn")
+		local character = client:GetCharacter()
+		local content = character:GetData("sheetPhysDesc", contents)
+		local url = character:GetData("UrlDesc", url)
+
+		description:buildSheet(client, isadmin)
+		description:setText(content, url)
+	end)
+	
+	netstream.Hook("ixReceiveViewDescription", function(target, contents, url, playerdata, isadmin)
+		local description = vgui.Create("ixDescriptionEnView")
+		local character = target:GetCharacter()
+		local content = character:GetData("sheetPhysDesc", contents)
+		local url = character:GetData("UrlDesc", url)
+
+		description:buildSheet(target, isadmin, playerdata)
+		description:setText(content, url)
+	end)
+else	
+	netstream.Hook("ixDescriptionSendText", function(client, contents, url, sheetdata)
+		local character = client:GetCharacter()
+		character:SetData("sheetDesc", contents)
+		character:SetData("UrlDesc", url)
+		character:SetData("charsheetinfo", sheetdata)
+	end)
+
+	netstream.Hook("ixDescriptionTargetSendText", function(client, target, sheet)
+		local character = target:GetCharacter()
+
+		character:SetData("charsheetinfo", sheet)
+	end)
+end
+
+function PLUGIN:OnCharacterCreated(client, character)
+	local charsheetinfo = character:GetData("charsheetinfo", nil) or {}
+	charsheetinfo["Name"] = {left = "Name", right = character:GetData("sheetName", nil) or character:GetName(), nonadmin = false}
+	--charsheetinfo["Nickname"] = {left = "Nickname", right = character:GetData("sheetFullName", nil) or "None", nonadmin = true}
+	charsheetinfo["Date of Birth"] = {left = "Date of Birth", right = character:GetData("sheetDOBText", nil) or "MM/DD/YYYY", nonadmin = false}
+	--charsheetinfo["Age"] = {left = "Age", right = character:GetData("sheetAge", nil) or "Fill me.", nonadmin = false}
+	charsheetinfo["Race"] = {left = "Race", right = character:GetData("sheetRace", nil) or "Fill me.", nonadmin = false}
+	charsheetinfo["Nationality"] = {left = "Nationality", right = character:GetData("sheetNationality", nil) or "Fill me.", nonadmin = false}
+
+	character:SetData("charsheetinfo", charsheetinfo)
+end
+
+--[[
+do
+	local COMMAND = {}
+	COMMAND.description = "Edit your own description"
+	COMMAND.adminOnly = false
+
+	function COMMAND:OnRun(client)
+			if (IsValid(client)) then
+			local character = client:GetCharacter()
+				netstream.Start(client, "ixReceiveDescription",client, character:GetData("sheetPhysDesc", contents), character:GetData("UrlDesc", url), character:GetData("charsheetinfo", nil), client:IsAdmin())
+			else
+				return "Not a valid player"
+			end
+	end
+
+	ix.command.Add("Selfdesc", COMMAND)
+end
+--]]

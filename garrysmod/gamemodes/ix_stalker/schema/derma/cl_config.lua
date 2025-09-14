@@ -53,6 +53,10 @@ function PANEL:Populate()
 				row:SetMin(data and data.min or 0)
 				row:SetMax(data and data.max or 1)
 				row:SetDecimals(data and data.decimals or 0)
+
+				if (data and data.step) then
+					row:SetStep(data.step)
+				end
 			end
 
 			row:SetValue(value, true)
