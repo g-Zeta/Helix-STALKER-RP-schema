@@ -16,3 +16,5 @@ ITEM.Range = 30
 ITEM.Pen = 4
 ITEM.Mag = 6
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/taurus_raging_bull.png", "smooth")

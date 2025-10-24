@@ -22,3 +22,5 @@ ITEM.iconCam = {
 	ang = Angle(0, 270, 0),
 	fov = 10,
 }
+
+ITEM.img = Material("stalker2/ui/weapons/l85a2.png", "smooth")

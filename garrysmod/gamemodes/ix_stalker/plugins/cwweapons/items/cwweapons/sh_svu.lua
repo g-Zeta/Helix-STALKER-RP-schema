@@ -16,3 +16,5 @@ ITEM.Range = 150
 ITEM.Pen = 20
 ITEM.Mag = 10
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/dragunov_svu.png", "smooth")

@@ -17,3 +17,5 @@ ITEM.Range = 150
 ITEM.Pen = 18
 ITEM.Mag = 100
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/pkm.png", "smooth")
