@@ -1,6 +1,6 @@
 PLUGIN.name = "Crosshair - STALKER"
 PLUGIN.author = "some faggot"
-PLUGIN.desc = "modified crosshair"
+PLUGIN.desc = "Custom Stalker styled crosshair."
 
 ix.option.Add("Crosshair", ix.type.bool, false, {
 	category = "STALKER Settings",
@@ -21,7 +21,11 @@ if (CLIENT) then
 	local function drawdot( pos, size, col )
 		local color = col[2]
 		surface.SetDrawColor(color.r, color.g, color.b, color.a)
-		surface.SetMaterial( Material("stalker/crosshair.vtf") )
+		if ix.option.Get("StalkerHUD") then
+			surface.SetMaterial( Material("stalker2/ui/hud/crosshair_circle_point.png", "smooth") )
+		else
+			surface.SetMaterial( Material("stalker/ui/crosshair.vtf", "smooth") )
+		end
 		surface.DrawTexturedRect(pos[1] - size/2, pos[2] - size/2, size, size)
 		
 	end
@@ -93,7 +97,7 @@ if (CLIENT) then
 			curGap = Lerp(ft * 2, curGap, crossGap)
 			curAlpha = Lerp(ft * 2, curAlpha, (!client:IsWepRaised() and 255 or 150))
 			curAlpha = hook.Run("GetCrosshairAlpha", curAlpha) or curAlpha
-			colors[2] = Color(255, curAlpha, curAlpha, curAlpha)
+			colors[2] = Color(255, 255, 255, 255)
 		
 			drawdot( {math_round(screen.x), math_round(screen.y)}, crossSize, colors)
 			--drawdot( {math_round(screen.x + curGap), math_round(screen.y)}, crossSize, colors)

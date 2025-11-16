@@ -6,7 +6,7 @@ ITEM.class = "cw_sil_toz34"
 ITEM.weaponCategory = "secondary"
 ITEM.width = 4
 ITEM.price = 6500
-ITEM.height = 1 
+ITEM.height = 2
 ITEM.flag = "1"
 ITEM.Range = 50
 ITEM.Pen = 5
@@ -22,3 +22,5 @@ ITEM.iconCam = {
 	ang = Angle(0, 90, 0),
 	fov = 70
 }
+
+ITEM.img = Material("stalker2/ui/weapons/toz34.png", "smooth")

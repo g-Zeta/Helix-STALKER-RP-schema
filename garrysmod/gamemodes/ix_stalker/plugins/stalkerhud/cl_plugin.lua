@@ -1,3 +1,4 @@
+--STALKER SHoC HUD textures
 local health = Material("stalkerSHoC/ui/hud/health.png", "noclamp smooth")
 local healthbar = Material("stalkerSHoC/ui/hud/bar.png", "noclamp smooth")
 local staminabar = Material("stalkerSHoC/ui/hud/bar4.png", "noclamp smooth")
@@ -14,36 +15,60 @@ local s2hud = Material("stalker2/ui/hud/s2hud.png", "noclamp smooth")
 local hpbar = Material("stalker2/ui/hud/hpbar.png", "noclamp smooth")
 local stmbar = Material("stalker2/ui/hud/stmbar.png", "noclamp smooth")
 local radicon = Material("stalker2/ui/hud/radicon.png", "noclamp smooth")
+local radsmeter = Material("stalker2/ui/hud/rads.vtf", "noclamp smooth")
+
 local ammoS2 = Material("stalker2/ui/hud/ammo.png", "noclamp smooth")
 
-local ammo9x18 = Material("stalker2/ui/ammunition/ammo_9x18.png", "noclamp smooth")
-local ammo9x19 = Material("stalker2/ui/ammunition/ammo_9x19.png", "noclamp smooth")
+local ammo9x18 = Material("stalker2/ui/ammunition/ammo_9x18_fmj.png", "noclamp smooth")
+local ammo9x18ap = Material("stalker2/ui/ammunition/ammo_9x18_ap.png", "noclamp smooth")
+local ammo9x19 = Material("stalker2/ui/ammunition/ammo_9x19_fmj.png", "noclamp smooth")
+local ammo9x19ap = Material("stalker2/ui/ammunition/ammo_9x19_ap.png", "noclamp smooth")
+local ammo45acp = Material("stalker2/ui/ammunition/ammo_45acp_fmj.png", "noclamp smooth")
+local ammo45acpap = Material("stalker2/ui/ammunition/ammo_45acp_ap.png", "noclamp smooth")
+local ammo45acphp = Material("stalker2/ui/ammunition/ammo_45acp_hp.png", "noclamp smooth")
 local ammo12x70buck = Material("stalker2/ui/ammunition/ammo_12x70_buck.png", "noclamp smooth")
-local ammo50AE = Material("spawnicons/models/kek1ch/ammo_50_ae_128.png", "noclamp smooth")
-local ammo545x39 = Material("stalker2/ui/ammunition/ammo_545x39.png", "noclamp smooth")
-local ammo556x45 = Material("stalker2/ui/ammunition/ammo_556x45.png", "noclamp smooth")
-local ammo762x25 = Material("spawnicons/models/kek1ch/ammo_762x25_p_128.png", "noclamp smooth")
-local ammo762x39 = Material("stalker2/ui/ammunition/ammo_762x39.png", "noclamp smooth")
-local ammo762x54 = Material("stalker2/ui/ammunition/ammo_762x54_7n1.png", "noclamp smooth")
-local ammo86x70 = Material("spawnicons/models/kek1ch/ammo_86x70_fmj_128.png", "noclamp smooth")
-local ammo9x39 = Material("stalker2/ui/ammunition/ammo_9x39.png", "noclamp smooth")
+local ammo12x70dart = Material("stalker2/ui/ammunition/ammo_12x70_dart.png", "noclamp smooth")
+local ammo12x70slug = Material("stalker2/ui/ammunition/ammo_12x70_slug.png", "noclamp smooth")
+local ammo545x39 = Material("stalker2/ui/ammunition/ammo_545x39_fmj.png", "noclamp smooth")
+local ammo545x39ap = Material("stalker2/ui/ammunition/ammo_545x39_ap.png", "noclamp smooth")
+local ammo545x39hp = Material("stalker2/ui/ammunition/ammo_545x39_hp.png", "noclamp smooth")
+local ammo556x45 = Material("stalker2/ui/ammunition/ammo_556x45_fmj.png", "noclamp smooth")
+local ammo556x45ap = Material("stalker2/ui/ammunition/ammo_556x45_ap.png", "noclamp smooth")
+local ammo556x45hp = Material("stalker2/ui/ammunition/ammo_556x45_hp.png", "noclamp smooth")
+local ammo556x45ss = Material("stalker2/ui/ammunition/ammo_556x45_ss.png", "noclamp smooth")
+local ammo762x39 = Material("stalker2/ui/ammunition/ammo_762x39_fmj.png", "noclamp smooth")
+local ammo762x39ap = Material("stalker2/ui/ammunition/ammo_762x39_ap.png", "noclamp smooth")
+local ammo762x39hp = Material("stalker2/ui/ammunition/ammo_762x39_hp.png", "noclamp smooth")
+local ammo762x51 = Material("stalker2/ui/ammunition/ammo_308_fmj.png", "noclamp smooth")
+local ammo762x51ap = Material("stalker2/ui/ammunition/ammo_308_ap.png", "noclamp smooth")
+local ammo762x51match = Material("stalker2/ui/ammunition/ammo_308_match.png", "noclamp smooth")
+local ammo762x54 = Material("stalker2/ui/ammunition/ammo_762x54_fmj.png", "noclamp smooth")
+local ammo762x54ap = Material("stalker2/ui/ammunition/ammo_762x54_ap.png", "noclamp smooth")
+local ammo762x54ss = Material("stalker2/ui/ammunition/ammo_762x54_ss.png", "noclamp smooth")
+local ammo9x39 = Material("stalker2/ui/ammunition/ammo_9x39_fmj.png", "noclamp smooth")
+local ammo9x39ppe = Material("stalker2/ui/ammunition/ammo_9x39_ppe.png", "noclamp smooth")
+local ammo9x39sp5 = Material("stalker2/ui/ammunition/ammo_9x39_sp5.png", "noclamp smooth")
+local ammo9x39sp6 = Material("stalker2/ui/ammunition/ammo_9x39_sp6.png", "noclamp smooth")
 local ammogauss = Material("stalker2/ui/ammunition/ammo_gauss.png", "noclamp smooth")
+local ammorpg = Material("stalker2/ui/ammunition/ammo_pg7v.png", "noclamp smooth")
+local ammom203 = Material("stalker2/ui/ammunition/ammo_m203.png", "noclamp smooth")
+local ammovog25 = Material("stalker2/ui/ammunition/ammo_vog25.png", "noclamp smooth")
 
-local minScale = 1.0  -- Minimum scale (100% original size)
-local maxScale = 1.3  -- Maximum scale (130% of original size)
-local scaleSpeed = 0.25   -- Speed of the scaling effect
-local elapsedTime = 0.1  -- Time elapsed for the heartbeat effect
+local minScale = 0.9
+local maxScale = 1.3
+local scaleSpeed = 0.3
+local elapsedTime = 0.1
 
 --Ammo and Clip fonts
 surface.CreateFont("ClipFont", {
 	font = "arial",
-	size = ScreenScale(12),
+	size = ScreenScale(17),
 	extended = true,
 	weight = 600,
 })
 surface.CreateFont("SlashFont", {
 	font = "arial",
-	size = ScreenScale(10),
+	size = ScreenScale(12),
 	extended = true,
 	weight = 500,
 })
@@ -177,7 +202,7 @@ function PLUGIN:SHoCHUDPaint()
 --// End HUD Code //--
 end
 
---STALKER 2 HUD
+--STALKER 2 HUD New
 function PLUGIN:S2HUDPaint()
 	local lp = LocalPlayer()
 	local wep = LocalPlayer():GetActiveWeapon()
@@ -185,34 +210,44 @@ function PLUGIN:S2HUDPaint()
 
 	if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
 
+	local scrW, scrH = ScrW(), ScrH()
+	local scaleX, scaleY = scrW / 1920, scrH / 1080
+
 	--UI
+	local hudX, hudY = 40 * scaleX, 960 * scaleY
+	local hudW, hudH = 291 * scaleX, 83 * scaleY
 	surface.SetMaterial(s2hud)
 	surface.SetDrawColor(Color(255, 255, 255, 255))
-	surface.DrawTexturedRect(30 * (ScrW() / 1920), 930 * (ScrH() / 1080), 319 * (ScrW() / 1920), 111 * (ScrH() / 1080))
+	surface.DrawTexturedRect(hudX, hudY, hudW, hudH)
 	
 	--Health bar
+	local hpFraction = math.Clamp(lp:Health() / lp:GetMaxHealth(), 0, 1)
+	local hpBarX, hpBarY = hudX + 94 * scaleX, hudY + 27 * scaleY
+	local hpBarW, hpBarH = (185 * scaleX) * hpFraction, 12 * scaleY
+
 	surface.SetMaterial(hpbar)
 	surface.SetDrawColor(Color(255, 255, 255, 255))
-	surface.DrawTexturedRect(ScrW()-1776 * (ScrW() / 1920), ScrH()-110 * (ScrH() / 1080), (1.88*math.Clamp( LocalPlayer():Health()/LocalPlayer():GetMaxHealth()*100, 0, 100 )) * (ScrW() / 1920), 11 * (ScrH() / 1080))
+	-- Draw the bar with UV coordinates adjusted by health. This crops the texture instead of resizing it.
+	-- The arguments are: x, y, width, height, startU, startV, endU, endV
+	surface.DrawTexturedRectUV(hpBarX, hpBarY, hpBarW, hpBarH, 0, 0, hpFraction, 1)
 	
-	--Stamina bars
-	local maxStamina = 100 -- Player's maximum stamina
-	local fullWidth = 171 * (ScrW() / 1920)  -- Full width of the stamina bar
-	local stamina = LocalPlayer():GetLocalVar("stm", 100)  -- Get the current stamina value
-	local sectionWidth = fullWidth / 3 -- Calculate the width of each segment
-	local width1 = (stamina >= maxStamina * (1/3)) and sectionWidth or (sectionWidth * (stamina / (maxStamina * (1/3))))
-	local width2 = (stamina >= maxStamina * (2/3)) and sectionWidth or (sectionWidth * ((stamina - maxStamina * (1/3)) / (maxStamina * (1/3))))
-	local width3 = (stamina >= maxStamina) and sectionWidth or (sectionWidth * ((stamina - maxStamina * (2/3)) / (maxStamina * (1/3))))
-	
+	--Stamina bar
+	local stmFraction = math.Clamp(lp:GetLocalVar("stm", 100) / 100, 0, 1)
+	local stmBarX, stmBarY = hudX + 97 * scaleX, hudY + 45 * scaleY
+	local stmBarW, stmBarH = (164 * scaleX) * stmFraction, 7 * scaleY
+
 	surface.SetMaterial(stmbar)
 	surface.SetDrawColor(Color(255, 255, 255, 255))
-	surface.DrawTexturedRect(ScrW() - 1776 * (ScrW() / 1920), ScrH() - 90 * (ScrH() / 1080), width1, 8, Color(255, 255, 255, 255))  -- First 33.33%
-	surface.DrawTexturedRect(ScrW() - 1776 * (ScrW() / 1920) + sectionWidth, ScrH() - 90 * (ScrH() / 1080), width2, 8, Color(255, 255, 255, 255))  -- Second 33.33%
-	surface.DrawTexturedRect(ScrW() - 1776 * (ScrW() / 1920) + 2 * sectionWidth, ScrH() - 90 * (ScrH() / 1080), width3, 8, Color(255, 255, 255, 255))  -- Third 33.33%
+	surface.DrawTexturedRectUV(stmBarX, stmBarY, stmBarW, stmBarH, 0, 0, stmFraction, 1)
 
 	--Radiation status
-    local radiation = lp:getRadiation()
-    local radMaterials = {}
+	local radiation = lp:getRadiation()
+	local radMaterials = {}
+	local scale = 1.0 -- Default scale
+
+	-- Position for the animated frame indicator
+	local radsX = hudX + 13 * scaleX
+	local radsY = hudY + 9 * scaleY
 
     -- Modify scaleSpeed based on radiation level
     scaleSpeed = 1 + (radiation / 5) -- Adjust '50' to control sensitivity
@@ -229,68 +264,18 @@ function PLUGIN:S2HUDPaint()
     local colorOrange = Color(255, 165, 0, 255)  	--Orange
     local colorRed = Color(255, 0, 0, 255)        	--Red
 
-    if radiation > 0 then
-        -- Set the material and draw color
-        surface.SetMaterial(radicon)
-        surface.SetDrawColor(colorWhite)
-
-    -- Determine color based on radiation level
-    local currentColor
-    if radiation <= 25 then
-        -- Fully white
-        currentColor = colorWhite
-    elseif radiation <= 50 then
-        -- Interpolate from white to yellow
-        local factor = (radiation - 25) / 25
-        currentColor = Color(
-            Lerp(factor, colorWhite.r, colorYellow.r),
-            Lerp(factor, colorWhite.g, colorYellow.g),
-            Lerp(factor, colorWhite.b, colorYellow.b),
-            colorWhite.a
-        )
-    elseif radiation <= 75 then
-        -- Interpolate from yellow to orange
-        local factor = (radiation - 50) / 25
-        currentColor = Color(
-            Lerp(factor, colorYellow.r, colorOrange.r),
-            Lerp(factor, colorYellow.g, colorOrange.g),
-            Lerp(factor, colorYellow.b, colorOrange.b),
-            colorYellow.a
-        )
-    else
-        -- Interpolate from orange to red
-        local factor = (radiation - 75) / 25
-        currentColor = Color(
-            Lerp(factor, colorOrange.r, colorRed.r),
-            Lerp(factor, colorOrange.g, colorRed.g),
-            Lerp(factor, colorOrange.b, colorRed.b),
-            colorOrange.a
-        )
-    end
-
-    -- Set the material and draw color
-    surface.SetMaterial(radicon)
-    surface.SetDrawColor(currentColor)
-
-        -- Calculate the size of the texture based on the heartbeat scale
-        local width, height = 61 * scale * (ScrW() / 1920), 61 * scale * (ScrH() / 1080)  -- Adjust the size based on the scale
-        local xPosition = ScrW() - 1880 * (ScrW() / 1920) - (width - 75 * (ScrW() / 1920)) / 2  -- Center the image based on its resized width
-        local yPosition = ScrH() - 129 * (ScrH() / 1080) - (height - 75 * (ScrH() / 1080)) / 2  -- Center the image based on its resized height
-
-        -- Draw the texture at the specified position with the scaled size
-        surface.DrawTexturedRect(xPosition, yPosition, width, height)
-    end
-
     -- Load all the materials into a table
-    for i = 1, 24 do
-        radMaterials[i] = Material("stalker2/ui/hud/rad" .. i .. ".png", "noclamp smooth")
+    for i = 1, 32 do
+        radMaterials[i] = Material("stalker2/ui/hud/radc" .. i .. ".png", "noclamp smooth")
     end
 
     local materialIndex = 1  -- Default index
 
     if radiation > 0 then
+        local currentColor
+
         -- Calculate the material index based on radiation
-        materialIndex = math.min(math.floor(radiation / 4) + 1, 24)  -- Ensure it does not exceed 24
+        materialIndex = math.min(math.floor((radiation / 100) * 31) + 1, 32) -- Map 1-100 radiation to 1-32 frames
 
     -- Determine the color based on radiation level
     local currentColor
@@ -326,21 +311,39 @@ function PLUGIN:S2HUDPaint()
         )
     end
 
-    -- Set the material and draw color
-    surface.SetMaterial(radMaterials[materialIndex])
-	surface.SetDrawColor(currentColor)
+		-- Draw the animated meter frame
+		surface.SetMaterial(radMaterials[materialIndex])
+		surface.SetDrawColor(currentColor)
+		local radmeterSize = 60
+		local radmeterX = radsX + (60 - radmeterSize) * 0.5 * scaleX
+		local radmeterY = radsY + (61 - radmeterSize) * 0.5 * scaleY
+		surface.DrawTexturedRect(radmeterX, radmeterY, radmeterSize * scaleX, radmeterSize * scaleY)
 
-    -- Draw the texture at the specified position
-    surface.DrawTexturedRect(ScrW() - 1880 * (ScrW() / 1920), ScrH() - 131 * (ScrH() / 1080), 75 * (ScrW() / 1920), 78 * (ScrH() / 1080))  -- Adjust position as needed
-    else
-        -- If radiation is 0, set a transparent draw color to ensure nothing is drawn
-        surface.SetDrawColor(0, 0, 0, 0)  -- Fully transparent
+		-- Draw the pulsing icon in the center
+		surface.SetMaterial(radicon)
+		surface.SetDrawColor(currentColor)
+		local radiconSize = 30 * scale
+		local radiconX = radsX + (60 - radiconSize) * 0.5 * scaleX
+		local radiconY = radsY + (61 - radiconSize) * 0.5 * scaleY
+		surface.DrawTexturedRect(radiconX, radiconY, radiconSize * scaleX, radiconSize * scaleY)
+	else
+		-- If radiation is 0, draw a static white icon
+		surface.SetMaterial(radicon)
+		surface.SetDrawColor(colorWhite)
+		local radiconSize = 30
+		local radiconX = radsX + (60 - radiconSize) * 0.5 * scaleX
+		local radiconY = radsY + (61 - radiconSize) * 0.5 * scaleY
+		surface.DrawTexturedRect(radiconX, radiconY, radiconSize * scaleX, radiconSize * scaleY)
+		-- Also ensure the animated meter is not drawn
+		surface.SetDrawColor(0, 0, 0, 0)
 	end
-
+	
 	--Ammo UI
+	local ammoX, ammoY = (ScrW() - 270) * scaleX, (ScrH() - 120) * scaleY
+	local ammoW, ammoH = 226 * scaleX, 83 * scaleY
 	surface.SetMaterial(ammoS2)
-	surface.SetDrawColor(Color(255, 255, 255, 240))
-	surface.DrawTexturedRect(ScrW()-280 * (ScrW() / 1920), ScrH()-160 * (ScrH() / 1080), 251 * (ScrW() / 1920), 131 * (ScrH() / 1080))
+	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.DrawTexturedRect(ammoX, ammoY, ammoW, ammoH)
 
     -- Display ammo icon based on the weapon's primary ammo type
     if IsValid(wep) and wep.Primary then
@@ -353,20 +356,14 @@ function PLUGIN:S2HUDPaint()
             ammoMaterial = ammo9x19
         elseif wep.Primary.Ammo == "12 Gauge" then
             ammoMaterial = ammo12x70buck
-        elseif wep.Primary.Ammo == ".50 AE" then
-            ammoMaterial = ammo50AE
         elseif wep.Primary.Ammo == "5.45x39MM" then
             ammoMaterial = ammo545x39
         elseif wep.Primary.Ammo == "5.56x45MM" then
             ammoMaterial = ammo556x45
-        elseif wep.Primary.Ammo == "7.62x25MM" then
-            ammoMaterial = ammo762x25
         elseif wep.Primary.Ammo == "7.62x39MM" then
             ammoMaterial = ammo762x39
         elseif wep.Primary.Ammo == "7.62x54MM" then
             ammoMaterial = ammo762x54
-        elseif wep.Primary.Ammo == ".338 Lapua" then
-            ammoMaterial = ammo86x70
         elseif wep.Primary.Ammo == "9x39MM" then
             ammoMaterial = ammo9x39
         elseif wep.Primary.Ammo == "Batteries" then
@@ -376,8 +373,11 @@ function PLUGIN:S2HUDPaint()
         -- If a valid ammo material was found, draw it
         if ammoMaterial then
             surface.SetMaterial(ammoMaterial)
-            surface.SetDrawColor(Color(255, 255, 255, 255))
-            surface.DrawTexturedRect(ScrW() - 138 * (ScrW() / 1920), ScrH() - 115 * (ScrH() / 1080), 96 * (ScrW() / 1920), 48 * (ScrH() / 1080))
+            surface.SetDrawColor(Color(255, 255, 255, 255))			
+			local ammoIconX = ammoX + 141 * scaleX
+			local ammoIconY = ammoY + 22 * scaleY
+			local ammoIconW, ammoIconH = 77 * scaleX, 39 * scaleY
+            surface.DrawTexturedRect(ammoIconX, ammoIconY, ammoIconW, ammoIconH)
         end
     end
 
@@ -385,21 +385,49 @@ function PLUGIN:S2HUDPaint()
 	if IsValid(wep) then
 		if wep:HasAmmo() and wep:Clip1() >= 0 then
 			local clipText = tostring(wep:Clip1())
-			local ammoCount = tostring(lp:GetAmmoCount(wep:GetPrimaryAmmoType()))
-			local slash = "/" -- The slash character
+			local ammoCountText = tostring(lp:GetAmmoCount(wep:GetPrimaryAmmoType()))
 			
-			-- Calculate the positions for the text
-			local baseX = ScrW() - 222 * (ScrW() / 1920)
-			local baseY = ScrH() - 122 * (ScrH() / 1080)
-
-			-- Draw the Clip size
-			draw.DrawText(clipText, "ClipFont", baseX, baseY, Color(200, 200, 200, 255), TEXT_ALIGN_CENTER)
+			-- Calculate the positions for the text relative to the ammo UI panel
+			local baseX = ammoX + 80 * scaleX
+			local baseY = ammoY + 2 * scaleY
 			
-			-- Draw the slash
-			draw.DrawText(slash, "SlashFont", baseX + 34 * (ScrW() / 1920), baseY + 6 * (ScrH() / 1080), Color(200, 200, 200, 255), TEXT_ALIGN_CENTER)
+			local defaultTextColor = Color(215, 215, 215, 255)
+			local clipTextColor = defaultTextColor
 
-			-- Draw the Ammo count
-			draw.DrawText(ammoCount, "AmmoFont", baseX + 60 * (ScrW() / 1920), baseY + 6 * (ScrH() / 1080), Color(200, 200, 200, 255), TEXT_ALIGN_CENTER)
+			local ammoCountColor = defaultTextColor
+			local ammoType = wep:GetPrimaryAmmoType()
+			local currentAmmo = lp:GetAmmoCount(ammoType)
+			local maxAmmo = 100
+			if maxAmmo > 0 and currentAmmo <= (maxAmmo * 0.10) then
+				ammoCountColor = Color(255, 0, 0, 255) -- Red
+			end
+
+			local flashSpeed = 20 -- Higher is faster, lower is slower.
+			-- Check if ammo is low (e.g., 25% of clip size)
+			if wep.Primary and wep.Primary.ClipSize > 0 and wep:Clip1() <= (wep.Primary.ClipSize * 0.25) then
+				-- Create a flashing effect using a sine wave
+				if math.sin(CurTime() * flashSpeed) > 0 then
+					clipTextColor = Color(255, 0, 0, 255) -- Red
+				end
+			end
+
+			-- Define text properties in a table for cleaner drawing calls
+			local textSpec = {}
+			
+			-- Draw the clip text right-aligned to prevent overlap
+			textSpec.text, textSpec.font, textSpec.pos, textSpec.xalign, textSpec.color = clipText, "ClipFont", {baseX, baseY}, TEXT_ALIGN_RIGHT, clipTextColor
+			draw.Text(textSpec)
+			
+			-- Draw the slash and ammo count with the default color
+			textSpec.color = defaultTextColor
+			textSpec.text, textSpec.font, textSpec.pos = "/", "SlashFont", {baseX + 12 * scaleX, baseY + 7 * scaleY}
+			draw.Text(textSpec)
+			
+			textSpec.text, textSpec.font, textSpec.pos, textSpec.xalign, textSpec.color = ammoCountText, "AmmoFont", {baseX + 15 * scaleX, baseY + 11 * scaleY}, TEXT_ALIGN_LEFT, ammoCountColor
+			draw.Text(textSpec)
+
+			-- Reset xalign for other text elements if needed elsewhere
+			textSpec.xalign = TEXT_ALIGN_CENTER
 		end
 	end
 --// End HUD Code //--
