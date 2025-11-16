@@ -33,6 +33,20 @@ local function InventoryAction(action, itemID, invID, data)
 	net.SendToServer()
 end
 
+-- A global utility function to format numbers with commas as thousand separators.
+function ix.util.FormatNumber(number)
+	if not tonumber(number) then return number end
+	local s = tostring(math.floor(number))
+	local formatted = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	-- Remove leading comma if the number of digits is a multiple of 3
+	if formatted:sub(1,1) == "," then
+		formatted = formatted:sub(2)
+	end
+	return formatted
+end
+
+ix.currency.Get = function(price, noSymbol) return (noSymbol and "" or (ix.currency.symbol or "$") .. " ") .. (ix.util.FormatNumber(price) or "0") end
+
 local PANEL = {}
 
 AccessorFunc(PANEL, "itemTable", "ItemTable")
