@@ -22,3 +22,5 @@ ang= Angle(-0.70499622821808, 268.25439453125, 0),
 fov= 14.085652091515,
 pos= Vector(-9, 200, 0)
 }
+
+ITEM.img = Material("stalker2/ui/weapons/m16.png", "smooth")

@@ -16,3 +16,5 @@ ITEM.Range = 50
 ITEM.Pen = 5
 ITEM.Mag = 8
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/remington870.png", "smooth")

@@ -24,3 +24,5 @@ ITEM.iconCam = {
 	ang = Angle(0, 270, 4.7058825492859),
 	fov = 5,
 }
+
+ITEM.img = Material("stalker2/ui/weapons/makarov.png", "smooth")
