@@ -33,6 +33,20 @@ local function InventoryAction(action, itemID, invID, data)
 	net.SendToServer()
 end
 
+-- A global utility function to format numbers with commas as thousand separators.
+function ix.util.FormatNumber(number)
+	if not tonumber(number) then return number end
+	local s = tostring(math.floor(number))
+	local formatted = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	-- Remove leading comma if the number of digits is a multiple of 3
+	if formatted:sub(1,1) == "," then
+		formatted = formatted:sub(2)
+	end
+	return formatted
+end
+
+ix.currency.Get = function(price, noSymbol) return (noSymbol and "" or (ix.currency.symbol or "$") .. " ") .. (ix.util.FormatNumber(price) or "0") end
+
 local PANEL = {}
 
 AccessorFunc(PANEL, "itemTable", "ItemTable")
@@ -1120,7 +1134,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 							surface.DrawTexturedRect(SW(0), SH(0), SW(110), SH(115))
 						elseif not item.isArmor then
 							if (item.isGasmask and item.isHelmet) or item.isGasmask then
-								local headgearImage = item.img
+								local headgearImage = item.img or Material("placeholders/headgear_nomask.png")
 								surface.SetMaterial(headgearImage)
 								surface.SetDrawColor(255, 255, 255, 255) 
 								surface.DrawTexturedRect(SW(5), SH(3), SW(100), SH(100))
@@ -1178,7 +1192,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			function ArmorPanel:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.isArmor and item:GetData("equip", false) then
-						local armorImage = item.img
+						local armorImage = item.img or Material("placeholders/armor_nosuit.png")
 						surface.SetMaterial(armorImage)
 						surface.SetDrawColor(255, 255, 255, 255) 
 						surface.DrawTexturedRect(SW(2), SH(10), SW(106), SH(159))
@@ -1234,15 +1248,13 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			function LWepPanel:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
-						local LWepImage = item.img
+						local LWepImage = item.img or Material("placeholders/weapon_secondary.png")
 						
-						if not LWepImage then return end	-- If nil or non-existent, then no image
-
 						surface.SetMaterial(LWepImage)
 						surface.SetDrawColor(255, 255, 255, 255)
 
 						-- Padding
-						local pad = SW(4)
+						local pad = SW(2)
 						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
 
 						-- Source aspect. If unknown, assume horizontal image (e.g., rifle) -> wider than tall.
@@ -1317,9 +1329,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			function SidearmPanel:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
-						local SidearmImage = item.img
-						
-						if not SidearmImage then return end
+						local SidearmImage = item.img or Material("placeholders/weapon_sidearm.png")
 
 						surface.SetMaterial(SidearmImage)
 						surface.SetDrawColor(255, 255, 255, 255)
@@ -1392,15 +1402,13 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			function RWepPanel:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "primary" and item:GetData("equip", false) then
-						local RWepImage = item.img
+						local RWepImage = item.img or Material("placeholders/weapon_primary.png")
 						
-						if not RWepImage then return end
-
 						surface.SetMaterial(RWepImage)
 						surface.SetDrawColor(255, 255, 255, 255)
 
 						-- Padding
-						local pad = SW(4)
+						local pad = SW(2)
 						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
 
 						-- Landscape
