@@ -339,7 +339,7 @@ function PLUGIN:S2HUDPaint()
 	end
 	
 	--Ammo UI
-	local ammoX, ammoY = (ScrW() - 270) * scaleX, (ScrH() - 120) * scaleY
+	local ammoX, ammoY = 1650 * scaleX, 960 * scaleY
 	local ammoW, ammoH = 226 * scaleX, 83 * scaleY
 	surface.SetMaterial(ammoS2)
 	surface.SetDrawColor(Color(255, 255, 255, 255))
