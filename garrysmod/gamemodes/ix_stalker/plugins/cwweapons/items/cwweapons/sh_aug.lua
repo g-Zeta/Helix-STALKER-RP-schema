@@ -21,3 +21,5 @@ ITEM.Range = 100
 ITEM.Pen = 12
 ITEM.Mag = 30
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/aug_a3.png", "smooth")

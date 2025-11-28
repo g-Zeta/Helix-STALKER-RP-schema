@@ -17,3 +17,5 @@ ITEM.Pen = 6
 ITEM.Mag = 25
 ITEM.Rld = "Ready"
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/kriss_vector.png", "smooth")

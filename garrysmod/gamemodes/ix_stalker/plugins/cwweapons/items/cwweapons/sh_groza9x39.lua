@@ -16,3 +16,5 @@ ITEM.modifier = 4
 ITEM.weight = 4
 ITEM.flag = "3"
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/groza.png", "smooth")

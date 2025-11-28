@@ -18,3 +18,5 @@ ITEM.Range = 50
 ITEM.Pen = 6
 ITEM.Mag = 64
 ITEM.barrel = "medium"
+
+ITEM.img = Material("stalker2/ui/weapons/pp19_bizon.png", "smooth")
