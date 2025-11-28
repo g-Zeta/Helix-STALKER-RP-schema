@@ -11,6 +11,15 @@ local function EmitChange(pitch)
 	LocalPlayer():EmitSound("weapons/ar2/ar2_empty.wav", 75, pitch or 150, 0.25)
 end
 
+local BASE_W, BASE_H = 1920, 1080
+local function UIScale()
+  -- uniform scale, using the minimum axis to avoid stretch
+  return math.min(ScrW() / BASE_W, ScrH() / BASE_H)
+end
+
+local function SW(x) return math.floor(x * UIScale() + 0.5) end
+local function SH(y) return math.floor(y * UIScale() + 0.5) end
+
 -- color setting
 local PANEL = {}
 
@@ -569,12 +578,35 @@ function PANEL:Init()
 
 	self.canvas = self:Add("DScrollPanel")
 	self.canvas:Dock(FILL)
+	self.canvas:GetCanvas():DockPadding(0, 0, SW(5), 0)
+	self.canvas:GetCanvas():SetTall(0) -- Set initial tall to 0 to allow it to grow
 	self.canvas.PerformLayout = function(panel)
 		BaseClass.PerformLayout(panel)
 
 		if (!panel.VBar.Enabled) then
 			panel.pnlCanvas:SetWide(panel:GetWide() - panel.VBar:GetWide())
 		end
+	end
+
+	local scrollvbar = self.canvas:GetVBar()
+	self.canvas:GetVBar():SetWide(SW(15))
+
+	scrollvbar.btnGrip.Paint = function(panel, w, h)
+		local color = ColorAlpha(ix.GetFactionColor(), 90)
+		surface.SetDrawColor(color)
+		surface.DrawRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnUp.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/up_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnDown.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/down_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
 	end
 end
 
@@ -684,6 +716,7 @@ function PANEL:FilterRows(query)
 					if (ix.option.Get("disableAnimations", false)) then
 						category:SizeToContents()
 					end
+					self.canvas:InvalidateLayout(true)
 				end
 			})
 		end

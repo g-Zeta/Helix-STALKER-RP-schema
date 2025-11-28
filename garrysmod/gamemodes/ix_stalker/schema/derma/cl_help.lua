@@ -113,6 +113,27 @@ function PANEL:AddCategory(name)
 		surface.DrawRect(0, 0, width, height)
 	end
 
+	local scrollvbar = panel:GetVBar()
+	panel:GetVBar():SetWide(15)
+
+	scrollvbar.btnGrip.Paint = function(panel, w, h)
+		local color = ColorAlpha(ix.GetFactionColor(), 90)
+		surface.SetDrawColor(color)
+		surface.DrawRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnUp.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/up_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnDown.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/down_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+
 	-- reverts functionality back to a standard panel in the case that a category will manage its own scrolling
 	panel.DisableScrolling = function()
 		panel:GetCanvas():SetVisible(false)

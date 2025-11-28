@@ -97,23 +97,74 @@ function PANEL:Init()
 
 	self.categories = self:Add("DScrollPanel")
 	self.categories:Dock(LEFT)
-	self.categories:SetWide(260)
+	self.categories:SetWide(SW(260))
 	self.categories.Paint = function(this, w, h)
 		surface.SetDrawColor(0, 0, 0, 150)
 		surface.DrawRect(0, 0, w, h)
 	end
 	self.categories:DockPadding(5, 5, 5, 5)
-	self.categories:DockMargin(0, 46, 0, 0)
 	self.categoryPanels = {}
+	self.categories:GetCanvas():DockPadding(0, 0, SW(5), 0)
+	self.categories:GetVBar():SetWide(SW(10))
+
+	local catvbar = self.categories:GetVBar()
+
+	catvbar.btnGrip.Paint = function(panel, w, h)
+		local color = ColorAlpha(ix.GetFactionColor(), 90)
+		surface.SetDrawColor(color)
+		surface.DrawRect(0, 0, w, h)
+	end
+
+	catvbar.btnUp.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/up_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+
+	catvbar.btnDown.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/down_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
 
 	self.scroll = self:Add("DScrollPanel")
 	self.scroll:Dock(FILL)
+	self.scroll:DockMargin(0, 4, 5, 0)
+	self.scroll:DockPadding(0, 1, 0, 0)
+	self.scroll:GetVBar():SetWide(SW(20))
+
+	local scrollvbar = self.scroll:GetVBar()
+
+	-- This paints the background track of the scrollbar
+	scrollvbar.Paint = function(panel, w, h)
+		surface.SetDrawColor(Color(30, 30, 30, 255))
+		surface.DrawRect(0, 0, w, h)
+	end
+
+	-- This paints the draggable part of the scrollbar (the "grip")
+	scrollvbar.btnGrip.Paint = function(panel, w, h)
+		local color = ColorAlpha(ix.GetFactionColor(), 90)
+		surface.SetDrawColor(color)
+		surface.DrawRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnUp.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/up_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+
+	scrollvbar.btnDown.Paint = function(panel, w, h)
+		surface.SetMaterial(Material("stalker/ui/pda/rankings/down_arrow.png", "smooth"))
+		surface.SetDrawColor(ix.GetFactionColor())
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
 
 	self.search = self:Add("DTextEntry")
 	self.search:Dock(TOP)
 	self.search:SetTall(36)
 	self.search:SetFont("ixMediumFont")
-	self.search:DockMargin(0, 0, 5, 5)
+	self.search:DockMargin(10, 0, 5, 5)
 	self.search.OnTextChanged = function(this)
 		local text = self.search:GetText():lower()
 
@@ -140,7 +191,7 @@ function PANEL:Init()
 	self.checkout:SetTextColor(color_white)
 	self.checkout:SetTall(36)
 	self.checkout:SetFont("ixMediumFont")
-	self.checkout:DockMargin(10, 10, 0, 0)
+	self.checkout:DockMargin(10, 10, 5, 0)
 	self.checkout:SetExpensiveShadow(1, Color(0, 0, 0, 150))
 	self.checkout:SetText(L("checkout", 0))
 	self.checkout.DoClick = function()
