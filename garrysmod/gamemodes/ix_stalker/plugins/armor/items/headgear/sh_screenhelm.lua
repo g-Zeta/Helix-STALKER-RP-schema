@@ -24,7 +24,7 @@ ITEM.res = {
 ITEM.BRC = 15
 
 ITEM.img = Material("stalkerCoP/ui/headgear/headgear_helmet_screen.png")
-ITEM.overlayPath = "vgui/overlays/hud_sci"
+ITEM.overlayPath = "stalker/ui/overlays/hud_sci"
 
 ITEM.isGasmask = true
 ITEM.isHelmet = true

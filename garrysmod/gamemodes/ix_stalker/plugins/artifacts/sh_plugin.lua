@@ -2,8 +2,6 @@ PLUGIN.name = "Artifacts"
 PLUGIN.author = "Lt. Taylor & Zeta"
 PLUGIN.desc = "Adds a relatively simple artifact system"
 
-ix.util.Include("cl_plugin.lua")
-
 if SERVER then
 	function PLUGIN:CharacterLoaded(character)
 		if character then

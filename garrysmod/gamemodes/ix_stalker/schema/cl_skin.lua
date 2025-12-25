@@ -5,7 +5,22 @@ local gradientLeft = surface.GetTextureID("vgui/gradient-l")
 local gradientRadial = Material("helix/gui/radial-gradient.png")
 local chatboxbg = Material("cotz/panels/frame1.png")
 local menubg = Material("stalker2/ui/menu/main_menu", "smooth")
-local pdabackground = Material("stalkerSHoC/ui/pda/pda_on.png")
+local pdabackground = Material("stalkerSHoC/ui/pda/pda_on_skin0.png")
+
+ix.option.Add("PDAskin", ix.type.number, 0, {
+	category = "STALKER Settings",
+	min = 0,
+	max = 4,
+	OnChanged = function(oldValue, newValue)
+		pdabackground = Material("stalkerSHoC/ui/pda/pda_on_skin" .. newValue .. ".png")
+	end
+})
+
+hook.Add("InitializedConfig", "ixPDAskinInit", function()
+	local skin = ix.option.Get("PDAskin", 0)
+	pdabackground = Material("stalkerSHoC/ui/pda/pda_on_skin" .. skin .. ".png")
+end)
+
 local menubuttonbackground = Material("cotz/panels/button2.png")
 local defaultBackgroundColor = Color(30, 30, 30, 200)
 

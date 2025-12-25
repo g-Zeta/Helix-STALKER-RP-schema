@@ -34,6 +34,8 @@ ITEM.ballisticareas = {"  Head:", "  Face:"}	--No need to add this line to the i
 
 ITEM.img = Material("placeholders/headgear_nomask.png")
 
+ITEM.overlayPath = nil
+
 ITEM.canRepair = true	--No need to add this line to the items
 ITEM.isGasmask = false	--If the item is a gasmask add this line and switch it to true
 ITEM.isHelmet = false	--If the item is a helmet add this line and switch it to true
@@ -202,6 +204,53 @@ if (CLIENT) then
 		
 		tooltip:SizeToContents()
 	end
+
+	hook.Add("RenderScreenspaceEffects", "ixGasmaskOverlay", function()
+		local client = LocalPlayer()
+
+		if (!IsValid(client) or !client:GetCharacter() or !client:Alive()) then
+			return
+		end
+
+		local character = LocalPlayer():GetCharacter()
+
+		if character and ix.option.Get("gasmaskoverlay", false) then
+			local inventory = character:GetInventory()
+			local items = inventory:GetItems()
+			local armorHealth = 10000
+			for k, v in pairs(items) do
+				if (v.overlayPath != nil and v:GetData("equip")) then
+					armorHealth = v:GetData("durability", 10000)
+
+					if (armorHealth <= 0) then
+						DrawMaterialOverlay( v.overlayPath.."12.png", 0.2 )
+					elseif (armorHealth <= 1000) then
+						DrawMaterialOverlay( v.overlayPath.."11.png", 0.2 )
+					elseif (armorHealth <= 2000) then
+						DrawMaterialOverlay( v.overlayPath.."10.png", 0.2 )
+					elseif (armorHealth <= 3000) then
+						DrawMaterialOverlay( v.overlayPath.."9.png", 0.2 )
+					elseif (armorHealth <= 4000) then
+						DrawMaterialOverlay( v.overlayPath.."8.png", 0.2 )
+					elseif (armorHealth <= 5000) then
+						DrawMaterialOverlay( v.overlayPath.."7.png", 0.2 )
+					elseif (armorHealth <= 6000) then
+						DrawMaterialOverlay( v.overlayPath.."6.png", 0.2 )
+					elseif (armorHealth <= 7000) then
+						DrawMaterialOverlay( v.overlayPath.."5.png", 0.2 )
+					elseif (armorHealth <= 8000) then
+						DrawMaterialOverlay( v.overlayPath.."4.png", 0.2 )
+					elseif (armorHealth <= 9000) then
+						DrawMaterialOverlay( v.overlayPath.."3.png", 0.2 )
+					elseif (armorHealth <= 9500) then
+						DrawMaterialOverlay( v.overlayPath.."2.png", 0.2 )
+					else
+						DrawMaterialOverlay( v.overlayPath.."1.png", 0.2 )
+					end
+				end
+			end
+		end
+	end)
 end
 
 function ITEM:OnInstanced()
@@ -212,7 +261,6 @@ ITEM:Hook("drop", function(item)
 	local client = item.player
 	if (item:GetData("equip")) then
 		item:SetData("equip", nil)
-		item.player:ReevaluateOverlay()
 		item:RemovePart(item.player)
 	end
 end)
@@ -224,7 +272,6 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 	OnRun = function(item)
 		local client = item.player
 		item:RemovePart(item.player)
-		item.player:ReevaluateOverlay()
 
 		return false
 	end,
@@ -264,7 +311,6 @@ ITEM.functions.Equip = {
 
 		item:SetData("equip", true)
 		item.player:AddPart(item.uniqueID, item)
-		item.player:ReevaluateOverlay()
 
 		if (item.attribBoosts) then
 			for k, v in pairs(item.attribBoosts) do

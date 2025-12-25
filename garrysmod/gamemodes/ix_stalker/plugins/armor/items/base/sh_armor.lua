@@ -12,9 +12,7 @@ ITEM.height = 3	--No need to add this line to the items
 
 --[[
 ITEM.flag = "?"	--Set the flag according to the faction or trade tier
---]]
 
---[[
 ITEM.radProt = 0.00	--Only add this line if the suit includes a gasmask
 --]]
 
@@ -37,6 +35,8 @@ ITEM.ballisticareas = {"  Head:", "  Face:", "  Arms:", "  Torso:", "  Legs:"}	-
 ITEM.artifactcontainers = {"0"}	--Number of containers that come with the suit
 
 ITEM.img = Material("placeholders/armor_nosuit.png")
+
+ITEM.overlayPath = nil
 
 ITEM.isGasmask = false	--Add this line to the item if the suit comes with a gasmask and switch to true
 ITEM.isHelmet = false	--Add this line to the item if the suit comes with a helmet and switch to true
@@ -68,6 +68,9 @@ end
 --If there is no female model for the same item then just use this line
 ITEM.replacements = "playermodel_path"
 --]]
+
+ITEM.hands = nil -- Path to the c_arms model, e.g. "models/weapons/c_arms_sunrise.mdl"
+ITEM.handsSkin = nil -- The skin to apply to the c_arms model.
 
 ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")	--No need to add this line to the items
 ITEM.skincustom = {}
@@ -277,6 +280,17 @@ function ITEM:RemoveOutfit(client)
 		end
 	end
 
+	if (self.hands and IsValid(client)) then
+		local oldHands = self:GetData("oldHands")
+		local oldHandsSkin = self:GetData("oldHandsSkin")
+		local hands = client:GetHands()
+		if (hands and oldHands) then
+			hands:SetModel(oldHands)
+			hands:SetSkin(oldHandsSkin or 0)
+			self:SetData("oldHands", nil)
+		end
+	end
+
 	for k, v in pairs( self:GetData("origgroups")) do
 		self.player:SetBodygroup( k, v )
 		bgroups[k] = v
@@ -378,7 +392,6 @@ ITEM:Hook("drop", function(item)
 	local client = item.player
 	if (item:GetData("equip")) then
 		item:SetData("equip", nil)
-		item.player:ReevaluateOverlay()
 		item:RemoveOutfit(item:GetOwner())
 		if (item.armorclass != "helmet") then
 			item.player:SetModel(item.player:GetChar():GetModel())
@@ -394,7 +407,6 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 		local client = item.player
 		item:RemoveOutfit(item.player)
 		item:RemovePart(item.player)
-		item.player:ReevaluateOverlay()
 		
 		return false
 	end,
@@ -446,8 +458,6 @@ ITEM.functions.Equip = {
 		end
 		item:SetData("origgroups", origbgroups)
 
-		item.player:ReevaluateOverlay()
-
 		if (type(item.OnGetReplacement) == "function") then
 			character:SetData("oldModel" .. item.outfitCategory, character:GetData("oldModel" .. item.outfitCategory, item.player:GetModel()))
 			character:SetModel(item:OnGetReplacement())
@@ -496,6 +506,17 @@ ITEM.functions.Equip = {
 
 			if (table.Count(newGroups) > 0) then
 				character:SetData("groups", newGroups)
+			end
+		end
+
+		if (item.hands and IsValid(client)) then
+			local hands = client:GetHands()
+			if (hands) then
+				item:SetData("oldHands", hands:GetModel())
+				item:SetData("oldHandsSkin", hands:GetSkin())
+
+				hands:SetModel(item.hands) -- Set the new model on the hands entity
+				hands:SetSkin(item.handsSkin or 0) -- Set the new skin.
 			end
 		end
 
@@ -559,6 +580,17 @@ function ITEM:ModelOff(client)
 				groups[index] = nil
 				character:SetData("groups" .. self.outfitCategory, groups)
 			end
+		end
+	end
+
+	if (self.hands and IsValid(client)) then
+		local oldHands = self:GetData("oldHands")
+		local oldHandsSkin = self:GetData("oldHandsSkin")
+		local hands = client:GetHands()
+		if (hands and oldHands) then
+			hands:SetModel(oldHands)
+			hands:SetSkin(oldHandsSkin or 0)
+			self:SetData("oldHands", nil) -- Clear the stored model path
 		end
 	end
 
@@ -736,6 +768,17 @@ function ITEM:RemovePart(client)
 		end
 	end
 
+	if (self.hands and IsValid(client)) then
+		local oldHands = self:GetData("oldHands")
+		local hands = client:GetHands()
+		if (hands and oldHands) then -- This check is slightly different from others, let's correct it.
+			hands:SetModel(oldHands)
+			local oldHandsSkin = self:GetData("oldHandsSkin")
+			hands:SetSkin(oldHandsSkin or 0)
+			self:SetData("oldHands", nil)
+		end
+	end
+
 	self:OnUnequipped()
 end
 
@@ -786,8 +829,17 @@ end
 
 function ITEM:OnRemoved()
 	local client = self:GetOwner()
+	if (self.hands and IsValid(client)) then
+		local oldHands = self:GetData("oldHands")
+		local oldHandsSkin = self:GetData("oldHandsSkin")
+		local hands = client:GetHands()
+		if (hands and oldHands) then
+			hands:SetModel(oldHands)
+			hands:SetSkin(oldHandsSkin or 0)
+			self:SetData("oldHands", nil)
+		end
+	end
 	if (self:GetData("equip")) then
-		client:ReevaluateOverlay()
 		self:RemoveOutfit(self:GetOwner())
 	end
 end

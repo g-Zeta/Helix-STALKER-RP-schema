@@ -532,3 +532,18 @@ if (IsValid(ix.gui.characterMenu)) then
 		ix.gui.characterMenu = vgui.Create("ixCharMenu")
 	end)
 end
+
+-- Force Esc key to open and close custom menu instead of GMod's default menu
+hook.Add("OnPauseMenuShow", "ixStalkerMenu", function()
+	if (IsValid(ix.gui.characterMenu) and !ix.gui.characterMenu:IsClosing()) then
+		if (LocalPlayer():GetCharacter()) then
+			ix.gui.characterMenu:Close()
+		end
+	elseif (IsValid(ix.gui.menu)) then
+		ix.gui.menu:Remove()
+	else
+		vgui.Create("ixCharMenu")
+	end
+
+	return false
+end)

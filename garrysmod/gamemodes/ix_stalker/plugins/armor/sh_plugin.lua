@@ -137,3 +137,7 @@ ix.command.Add("CheckCharRadProt", {
 		client:ChatPrint(response)
 	end
 })
+
+ix.option.Add("gasmaskoverlay", ix.type.bool, true, {
+	category = "STALKER Settings",
+})

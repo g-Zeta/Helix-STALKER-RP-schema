@@ -59,6 +59,104 @@ local maxScale = 1.3
 local scaleSpeed = 0.3
 local elapsedTime = 0.1
 
+-- Fading HUD logic
+local hudAlpha = 255
+local lastHUDActivity = 0
+local hudFadeDelay = 5 -- seconds
+local hudFadeDuration = 1 -- seconds
+
+local function ResetHUDFade()
+    lastHUDActivity = CurTime()
+    hudAlpha = 255
+end
+
+hook.Add("Think", "HUDThink", function()
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
+
+    -- Keep HUD visible if player has any radiation
+    local radiation = 0
+    if lp.getRadiation then radiation = lp:getRadiation() or 0 end
+    if radiation > 0 then
+        lastHUDActivity = CurTime()
+        hudAlpha = 255
+        return
+    end
+
+    -- Prevent fading if current weapon clip is at or below 25%
+    local wep = lp:GetActiveWeapon()
+    if IsValid(wep) and wep.Primary and type(wep.Primary.ClipSize) == "number" and wep.Primary.ClipSize > 0 then
+        local curClip = wep:Clip1()
+        local threshold = math.ceil(wep.Primary.ClipSize * 0.25)
+        if curClip <= threshold then
+            lastHUDActivity = CurTime()
+            hudAlpha = 255
+            return
+        end
+    end
+	
+    if lastHUDActivity == 0 then
+        lastHUDActivity = CurTime()
+    end
+
+    if CurTime() - lastHUDActivity > hudFadeDelay then
+        hudAlpha = math.max(0, hudAlpha - (255 / hudFadeDuration) * FrameTime())
+    end
+end)
+
+local wasRKeyPressed = false
+local prevHealth = nil
+local prevClip = nil
+local prevWepClass = nil
+
+hook.Add("Think", "HUDRKeyCheck", function()
+    local lp = LocalPlayer()
+    if not IsValid(lp) then
+        prevClip = nil
+        prevWepClass = nil
+        return
+    end
+
+    if prevHealth == nil then
+        prevHealth = lp:Health()
+    end
+
+    -- R key detection (fires once per press)
+    local isRKeyDown = input.IsKeyDown(KEY_R)
+    if isRKeyDown and not wasRKeyPressed then
+        ResetHUDFade()
+    end
+    wasRKeyPressed = isRKeyDown
+
+    -- Show HUD when player loses health
+    local curHealth = lp:Health()
+    if lp:Alive() and curHealth < prevHealth then
+        ResetHUDFade()
+    end
+    prevHealth = curHealth
+
+    -- Show HUD when clip size drops to 25% or less (trigger on drop)
+    local wep = lp:GetActiveWeapon()
+    if IsValid(wep) and wep:HasAmmo() and wep.Primary and type(wep.Primary.ClipSize) == "number" and wep.Primary.ClipSize > 0 then
+        local curClip = wep:Clip1()
+        local wepClass = wep:GetClass()
+        local threshold = math.floor(wep.Primary.ClipSize * 0.25 + 0.5)
+
+        if prevWepClass ~= wepClass then
+            prevClip = curClip
+            prevWepClass = wepClass
+        else
+            if curClip < (prevClip or curClip) and curClip <= threshold then
+                ResetHUDFade()
+            end
+            prevClip = curClip
+        end
+    else
+        prevClip = nil
+        prevWepClass = nil
+    end
+end)
+
 --Ammo and Clip fonts
 surface.CreateFont("ClipFont", {
 	font = "arial",
@@ -116,6 +214,7 @@ hook.Add("DrawOverlay", "Draw_Cursor_Function_FGSHAR", cursorDraw)
 hook.Add("Think", "Cursor_Think_Function_FGSHAR", cursorThink)
 
 function PLUGIN:HUDPaint()
+	if (hudAlpha <= 0) then return end
 	-- Also hide the HUD if the tab menu is open and our custom blur is active.
 	if ix.option.Get("DisableHUD", false) or (not ix.option.Get("cheapBlur", false) and IsValid(ix.gui.menu)) then
 		return false
@@ -128,6 +227,7 @@ function PLUGIN:HUDPaint()
 		self:RadiationIconHUDPaint()
 		self:PsyhealthIconHUDPaint()
 		self:HeadgearIconHUDPaint()
+		self:ArtifactBeltHUDPaint()
 
 		-- Check which HUD style to use
 		if ix.option.Get("StalkerHUD") then
@@ -148,17 +248,17 @@ function PLUGIN:SHoCHUDPaint()
 
 	--HP and stamina UI
 	surface.SetMaterial(health)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ScrW()-280 * (ScrW()/1920), ScrH()-195 * (ScrH() / 1080), 250 * (ScrW()/1920), 90 * (ScrH() / 1080))
 
 	--Health bar
 	surface.SetMaterial(healthbar)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ScrW()-233 * (ScrW()/1920), ScrH()-136 * (ScrH() / 1080), (1.72*math.Clamp( LocalPlayer():Health()/LocalPlayer():GetMaxHealth()*100, 0, 100 )) * (ScrW()/1920), 17 * (ScrH() / 1080))
 
 	--Stamina bar
 	surface.SetMaterial(staminabar)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ScrW()-233 * (ScrW()/1920), ScrH()-163 * (ScrH() / 1080), (173*LocalPlayer():GetLocalVar("stm", 100)) / 100 * (ScrW()/1920), 17 * (ScrH() / 1080))
 
     -- Player stance indicator
@@ -179,22 +279,22 @@ function PLUGIN:SHoCHUDPaint()
     -- Draw the stance indicator if a material is set
     if stanceMaterial then
         surface.SetMaterial(stanceMaterial)
-        surface.SetDrawColor(Color(255, 255, 255, 255))
+        surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
         surface.DrawTexturedRect(100 * (ScrW() / 1920), 865 * (ScrH() / 1080), 156 * (ScrW() / 1920), 191 * (ScrH() / 1080))
     end
 
 	--Ammo UI
 	surface.SetMaterial(Ammo)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ScrW()-250 * (ScrW() / 1920), ScrH()-115 * (ScrH() / 1080), 210 * (ScrW() / 1920), 90 * (ScrH() / 1080))
 	
 	--Ammo display
 	if IsValid( wep ) then
 		if wep:HasAmmo() and wep:Clip1() >= 0 then
-			draw.DrawText( tostring(wep:Clip1()) .. " / " .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalker2regularfont", ScrW()-120 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
+			draw.DrawText( tostring(wep:Clip1()) .. " / " .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalker2regularfont", ScrW()-120 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
 			if wep:GetPrimaryAmmoType() then
 				if string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()) or "no", -1) == "-" then
-					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalker2regularfont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, 255 ), TEXT_ALIGN_CENTER )
+					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalker2regularfont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
 				end
 			end
 		end
@@ -217,7 +317,7 @@ function PLUGIN:S2HUDPaint()
 	local hudX, hudY = 40 * scaleX, 960 * scaleY
 	local hudW, hudH = 291 * scaleX, 83 * scaleY
 	surface.SetMaterial(s2hud)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(hudX, hudY, hudW, hudH)
 	
 	--Health bar
@@ -226,7 +326,7 @@ function PLUGIN:S2HUDPaint()
 	local hpBarW, hpBarH = (185 * scaleX) * hpFraction, 12 * scaleY
 
 	surface.SetMaterial(hpbar)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	-- Draw the bar with UV coordinates adjusted by health. This crops the texture instead of resizing it.
 	-- The arguments are: x, y, width, height, startU, startV, endU, endV
 	surface.DrawTexturedRectUV(hpBarX, hpBarY, hpBarW, hpBarH, 0, 0, hpFraction, 1)
@@ -237,7 +337,7 @@ function PLUGIN:S2HUDPaint()
 	local stmBarW, stmBarH = (164 * scaleX) * stmFraction, 7 * scaleY
 
 	surface.SetMaterial(stmbar)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRectUV(stmBarX, stmBarY, stmBarW, stmBarH, 0, 0, stmFraction, 1)
 
 	--Radiation status
@@ -313,7 +413,7 @@ function PLUGIN:S2HUDPaint()
 
 		-- Draw the animated meter frame
 		surface.SetMaterial(radMaterials[materialIndex])
-		surface.SetDrawColor(currentColor)
+		surface.SetDrawColor(Color(currentColor.r, currentColor.g, currentColor.b, math.min(currentColor.a, hudAlpha)))
 		local radmeterSize = 60
 		local radmeterX = radsX + (60 - radmeterSize) * 0.5 * scaleX
 		local radmeterY = radsY + (61 - radmeterSize) * 0.5 * scaleY
@@ -321,7 +421,7 @@ function PLUGIN:S2HUDPaint()
 
 		-- Draw the pulsing icon in the center
 		surface.SetMaterial(radicon)
-		surface.SetDrawColor(currentColor)
+		surface.SetDrawColor(Color(currentColor.r, currentColor.g, currentColor.b, math.min(currentColor.a, hudAlpha)))
 		local radiconSize = 30 * scale
 		local radiconX = radsX + (60 - radiconSize) * 0.5 * scaleX
 		local radiconY = radsY + (61 - radiconSize) * 0.5 * scaleY
@@ -329,7 +429,7 @@ function PLUGIN:S2HUDPaint()
 	else
 		-- If radiation is 0, draw a static white icon
 		surface.SetMaterial(radicon)
-		surface.SetDrawColor(colorWhite)
+		surface.SetDrawColor(Color(colorWhite.r, colorWhite.g, colorWhite.b, math.min(colorWhite.a, hudAlpha)))
 		local radiconSize = 30
 		local radiconX = radsX + (60 - radiconSize) * 0.5 * scaleX
 		local radiconY = radsY + (61 - radiconSize) * 0.5 * scaleY
@@ -342,8 +442,57 @@ function PLUGIN:S2HUDPaint()
 	local ammoX, ammoY = 1650 * scaleX, 960 * scaleY
 	local ammoW, ammoH = 226 * scaleX, 83 * scaleY
 	surface.SetMaterial(ammoS2)
-	surface.SetDrawColor(Color(255, 255, 255, 255))
+	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ammoX, ammoY, ammoW, ammoH)
+
+	local auto = Material("stalker2/ui/hud/firetype_auto.png", "noclamp smooth")
+	local single = Material("stalker2/ui/hud/firetype_single.png", "noclamp smooth")
+	local burst = Material("stalker2/ui/hud/firetype_queue.png", "noclamp smooth")
+
+	-- Define fire modes with their names, materials, and positions
+	local fireModes = {
+		{names = {"auto"}, mat = auto},
+		{names = {"burst", "2burst", "3burst"}, mat = burst},
+		{names = {"single", "semi", "bolt", "pump", "break", "double"}, mat = single},
+	}
+
+	-- Get the current fire mode from the weapon
+	local currentFireMode = IsValid(wep) and wep.FireMode or "single"
+	local highlightColor = Color(255, 255, 255, hudAlpha)
+	local defaultColor = Color(100, 100, 100, hudAlpha)
+
+	-- Dynamically draw and position available fire mode icons
+	if IsValid(wep) and wep.FireModes and type(wep.FireModes) == "table" then
+		local modesToDraw = {}
+		-- First, collect all available fire modes for the weapon in the correct display order
+		for _, iconData in ipairs(fireModes) do
+			for _, availableModeName in ipairs(wep.FireModes) do
+				if table.HasValue(iconData.names, availableModeName) then
+					-- Store the icon data and whether it's the active mode
+					modesToDraw[#modesToDraw + 1] = {
+						mat = iconData.mat,
+						active = (availableModeName == currentFireMode)
+					}
+					break -- Found a match for this icon type, move to the next
+				end
+			end
+		end
+
+		-- Now, draw the collected icons from right to left
+		local start_x_offset = 120 -- Starting offset for the rightmost icon
+		local icon_width = 18
+		local icon_spacing = 5
+		local current_x_offset = start_x_offset
+
+		for _, mode in ipairs(modesToDraw) do
+			surface.SetDrawColor(mode.active and highlightColor or defaultColor)
+			surface.SetMaterial(mode.mat)
+			surface.DrawTexturedRect(ammoX + current_x_offset * scaleX, ammoY + 54 * scaleY, icon_width * scaleX, icon_width * scaleY)
+
+			-- Decrement the offset for the next icon to the left
+			current_x_offset = current_x_offset - (icon_width + icon_spacing)
+		end
+	end
 
     -- Display ammo icon based on the weapon's primary ammo type
     if IsValid(wep) and wep.Primary then
@@ -373,7 +522,7 @@ function PLUGIN:S2HUDPaint()
         -- If a valid ammo material was found, draw it
         if ammoMaterial then
             surface.SetMaterial(ammoMaterial)
-            surface.SetDrawColor(Color(255, 255, 255, 255))			
+            surface.SetDrawColor(Color(255, 255, 255, hudAlpha))			
 			local ammoIconX = ammoX + 141 * scaleX
 			local ammoIconY = ammoY + 22 * scaleY
 			local ammoIconW, ammoIconH = 77 * scaleX, 39 * scaleY
@@ -391,7 +540,7 @@ function PLUGIN:S2HUDPaint()
 			local baseX = ammoX + 80 * scaleX
 			local baseY = ammoY + 2 * scaleY
 			
-			local defaultTextColor = Color(215, 215, 215, 255)
+			local defaultTextColor = Color(215, 215, 215, hudAlpha)
 			local clipTextColor = defaultTextColor
 
 			local ammoCountColor = defaultTextColor
@@ -399,7 +548,7 @@ function PLUGIN:S2HUDPaint()
 			local currentAmmo = lp:GetAmmoCount(ammoType)
 			local maxAmmo = 100
 			if maxAmmo > 0 and currentAmmo <= (maxAmmo * 0.10) then
-				ammoCountColor = Color(255, 0, 0, 255) -- Red
+				ammoCountColor = Color(255, 0, 0, hudAlpha) -- Red
 			end
 
 			local flashSpeed = 20 -- Higher is faster, lower is slower.
@@ -407,7 +556,7 @@ function PLUGIN:S2HUDPaint()
 			if wep.Primary and wep.Primary.ClipSize > 0 and wep:Clip1() <= (wep.Primary.ClipSize * 0.25) then
 				-- Create a flashing effect using a sine wave
 				if math.sin(CurTime() * flashSpeed) > 0 then
-					clipTextColor = Color(255, 0, 0, 255) -- Red
+					clipTextColor = Color(255, 0, 0, hudAlpha) -- Red
 				end
 			end
 
@@ -465,18 +614,18 @@ function PLUGIN:SurvivalIconHUDPaint()
 			surface.SetDrawColor(Color(0, 0, 0, 0))
 		elseif LocalPlayer():GetHunger() <= 60 and LocalPlayer():GetHunger() > 45 then
 			surface.SetMaterial(hunger)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetHunger() <= 45 and LocalPlayer():GetHunger() > 30 then
 			surface.SetMaterial(hunger2)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetHunger() <= 30 and LocalPlayer():GetHunger() > 15 then
 			surface.SetMaterial(hunger3)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetHunger() <= 15 then
 			surface.SetMaterial(hunger4)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-550 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-550 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 
 		--Thirst
 		surface.SetMaterial(thirst)
@@ -485,18 +634,18 @@ function PLUGIN:SurvivalIconHUDPaint()
 			surface.SetDrawColor(Color(0, 0, 0, 0))
 		elseif LocalPlayer():GetThirst() <= 60 and LocalPlayer():GetThirst() > 45 then
 			surface.SetMaterial(thirst)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetThirst() <= 45 and LocalPlayer():GetThirst() > 30 then
 			surface.SetMaterial(thirst2)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetThirst() <= 30 and LocalPlayer():GetThirst() > 15 then
 			surface.SetMaterial(thirst3)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif LocalPlayer():GetThirst() <= 15 then
 			surface.SetMaterial(thirst4)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-600 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-600 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -545,21 +694,21 @@ function PLUGIN:HeadgearIconHUDPaint()
 				surface.SetDrawColor(Color(0, 0, 0, 0))
 			elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
 				surface.SetMaterial(helmet)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
 				surface.SetMaterial(helmet2)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
 				surface.SetMaterial(helmet3)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
 				surface.SetMaterial(helmet4)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			end
 		else
 			surface.SetDrawColor(Color(0, 0, 0, 0))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-500 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-500 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -599,21 +748,21 @@ function PLUGIN:ArmorIconHUDPaint()
 				surface.SetDrawColor(Color(0, 0, 0, 0))
 			elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
 				surface.SetMaterial(armor)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
 				surface.SetMaterial(armor2)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
 				surface.SetMaterial(armor3)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
 				surface.SetMaterial(armor4)
-				surface.SetDrawColor(Color(255, 255, 255, 255))
+				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 			end
 		else
 			surface.SetDrawColor(Color(0, 0, 0, 0))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-450 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-450 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -644,23 +793,23 @@ function PLUGIN:WeaponIconHUDPaint()
 						surface.SetDrawColor(Color(0, 0, 0, 0))
 					elseif weapondura > 60 and weapondura <= 80 then
 						surface.SetMaterial(gun)
-						surface.SetDrawColor(Color(255, 255, 255, 255))
+						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 					elseif weapondura > 40 and weapondura <= 60 then
 						surface.SetMaterial(gun2)
-						surface.SetDrawColor(Color(255, 255, 255, 255))
+						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 					elseif weapondura > 20 and weapondura <= 40 then
 						surface.SetMaterial(gun3)
-						surface.SetDrawColor(Color(255, 255, 255, 255))
+						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 					elseif weapondura > 0 and weapondura <= 20 then
 						surface.SetMaterial(gun4)
-						surface.SetDrawColor(Color(255, 255, 255, 255))
+						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 					end
 				end
 			else
 				surface.SetDrawColor(Color(0, 0, 0, 0))
 			end
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-400 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-400 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -685,17 +834,17 @@ function PLUGIN:WeightIconHUDPaint()
 
 		if char:HeavilyOverweight() then
 			surface.SetMaterial(weight4)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif char:Overweight() then
 			surface.SetMaterial(weight2)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		elseif currentCarry >= (ix.config.Get("maxWeight", 30) - 10) then
 			surface.SetMaterial(weight)
-			surface.SetDrawColor(Color(255, 255, 255, 255))
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		else
 			surface.SetDrawColor(Color(255, 255, 255, 0))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-350 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-350 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -728,19 +877,19 @@ function PLUGIN:RadiationIconHUDPaint()
 			surface.SetDrawColor(Color(0, 0, 0, 0))
 		elseif LocalPlayer():getRadiation() > 0 and LocalPlayer():getRadiation() <= 25 then
 			surface.SetMaterial(rad)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		elseif LocalPlayer():getRadiation() > 25 and LocalPlayer():getRadiation() <= 60 then
 			surface.SetMaterial(rad2)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		elseif LocalPlayer():getRadiation() > 60 and LocalPlayer():getRadiation() <= 89 then
 			surface.SetMaterial(rad3)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		elseif LocalPlayer():getRadiation() > 89 and LocalPlayer():getRadiation() <= 100 then
 			surface.SetMaterial(rad4)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		end
 
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-300 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-300 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
@@ -768,25 +917,96 @@ function PLUGIN:PsyhealthIconHUDPaint()
 		surface.SetDrawColor(Color(255, 255, 255, 0))
 		if (lp:GetPsyHealth() <= 99) then
 			surface.SetMaterial(psy1)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		end
 		if (lp:GetPsyHealth() <= 75) then
 			surface.SetMaterial(psy2)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		end
 		if (lp:GetPsyHealth() <= 50) then
 			surface.SetMaterial(psy3)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		end
 		if (lp:GetPsyHealth() <= 20) then
 			surface.SetMaterial(psy4)
-			surface.SetDrawColor(Color(255, 255, 255, alpha))
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
 		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-250 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, 255))
+		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-250 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
 	end
 end
 
+function PLUGIN:ArtifactBeltHUDPaint()
+	if ix.option.Get("DisableHUD", false) then
+		return false
+	else
+
+		local client = LocalPlayer() -- Get the local player
+
+		-- Check if the client is valid and has a character
+		if not IsValid(client) then return end
+
+		local character = client:GetCharacter() -- Get the player's character
+		
+		-- Check if the character exists
+		if not character then
+			return -- Exit if there is no character
+		end
+
+		local inv = character:GetInv() -- Get the inventory
+		
+		-- Check if the inventory exists
+		if not inv then
+			return -- Exit if there is no inventory
+		end
+
+		local items = inv:GetItems() -- Get the items in the inventory
+
+		local x = 360 * (ScrW()/1920) -- Starting X position
+		local y = 950 * (ScrH()/1080) -- Y position
+		local imageSize = 64 -- Size of the artifact images
+		
+		-- Iterate through the items to find the equipped artifact
+		for _, item in pairs(items) do
+			if item.isArtefact and item:GetData("equip", false) then
+
+				-- If the item is an artifact and it is equipped
+				local artifactImage = item.img -- Get the artifact image
+
+				-- Draw the artifact image on the HUD
+				surface.SetMaterial(artifactImage)
+				surface.SetDrawColor(255, 255, 255, hudAlpha) -- Set color to white
+				surface.DrawTexturedRect(x, y, imageSize * (ScrW()/1920), imageSize * (ScrH()/1080)) -- Draw the image (width, height)
+
+				-- Update the x position for the next artifact
+				x = x + 5 + imageSize -- Move x to the right for the next image
+
+			end
+		end
+	end
+end
+
+local vignette = Material("vgui/zoom")
+local exhaustSmooth = 0
+
 if (CLIENT) then
+	function ExhaustionHUD()
+		local lp = LocalPlayer()
+
+		-- Exhaustion vignette effect when stamina is low
+		local staminaFraction = math.Clamp(lp:GetLocalVar("stm", 100) / 100, 0, 1)
+		local exhaustion = math.max(0, (1 - staminaFraction))
+		exhaustSmooth = math.Approach(exhaustSmooth, exhaustion, FrameTime() * 2) -- Smooth transition
+		
+		if exhaustSmooth > 0 then
+			surface.SetMaterial(vignette)
+			surface.SetDrawColor(255, 255, 255, 230 * exhaustSmooth)
+			surface.DrawTexturedRect(0, 0, ScrW(), ScrH())
+			surface.DrawTexturedRectUV(0, 0, ScrW(), ScrH(), 1, 1, 0, 0) -- Inverted UVs for vignette effect
+		end
+	end
+
+	hook.Add("HUDPaint", "ExhaustionHUD", ExhaustionHUD)
+
 	local blurMaterial = Material("pp/blurscreen")
 
 	function PLUGIN:RenderScreenspaceEffects()

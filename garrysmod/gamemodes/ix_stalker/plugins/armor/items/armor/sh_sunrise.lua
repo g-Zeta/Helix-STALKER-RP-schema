@@ -31,3 +31,6 @@ ITEM.OnGetReplacement = function(self, player)
     end;
     return "models/nasca/stalker/male_sunrise_lone.mdl"
 end
+
+ITEM.hands = "models/weapons/c_arms_sunrise.mdl"
+ITEM.handsSkin = 0

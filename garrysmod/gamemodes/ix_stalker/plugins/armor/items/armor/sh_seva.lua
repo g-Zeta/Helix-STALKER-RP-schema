@@ -25,7 +25,10 @@ ITEM.BRC = 36
 ITEM.artifactcontainers = {"3"}
 
 ITEM.img = Material("stalker2/ui/armor/suit_seva.png")
-ITEM.overlayPath = "vgui/overlays/hud_sci"
+ITEM.overlayPath = "stalker/ui/overlays/hud_sci"
+
+ITEM.isGasmask = true
+ITEM.isHelmet = true 
 
 ITEM.OnGetReplacement = function(self, player)
     local player = self.player
@@ -38,3 +41,6 @@ end
 ITEM.bodyGroups = {
 	["Screen"] = 0,
 }
+
+ITEM.hands = "models/weapons/c_arms_sunrise.mdl"
+ITEM.handsSkin = 3
