@@ -25,3 +25,10 @@ CustomizableWeaponry.firemodes:registerFiremode("break", "BREAK-ACTION", false, 
 CustomizableWeaponry.firemodes:registerFiremode("2burst", "2-ROUND BURST", true, 2, 2)
 CustomizableWeaponry.firemodes:registerFiremode("3burst", "3-ROUND BURST", true, 3, 3)
 CustomizableWeaponry.firemodes:registerFiremode("safe", "SAFE", false, 0, 0)
+
+if CustomizableWeaponry and CustomizableWeaponry.firemodes and CustomizableWeaponry.firemodes.registered then
+	for _, firemode in ipairs(CustomizableWeaponry.firemodes.registered) do
+		firemode.display = ""
+		firemode.buldis = 0
+	end
+end
