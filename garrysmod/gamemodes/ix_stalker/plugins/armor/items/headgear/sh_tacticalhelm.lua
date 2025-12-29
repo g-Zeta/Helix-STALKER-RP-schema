@@ -10,12 +10,12 @@ ITEM.flag = "2"
 
 ITEM.res = {
 	["Bullet"] = 0.25,
-	["Impact"] = 0,
+	["Impact"] = 0.0,
 	["Slash"] = 0.04,
 	["Burn"] = 0.02,
 	["Shock"] = 0.03,
 	["Chemical"] = 0.08,
-	["Radiation"] = 0.25,
+	["Radiation"] = 0.05,
 	["Psi"] = 0.16,
 }
 
@@ -24,4 +24,3 @@ ITEM.BRC = 30
 ITEM.img = Material("stalker2/ui/headgear/headgear_helmet_sphere08.png")
 
 ITEM.isHelmet = true
-ITEM.isGasmask = true

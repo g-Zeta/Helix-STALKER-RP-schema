@@ -7,4 +7,4 @@ ITEM.longdesc = "This basic 9x19 caliber round with a jacketed bullet has good c
 ITEM.price = 500
 ITEM.flag = "1"
 ITEM.weight = 0.021
-ITEM.img = Material("stalker2/ui/ammunition/ammo_9x19.png")
+ITEM.img = Material("stalker2/ui/ammunition/ammo_9x19_fmj.png")

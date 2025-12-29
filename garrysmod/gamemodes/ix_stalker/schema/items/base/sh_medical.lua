@@ -1,18 +1,31 @@
-ITEM.name = "Medical"
+ITEM.name = "Medicine"
+ITEM.description = "Helps your body survive in the zone - in one way or another."
+ITEM.longdesc = ""
+ITEM.model = "models/Items/HealthKit.mdl"
+
+ITEM.category = "Medical"
+
+--ITEM.flag = "1"
+
 ITEM.width = 1
 ITEM.height = 1
-ITEM.desc = "Helps your body survive in the zone - in one way or another."
-ITEM.longdesc = " "
-ITEM.stopsBleed = false
+
+ITEM.weight = 1
+
+ITEM.price = 1
+
 ITEM.quantMax = 5
 ITEM.quantity = 1
-ITEM.weight = 1
+
+ITEM.stopsBleed = false
+
 ITEM.restore = 0
 ITEM.radrem = 0
 ITEM.stamBuff = 0
 ITEM.useName = "Heal"
 ITEM.useText = {"opens a ", " and uses it"}
 
+--[[
 ITEM:Hook("use", function(item)
 	item.player:EmitSound(item.sound or "items/battery_pickup.wav")
 end)
@@ -20,6 +33,7 @@ end)
 ITEM:Hook("usetarget", function(item)
 	item.player:EmitSound(item.sound or "items/battery_pickup.wav")
 end)
+]]
 
 ITEM.functions.Sell = {
 	name = "Sell",
@@ -193,8 +207,11 @@ ITEM.functions.use = {
 			item.player:AddBuff("buff_staminarestore", 300, { amount = item.stamBuff })
 		end
 		
-		if (item.restore > 0 or item.radrem > 0) then
-			item.player:AddBuff("buff_slowheal", 20, { amount = item.restore })
+		if (item.restore > 0) then
+			item.player:AddBuff("buff_slowheal", 5, { amount = item.restore })
+		end
+
+		if (item.radrem > 0) then
 			item.player:AddBuff("buff_radiationremoval", 10, { amount = item.radrem })
 		end
 		

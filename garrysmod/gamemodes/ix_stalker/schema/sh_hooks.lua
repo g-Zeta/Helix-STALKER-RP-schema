@@ -308,4 +308,17 @@ function Schema:PurchaseItems(client,x,y)
 	end
 end
 
-ix.config.Add("characterCreationBudget", 50000, "Budget for character creation loadout.", nil, { data = { min = 0, max = 100000, step = 1000 }, category = "Main menu" })
+ix.config.Add("characterCreationBudget", 50000, "Budget for character creation loadout.", nil, {
+	data = { min = 0, max = 100000, step = 1000 },
+	category = "Main menu"
+})
+
+ix.config.Add("inventoryWidth", 5, "How many slots in a row there is in a default inventory.", nil, {
+	data = {min = 1, max = 5},
+	category = "characters"
+})
+
+ix.config.Add("inventoryHeight", 20, "How many slots in a column there is in a default inventory.", nil, {
+	data = {min = 1, max = 20},
+	category = "characters"
+})

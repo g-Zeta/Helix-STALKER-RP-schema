@@ -15,6 +15,7 @@ function ITEM:GetDescription()
 	return "This device detects the radiation levels nearby, alarming you if they increase."
 end
 
+--[[
 if (CLIENT) then
 	function ITEM:PaintOver(item, w, h)
 		if (item:GetData("equip")) then
@@ -27,7 +28,7 @@ if (CLIENT) then
 		surface.DrawTexturedRect(w-23,h-23,19,19)
 	end
 end
-
+]]
 ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",

@@ -1,13 +1,13 @@
-ITEM.name = "HK MP5A4"
+ITEM.name = "HK MP5SD"
 ITEM.description= "A black submachinegun. Fires 9x19mm."
 ITEM.longdesc = "The MP5 is an iconic German submachinegun developed in the 1960s, known for it's reliability and effectiveness.\nThe MP5 differentiates from other submachineguns because it fires from a closed bolt.\nIt uses the same operating mechanism as the G3 rifle which has made it one of the most accurate submachineguns in the world.\n\nAmmo: 9x19mm\nMagazine Capacity: 30"
-ITEM.model = "models/weapons/ethereal/w_mp5a4.mdl"
-ITEM.class = "cw_sil_mp5a4"
+ITEM.model = "models/silver/stalker/weapons/w_mp5sd.mdl"
+ITEM.class = "cw_sil_mp5sd"
 ITEM.weaponCategory = "secondary"
-ITEM.width = 3
-ITEM.price = 11000
+ITEM.width = 4
+ITEM.price = 20000
 ITEM.height = 2
-ITEM.flag = "1"
+ITEM.flag = "2"
 ITEM.Range = 50
 ITEM.Pen = 6
 ITEM.Mag = 30
@@ -23,4 +23,4 @@ ITEM.iconCam = {
 	fov = 70
 }
 
-ITEM.img = Material("stalker2/ui/weapons/mp5a4.png", "smooth")
+ITEM.img = Material("stalker2/ui/weapons/mp5sd.png", "smooth")

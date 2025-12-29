@@ -34,7 +34,7 @@ ITEM.ballisticlevels = {"1", "1", "1", "1", "1"}	--Replace "1" with: 0, l, ll-a,
 ITEM.ballisticareas = {"  Head:", "  Face:", "  Arms:", "  Torso:", "  Legs:"}	--No need to add this line to the items
 ITEM.artifactcontainers = {"0"}	--Number of containers that come with the suit
 
-ITEM.img = Material("placeholders/armor_nosuit.png")
+ITEM.img = Material("placeholders/slot_armor.png")
 
 ITEM.overlayPath = nil
 
@@ -135,6 +135,7 @@ function ITEM:GetName()
 end
 
 if (CLIENT) then
+--[[
 	function ITEM:PaintOver(item, w, h)
 		if (item:GetData("equip")) then
 			surface.SetDrawColor(110, 255, 110, 255)
@@ -145,7 +146,7 @@ if (CLIENT) then
 		surface.SetMaterial(item.equipIcon)
 		surface.DrawTexturedRect(w-23,h-23,19,19)
 	end
-
+]]
 	function ITEM:PopulateTooltip(tooltip)
 		if !self.entity then
 			local ballistictitle = tooltip:AddRowAfter("description", "ballistictitle")

@@ -7,7 +7,11 @@ function PLUGIN:PlayerSwitchFlashlight(client, bEnabled)
 	local character = client:GetCharacter()
 	local inventory = character and character:GetInventory()
 
-	if (inventory and inventory:HasItem("headlamp")) then
-		return true
+	if (inventory) then
+		for _, item in pairs(inventory:GetItems()) do
+			if (item.uniqueID == "headlamp" and item:GetData("equip")) then
+				return true
+			end
+		end
 	end
 end

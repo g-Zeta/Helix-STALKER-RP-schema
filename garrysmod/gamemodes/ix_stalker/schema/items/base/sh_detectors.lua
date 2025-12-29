@@ -1,20 +1,23 @@
-ITEM.name = "Weapon"
-ITEM.description = "A Weapon."
-ITEM.longdesc = ""
-ITEM.category = "Weapons"
-ITEM.model = "models/weapons/w_pistol.mdl"
-ITEM.class = "weapon_pistol"
+ITEM.name = "Detector"
+ITEM.description = "A detector."
 ITEM.longdesc = nil
-ITEM.width = 2
-ITEM.height = 2
+ITEM.model = "models/weapons/w_pistol.mdl"
+ITEM.category = "Electronics"
+ITEM.class = "weapon_pistol"
+
+ITEM.width = 1
+ITEM.height = 1
+
+ITEM.isArtifactdetector = true
 ITEM.isWeapon = true
-ITEM.isGrenade = false
-ITEM.weaponCategory = "melee"
+ITEM.noAmmo = true
+ITEM.weaponCategory = "artifactdetector"
 ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 
 
 -- Inventory drawing
 if (CLIENT) then
+--[[
 	function ITEM:PaintOver(item, w, h)
 		//Equipsquare
 		if (item:GetData("equip")) then
@@ -27,7 +30,7 @@ if (CLIENT) then
 		surface.SetMaterial(item.equipIcon)
 		surface.DrawTexturedRect(w-23,h-23,19,19)
 	end
-
+]]
 	function ITEM:PopulateTooltip(tooltip)
 		if (self:GetData("equip")) then
 			local name = tooltip:GetRow("name")
@@ -43,10 +46,7 @@ ITEM.functions.Sell = {
 	OnRun = function(item)
 		local client = item.player
 		local sellprice = item.price*0.75
-		if item:GetData("durability",0) < 9500 then
-			client:Notify("Must be Repaired")
-			return false
-		end
+
 		sellprice = math.Round(sellprice)
 		client:Notify( "Sold for "..(sellprice).." rubles." )
 		client:GetCharacter():GiveMoney(sellprice)
@@ -62,11 +62,7 @@ ITEM.functions.Value = {
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
-		local sellprice = item.price*0.75
-		if item:GetData("durability",0) < 9500 then
-			client:Notify("Must be Repaired")
-			return false
-		end
+
 		sellprice = math.Round(sellprice)
 		client:Notify( "Item is sellable for "..(sellprice).." rubles." )
 		return false
@@ -76,11 +72,32 @@ ITEM.functions.Value = {
 	end
 }
 
+ITEM.functions.SetDurability = {
+	name = "Set Durability",
+	tip = "Dura",
+	icon = "icon16/wrench.png",
+	
+	OnCanRun = function(item)
+		local char = item.player:GetChar()
+		if char:HasFlags("N") then
+			return true
+		else
+			return false
+		end
+	end,
+	
+	OnRun = function(item)
+		netstream.Start(item.player, "armordurabilityAdjust", item:GetData("durability",10000), item.id)
+		return false
+	end,
+}
+
 function ITEM:GetDescription()
 	local quant = self:GetData("quantity", 1)
 	local str = self.description
+
 	if self.longdesc and !IsValid(self.entity) then
-		str = str.."\n"..(self.longdesc or "").."\n \nDurability: "..(math.floor(self:GetData("durability", 10000))/100).."%"
+		str = str.."\n\n"..(self.longdesc or "").."\n \nDurability: "..(math.floor(self:GetData("durability", 10000))/100).."%"
 	end
 
 	local customData = self:GetData("custom", {})
@@ -105,84 +122,6 @@ function ITEM:GetName()
 	
 	return name
 end
-
-ITEM.functions.Custom = {
-	name = "Customize",
-	tip = "Customize this item",
-	icon = "icon16/wrench.png",
-	OnRun = function(item)		
-		ix.plugin.list["customization"]:startCustom(item.player, item)
-		
-		return false
-	end,
-	
-	OnCanRun = function(item)
-		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
-	end
-}
-
-ITEM.functions.Inspect = {
-	name = "Inspect",
-	tip = "Inspect this item",
-	icon = "icon16/picture.png",
-	OnClick = function(item, test)
-		local customData = item:GetData("custom", {})
-
-		local frame = vgui.Create("DFrame")
-		frame:SetSize(540, 680)
-		frame:SetTitle(item.name)
-		frame:MakePopup()
-		frame:Center()
-
-		frame.html = frame:Add("DHTML")
-		frame.html:Dock(FILL)
-		
-		local imageCode = [[<img src = "]]..customData.img..[["/>]]
-		
-		frame.html:SetHTML([[<html><body style="background-color: #000000; color: #282B2D; font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Palatino LT STD', Georgia, serif; font-size 16px; text-align: justify;">]]..imageCode..[[</body></html>]])
-	end,
-	OnRun = function(item)
-		return false
-	end,
-	OnCanRun = function(item)
-		local customData = item:GetData("custom", {})
-	
-		if(!customData.img) then
-			return false
-		end
-		
-		if(item.entity) then
-			return false
-		end
-		
-		return true
-	end
-}
-
-ITEM.functions.Clone = {
-	name = "Clone",
-	tip = "Clone this item",
-	icon = "icon16/wrench.png",
-	OnRun = function(item)
-		local client = item.player	
-	
-		client:requestQuery("Are you sure you want to clone this item?", "Clone", function(text)
-			if text then
-				local inventory = client:GetCharacter():GetInventory()
-				
-				if(!inventory:Add(item.uniqueID, 1, item.data)) then
-					client:Notify("Inventory is full")
-				end
-			end
-		end)
-		return false
-	end,
-	OnCanRun = function(item)
-		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
-	end
-}
 
 -- On item is dropped, Remove a weapon from the player and keep the ammo in the item.
 ITEM:Hook("drop", function(item)
@@ -327,10 +266,10 @@ function ITEM:Equip(client)
 end
 
 function ITEM:OnInstanced(invID, x, y)
-	
 	if !self:GetData("durability") then
-		self:SetData("durability", 100)
+		self:SetData("durability", 10000)
 	end
+
 	if !self:GetData("ammo") then
 		self:SetData("ammo", 0)
 	end

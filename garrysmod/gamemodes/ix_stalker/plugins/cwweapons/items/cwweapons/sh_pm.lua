@@ -18,11 +18,11 @@ ITEM.modifier = 5
 ITEM.weight = 0.73
 ITEM.barrel = "short"
 
-ITEM.exRender = true
+ITEM.exRender = false
 ITEM.iconCam = {
 	pos = Vector(-8, 215.68627929688, 4),
 	ang = Angle(0, 270, 4.7058825492859),
 	fov = 5,
 }
 
-ITEM.img = Material("stalker2/ui/weapons/makarov.png", "smooth")
+ITEM.img = Material("stalker2/ui/weapons/pm_makarov.png", "smooth")

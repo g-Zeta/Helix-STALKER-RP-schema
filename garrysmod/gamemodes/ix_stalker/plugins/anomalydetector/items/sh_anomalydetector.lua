@@ -12,6 +12,7 @@ ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 ITEM.weaponCategory = "Anomaly Detector"
 ITEM.img = Material("spawnicons/models/flaymi/anomaly/dynamics/devices/dev_decoder.png")
 
+--[[
 if (CLIENT) then
 	function ITEM:PaintOver(item, w, h)
 		if (item:GetData("equip")) then
@@ -24,7 +25,7 @@ if (CLIENT) then
 		surface.DrawTexturedRect(w-23,h-23,19,19)
 	end
 end
-
+]]
 ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",

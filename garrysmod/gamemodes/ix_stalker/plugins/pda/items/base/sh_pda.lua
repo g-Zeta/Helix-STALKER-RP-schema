@@ -12,6 +12,7 @@ ITEM.weaponCategory = "PDA"
 ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 
 if (CLIENT) then
+--[[
     function ITEM:PaintOver(item, w, h)
         if (item:GetData("equip")) then
             surface.SetDrawColor(110, 255, 110, 255)
@@ -22,7 +23,7 @@ if (CLIENT) then
         surface.SetMaterial(item.equipIcon)
         surface.DrawTexturedRect(w-23,h-23,19,19)
     end
-
+]]
     -- Cache materials to avoid re-creating on each paint
     local matCache = {}
     local function safeMaterial(path)

@@ -27,4 +27,3 @@ ITEM.img = Material("stalker2/ui/headgear/headgear_gasmask_pa10_black.png")
 ITEM.overlayPath = "stalker/ui/overlays/hud_mil"
 
 ITEM.isGasmask = true
-ITEM.isHelmet = true

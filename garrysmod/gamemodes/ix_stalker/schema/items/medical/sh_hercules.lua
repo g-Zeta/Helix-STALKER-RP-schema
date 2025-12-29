@@ -2,13 +2,21 @@ ITEM.name = "Hercules"
 ITEM.description = "A bottle of liquid steroids."
 ITEM.longdesc = "Fast-acting anabolic steroids, relieve the user of the weight of his equipment for 5 minutes. Abuse leads to sterility."
 ITEM.model = "models/ethprops/medical/booster.mdl"
+
+ITEM.flag = "2"
+
 ITEM.width = 1
 ITEM.height = 2
-ITEM.category = "Medical"
+ITEM.weight = 0.05
+
+ITEM.price = 10000
+
 ITEM.quantMax = 1
 ITEM.quantity = 1
-ITEM.price = "10000"
-ITEM.flag = "1"
+
 ITEM.sound = "stalkersound/inv_drink_flask.mp3"
-ITEM.weight = 0.05
+
+ITEM.useName = "Drink"
 ITEM.useText = {"takes a swig from their ","."}
+
+ITEM.img = Material("stalkerCoP/ui/medicine/hercules.png")

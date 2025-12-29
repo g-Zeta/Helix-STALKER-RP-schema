@@ -150,6 +150,7 @@ attachments["kk_ins2_magnifier"] = {name = "Aimpoint/XPS x2 Magnifier", slot = 8
 -- Inventory drawing
 if (CLIENT) then
 	function ITEM:PaintOver(item, w, h)
+--[[
 		//Equipsquare
 		if (item:GetData("equip")) then
 			surface.SetDrawColor(110, 255, 110, 255)
@@ -186,7 +187,7 @@ if (CLIENT) then
 				end
 			end
 		end
-
+]]
 		//Attachment Icons
 		local iterator = 1
 		if item:GetData("attachments") then

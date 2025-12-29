@@ -18,7 +18,7 @@ ix.command.Add("charcheckinv", {
 				inventory:Sync(client)
 				inventory:AddReceiver(client)
 				
-				netstream.Start(client, "invCheck", inventory:GetID())
+				netstream.Start(client, "invCheck", inventory:GetID(), target:GetName())
 	        elseif target == client then
 	        	client:Notify("Can't check yourself")
 	        else
@@ -49,28 +49,64 @@ ix.command.Add("charcheckmoney", {
 })
 
 if CLIENT then
-	netstream.Hook("invCheck", function(index)
+	netstream.Hook("invCheck", function(index, name)
 		local inventory = ix.item.inventories[index]
 
 		if (inventory and inventory.slots) then
 			
-			ix.gui.inv1 = vgui.Create("ixInventory")
+			local w, h = 500, 600
+
+			ix.gui.inv1 = vgui.Create("DFrame")
+			ix.gui.inv1:SetSize(w, h)
+			ix.gui.inv1:SetTitle("Your Inventory")
 			ix.gui.inv1:ShowCloseButton(true)
-			ix.gui.inv1:SetPos(ScrW()*0.5, ScrH()*0.2)
+			ix.gui.inv1:SetPos(ScrW()*0.5 + 10, ScrH()*0.5 - h*0.5)
+			ix.gui.inv1:MakePopup()
+
+			local scroll1 = ix.gui.inv1:Add("DScrollPanel")
+			scroll1:Dock(FILL)
+
+			local inv1 = scroll1:Add("ixInventory")
+			inv1:SetTitle(nil)
+			inv1:SetDraggable(false)
+			inv1:SetSizable(false)
 
 			local inventory2 = LocalPlayer():GetCharacter():GetInventory()
 
 			if (inventory2) then
-				ix.gui.inv1:SetInventory(inventory2)
+				inv1:SetInventory(inventory2)
+				ix.gui.inv1:SetWide(inv1:GetWide() + 32)
 			end
 
-			local panel = vgui.Create("ixInventory")
+			ix.gui.inv1.childPanels = {}
+			ix.gui.inv1.GetIconSize = function() return inv1:GetIconSize() end
+			ix.gui.inv1.OnRemove = function(this)
+				if (this.childPanels) then
+					for _, v in ipairs(this.childPanels) do
+						if (v != this) then
+							v:Remove()
+						end
+					end
+				end
+			end
+
+			local panel = vgui.Create("DFrame")
+			panel:SetSize(w, h)
 			panel:ShowCloseButton(true)
-			panel:SetTitle("Checked inventory")
-			panel:SetInventory(inventory)
-			panel:Center()
-			panel:MoveLeftOf(ix.gui.inv1, 4)
+			panel:SetTitle("Checked inventory: " .. (name or "Unknown"))
 			panel:MakePopup()
+
+			local scroll2 = panel:Add("DScrollPanel")
+			scroll2:Dock(FILL)
+
+			local inv2 = scroll2:Add("ixInventory")
+			inv2:SetTitle(nil)
+			inv2:SetDraggable(false)
+			inv2:SetSizable(false)
+			inv2:SetInventory(inventory)
+			panel:SetWide(inv2:GetWide() + 32)
+			panel:SetPos(ScrW()*0.5 - panel:GetWide() - 10, ScrH()*0.5 - h*0.5)
+
 			panel.OnClose = function(this)
 				if (IsValid(ix.gui.inv1) and !IsValid(ix.gui.menu)) then
 					ix.gui.inv1:Remove()

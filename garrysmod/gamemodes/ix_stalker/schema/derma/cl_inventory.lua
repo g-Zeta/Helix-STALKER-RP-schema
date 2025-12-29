@@ -4,6 +4,15 @@ local RECEIVER_NAME = "ixInventoryItem"
 -- The queue for the rendered icons.
 ICON_RENDER_QUEUE = ICON_RENDER_QUEUE or {}
 
+local BASE_W, BASE_H = 1920, 1080
+local function UIScale()
+  -- uniform scale, using the minimum axis to avoid stretch
+  return math.min(ScrW() / BASE_W, ScrH() / BASE_H)
+end
+
+local function SW(x) return math.floor(x * UIScale() + 0.5) end
+local function SH(y) return math.floor(y * UIScale() + 0.5) end
+
 -- To make making inventory variant, This must be followed up.
 local function RenderNewIcon(panel, itemTable)
 	local model = itemTable:GetModel()
@@ -238,7 +247,7 @@ function PANEL:Move(newX, newY, givenInventory, bNoSend)
 		return
 	end
 
-	local x = (newX - 1) * iconSize + 4
+	local x = (newX - 1) * iconSize + SW(7)
 	local y = (newY - 1) * iconSize + givenInventory:GetPadding(2)
 
 	self.gridX = newX
@@ -278,10 +287,23 @@ end
 function PANEL:ExtraPaint(width, height)
 end
 
-function PANEL:Paint(width, height)
-	surface.SetDrawColor(0, 0, 0, 85)
-	surface.DrawRect(2, 2, width - 4, height - 4)
+local gradient = Material("vgui/gradient-d")
 
+function PANEL:Paint(width, height)
+	--surface.SetDrawColor(255, 255, 255, 10)			-- ixItemIcon background (keep it for debugging purposes)
+	--surface.DrawRect(2, 2, width - 4, height - 4)
+
+	if (self.itemTable and self.itemTable:GetData("equip") and self.gridX) then	-- Gradient effect for equipped items in the inventory
+		surface.SetDrawColor(0, 250, 0, 5)
+		surface.SetMaterial(gradient)
+		surface.DrawTexturedRect(2, 2, width - 4, height - 4)
+	end
+
+	if self.itemTable and self.gridX then
+		surface.SetDrawColor(0, 0, 0, 85)
+		surface.DrawRect(2, 2, width - 4, height - 4)
+	end
+	
 	self:ExtraPaint(width, height)
 end
 
@@ -292,16 +314,6 @@ DEFINE_BASECLASS("DFrame")
 
 AccessorFunc(PANEL, "iconSize", "IconSize", FORCE_NUMBER)
 AccessorFunc(PANEL, "bHighlighted", "Highlighted", FORCE_BOOL)
-
-
-local BASE_W, BASE_H = 1920, 1080
-local function UIScale()
-  -- uniform scale, using the minimum axis to avoid stretch
-  return math.min(ScrW() / BASE_W, ScrH() / BASE_H)
-end
-
-local function SW(x) return math.floor(x * UIScale() + 0.5) end
-local function SH(y) return math.floor(y * UIScale() + 0.5) end
 
 local moneyLabel
 local weightLabel
@@ -372,7 +384,7 @@ local function RefreshCharAvatar()
 end
 
 function PANEL:Init()
-	local baseIcon = 50
+	local baseIcon = 60
 	local scaling = UIScale()
 
 	self:SetIconSize(math.floor(baseIcon * scaling + 0.5))
@@ -472,6 +484,7 @@ function PANEL:SetInventory(inventory, bFitParent)
 				local item = ix.item.instances[data.id]
 
 				if (item and !IsValid(self.panels[item.id])) then
+
 					local icon = self:AddIcon(item:GetModel() or "models/props_junk/popcan01a.mdl",
 						x, y, item.width, item.height, item:GetSkin())
 
@@ -490,7 +503,7 @@ end
 
 function PANEL:SetGridSize(w, h)
 	local paddingYTop, paddingYBottom = self:GetPadding(2), self:GetPadding(4)
-	local newWidth = w * self.iconSize + SW(8)
+	local newWidth = w * self.iconSize + SW(14)
 	local newHeight = h * self.iconSize + paddingYTop + paddingYBottom
 
 	self.gridW = w
@@ -506,7 +519,7 @@ function PANEL:PerformLayout(width, height)
 	BaseClass.PerformLayout(self, width, height)
 
 	if (self.Sizing and self.gridW and self.gridH) then
-		local newWidth = (width - 8) / self.gridW
+		local newWidth = (width - SW(14)) / self.gridW
 		local newHeight = (height - self:GetPadding(2) + self:GetPadding(4)) / self.gridH
 
 		self:SetIconSize((newWidth + newHeight) / 2)
@@ -535,7 +548,7 @@ function PANEL:BuildSlots()
 			slot:SetZPos(-999)
 			slot.gridX = x
 			slot.gridY = y
-			slot:SetPos((x - 1) * iconSize + 4, (y - 1) * iconSize + self:GetPadding(2))
+			slot:SetPos((x - 1) * iconSize + SW(7), (y - 1) * iconSize + self:GetPadding(2))
 			slot:SetSize(iconSize, iconSize)
 			slot.Paint = function(panel, width, height)
 				derma.SkinFunc("PaintInventorySlot", panel, width, height)
@@ -553,7 +566,7 @@ function PANEL:RebuildItems()
 		for y = 1, self.gridH do
 			local slot = self.slots[x][y]
 
-			slot:SetPos((x - 1) * iconSize + 4, (y - 1) * iconSize + self:GetPadding(2))
+			slot:SetPos((x - 1) * iconSize + SW(7), (y - 1) * iconSize + self:GetPadding(2))
 			slot:SetSize(iconSize, iconSize)
 		end
 	end
@@ -568,12 +581,14 @@ end
 
 function PANEL:PaintDragPreview(width, height, mouseX, mouseY, itemPanel)
 	local iconSize = self.iconSize
-	local item = itemPanel:GetItemTable()
+	local item = itemPanel.GetItemTable and itemPanel:GetItemTable() or itemPanel.itemTable
 
 	if (item) then
+		local itemW = item.width or 1
+		local itemH = item.height or 1
 		local inventory = ix.item.inventories[self.invID]
-		local dropX = math.ceil((mouseX - SW(4) - (itemPanel.gridW - 1) * iconSize) / iconSize)
-		local dropY = math.ceil((mouseY - self:GetPadding(2) - (itemPanel.gridH - 1) * iconSize) / iconSize)
+		local dropX = math.ceil((mouseX - SW(7) - (itemW - 1) * iconSize) / iconSize)
+		local dropY = math.ceil((mouseY - self:GetPadding(2) - (itemH - 1) * iconSize) / iconSize)
 
 		local hoveredPanel = vgui.GetHoveredPanel()
 
@@ -606,16 +621,16 @@ function PANEL:PaintDragPreview(width, height, mouseX, mouseY, itemPanel)
 			local invWidth, invHeight = inventory:GetSize()
 
 			if (dropX < 1 or dropY < 1 or
-				dropX + itemPanel.gridW - 1 > invWidth or
-				dropY + itemPanel.gridH - 1 > invHeight) then
+				dropX + itemW - 1 > invWidth or
+				dropY + itemH - 1 > invHeight) then
 				return
 			end
 		end
 
 		local bEmpty = true
 
-		for x = 0, itemPanel.gridW - 1 do
-			for y = 0, itemPanel.gridH - 1 do
+		for x = 0, itemW - 1 do
+			for y = 0, itemH - 1 do
 				local x2 = dropX + x
 				local y2 = dropY + y
 
@@ -633,10 +648,10 @@ function PANEL:PaintDragPreview(width, height, mouseX, mouseY, itemPanel)
 
 		surface.SetDrawColor(previewColor)
 		surface.DrawRect(
-			(dropX - 1) * iconSize + 4,
+			(dropX - 1) * iconSize + SW(7),
 			(dropY - 1) * iconSize + self:GetPadding(2),
-			itemPanel:GetWide(),
-			itemPanel:GetTall()
+			itemW * iconSize,
+			itemH * iconSize
 		)
 	end
 end
@@ -819,8 +834,12 @@ function PANEL:ReceiveDrop(panels, bDropped, menuIndex, x, y)
 		local inventory = ix.item.inventories[self.invID]
 
 		if (inventory and panel.OnDrop) then
-			local dropX = math.ceil((x - SW(4) - (panel.gridW - 1) * self.iconSize) / self.iconSize)
-			local dropY = math.ceil((y - self:GetPadding(2) - (panel.gridH - 1) * self.iconSize) / self.iconSize)
+			local item = panel.GetItemTable and panel:GetItemTable() or panel.itemTable
+			local itemW = panel.gridW or (item and item.width) or 1
+			local itemH = panel.gridH or (item and item.height) or 1
+
+			local dropX = math.ceil((x - SW(7) - (itemW - 1) * self.iconSize) / self.iconSize)
+			local dropY = math.ceil((y - self:GetPadding(2) - (itemH - 1) * self.iconSize) / self.iconSize)
 
 			panel:OnDrop(true, self, inventory, dropX, dropY)
 		end
@@ -834,6 +853,246 @@ function PANEL:ReceiveDrop(panels, bDropped, menuIndex, x, y)
 end
 
 vgui.Register("ixInventory", PANEL, "DFrame")
+
+PANEL = {}
+
+AccessorFunc(PANEL, "itemFilter", "ItemFilter")
+AccessorFunc(PANEL, "equipFunction", "EquipFunction")
+AccessorFunc(PANEL, "unequipFunction", "UnequipFunction")
+AccessorFunc(PANEL, "inventoryID", "InventoryID")
+AccessorFunc(PANEL, "iconRotation", "IconRotation", FORCE_NUMBER)
+AccessorFunc(PANEL, "slotIndex", "SlotIndex", FORCE_NUMBER)
+
+function PANEL:Init()
+	self:SetItemFilter(function(item) return true end)
+	self:SetEquipFunction("Equip")
+	self:SetUnequipFunction("EquipUn")
+	self:SetPaintBackground(false)
+
+	self:Receiver(RECEIVER_NAME, self.ReceiveDrop)
+end
+
+function PANEL:ReceiveDrop(panels, bDropped, menuIndex, x, y)
+	local panel = panels[1]
+
+	if (!IsValid(panel)) then return end
+
+	local item = panel.itemTable
+
+	if (!item) then return end
+	if (self.itemFilter and !self.itemFilter(item)) then return end
+
+	if (bDropped) then
+		if (item:GetData("equip")) then return end
+
+		local action = item.functions[self:GetEquipFunction()]
+		local actionName = self:GetEquipFunction()
+
+		if (!action) then
+			for k, v in pairs(item.functions) do
+				if (k:lower() == actionName:lower()) then
+					action = v
+					actionName = k
+					break
+				end
+			end
+		end
+
+		if (action) then
+			item.player = LocalPlayer()
+
+			if (!action.OnCanRun or action.OnCanRun(item) != false) then
+				local send = true
+
+				if (action.OnClick) then
+					send = action.OnClick(item)
+				end
+
+				if (action.sound) then
+					surface.PlaySound(action.sound)
+				end
+
+				if (send != false) then
+					InventoryAction(actionName, item.id, panel.inventoryID)
+				end
+			end
+
+			item.player = nil
+		end
+	end
+end
+
+function PANEL:Think()
+	local char = LocalPlayer():GetCharacter()
+	if (!char) then return end
+	local inv = char:GetInventory()
+	if (!inv) then return end
+
+	self:SetInventoryID(inv:GetID())
+
+	local equippedItem = nil
+
+	if (self:GetSlotIndex()) then
+		local found = {}
+		for _, item in pairs(inv:GetItems()) do
+			if (item:GetData("equip", false) and self.itemFilter(item)) then
+				table.insert(found, item)
+			end
+		end
+		table.sort(found, function(a, b) return a.id < b.id end)
+		equippedItem = found[self:GetSlotIndex()]
+	else
+		for _, item in pairs(inv:GetItems()) do
+			if (item:GetData("equip", false) and self.itemFilter(item)) then
+				equippedItem = item
+				break
+			end
+		end
+	end
+
+	if (equippedItem) then
+		if (!IsValid(self.itemIcon)) then
+			local icon = self:Add("ixItemIcon")
+			icon:SetSize(self:GetWide(), self:GetTall())
+			icon:SetModel(equippedItem:GetModel(), equippedItem:GetSkin())
+			icon:SetItemTable(equippedItem)
+			icon:SetInventoryID(inv:GetID())
+			icon:SetHelixTooltip(function(tooltip)
+				ix.hud.PopulateItemTooltip(tooltip, equippedItem)
+			end)
+
+			if (equippedItem.img) then
+				if (IsValid(icon.Icon)) then icon.Icon:SetVisible(false) end
+				icon.ExtraPaint = function(this, panelX, panelY)
+					local exIcon = equippedItem.img
+					if (exIcon) then
+						surface.SetMaterial(exIcon)
+						surface.SetDrawColor(color_white)
+						local rot = self:GetIconRotation() or 0
+						local iw, ih = equippedItem.width or 1, equippedItem.height or 1
+
+						if (rot % 180 == 90) then
+							local newH = panelX
+							local newW = newH * (iw / ih)
+							if (newW > panelY) then
+								newW = panelY
+								newH = newW * (ih / iw)
+							end
+							surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, newW, newH, rot)
+						else
+							local newW = panelX
+							local newH = newW * (ih / iw)
+							if (newH > panelY) then
+								newH = panelY
+								newW = newH * (iw / ih)
+							end
+							surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, newW, newH, rot)
+						end
+					end
+				end
+			else
+				if (IsValid(icon.Icon)) then icon.Icon:SetVisible(true) end
+				icon.ExtraPaint = function() end
+			end
+
+			icon.OnDrop = function(this, bDragging, inventoryPanel, inventory, gridX, gridY)
+				local item = this.itemTable
+				if (!item or !bDragging) then return end
+
+				if (!IsValid(inventoryPanel)) then
+					InventoryAction("drop", item.id, item.invID, {})
+					return
+				end
+
+				local invIcon = inventoryPanel.panels[item.id]
+
+				if (inventoryPanel:IsAllEmpty(gridX, gridY, item.width, item.height, invIcon)) then
+					local oldX, oldY
+
+					if (IsValid(invIcon)) then
+						oldX, oldY = invIcon.gridX, invIcon.gridY
+						invIcon:Move(gridX, gridY, inventoryPanel, true)
+					else
+						oldX, oldY = item.gridX, item.gridY
+					end
+
+					net.Start("ixInventoryMove")
+						net.WriteUInt(oldX, 6)
+						net.WriteUInt(oldY, 6)
+						net.WriteUInt(gridX, 6)
+						net.WriteUInt(gridY, 6)
+						net.WriteUInt(item.invID, 32)
+						net.WriteUInt(inventoryPanel.invID, 32)
+					net.SendToServer()
+
+					InventoryAction(self:GetUnequipFunction(), item.id, item.invID)
+				else
+					InventoryAction(self:GetUnequipFunction(), item.id, item.invID)
+				end
+			end
+
+			self.itemIcon = icon
+		elseif (self.itemIcon:GetItemTable() != equippedItem) then
+			self.itemIcon:SetItemTable(equippedItem)
+			self.itemIcon:SetModel(equippedItem:GetModel(), equippedItem:GetSkin())
+			self.itemIcon:SetHelixTooltip(function(tooltip)
+				ix.hud.PopulateItemTooltip(tooltip, equippedItem)
+			end)
+
+			if (equippedItem.img) then
+				if (IsValid(self.itemIcon.Icon)) then self.itemIcon.Icon:SetVisible(false) end
+				self.itemIcon.ExtraPaint = function(this, panelX, panelY)
+					local exIcon = equippedItem.img
+					if (exIcon) then
+						surface.SetMaterial(exIcon)
+						surface.SetDrawColor(color_white)
+						local rot = self:GetIconRotation() or 0
+						local iw, ih = equippedItem.width or 1, equippedItem.height or 1
+
+						if (rot % 180 == 90) then
+							local newH = panelX
+							local newW = newH * (iw / ih)
+							if (newW > panelY) then
+								newW = panelY
+								newH = newW * (ih / iw)
+							end
+							surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, newW, newH, rot)
+						else
+							local newW = panelX
+							local newH = newW * (ih / iw)
+							if (newH > panelY) then
+								newH = panelY
+								newW = newH * (iw / ih)
+							end
+							surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, newW, newH, rot)
+						end
+					end
+				end
+			else
+				if (IsValid(self.itemIcon.Icon)) then self.itemIcon.Icon:SetVisible(true) end
+				self.itemIcon.ExtraPaint = function() end
+			end
+		end
+	else
+		if (IsValid(self.itemIcon)) then
+			self.itemIcon:Remove()
+		end
+	end
+end
+
+function PANEL:Paint(w, h)
+	if (dragndrop.IsDragging() and dragndrop.m_Receiver == self) then
+		local panel = dragndrop.m_Dragging and dragndrop.m_Dragging[1]
+		local item = panel and panel.itemTable
+
+		if (item and self.itemFilter(item)) then
+			surface.SetDrawColor(100, 100, 100, 10)
+			surface.DrawRect(0, 0, w, h)
+		end
+	end
+end
+
+vgui.Register("ixEquipmentSlot", PANEL, "DPanel")
 
 local MODEL_ANGLE = Angle(0, 90, 0)
 hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
@@ -896,13 +1155,18 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
-			local panel = mainpanel:Add("ixInventory")
+			-- Scroll Panel for inventory
+			local scroll = mainpanel:Add("DScrollPanel")
+			scroll:SetPos(SW(841), SH(109))
+			scroll:SetSize(SW(355), SH(609))
+			scroll:GetVBar():SetWide(0)
+
+			local panel = scroll:Add("ixInventory")
 			panel:SetDraggable(false)
 			panel:SetSizable(false)
 			panel:SetTitle(nil)
 			panel.bNoBackgroundBlur = true
 			panel.childPanels = {}
-			panel:SetPos(SW(844), SH(108))
 
 			-- Playermodel Panel
 			local playermodelFrame = mainpanel:Add("DImage")
@@ -928,6 +1192,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			equipmentpanel:SetMaterial(Material("stalkerCoP/ui/inventory/equipment.png", "smooth"))
 			equipmentpanel:Dock(FILL)
 			equipmentpanel:SetZPos(-1)
+			equipmentpanel:SetMouseInputEnabled(true)
 
 			-- Inventory Panel and image
 			local inventorypanel = mainpanel:Add("DImage")
@@ -1061,24 +1326,24 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local HelmetPanel = equipmentpanel:Add("DPanel")
 			HelmetPanel:SetSize(SW(96), SH(115))
 			HelmetPanel:SetPos(SW(12), SH(11))
-			function HelmetPanel:Paint(w, h)
+			HelmetPanel:SetPaintBackground(false)
+			function HelmetPanel:PaintOver(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
 						if (item.isArmor and item.isHelmet) or (item.isHelmet and item.isGasmask) then
 							surface.SetMaterial(blocker)
 							surface.SetDrawColor(255, 255, 255, 255) 
-							surface.DrawTexturedRect(0, 0, SW(96), SH(115))
-						elseif not item.isArmor and not item.isGasmask then
-							if item.isHelmet then
-								local helmetImage = item.img
-								surface.SetMaterial(helmetImage)
-								surface.SetDrawColor(255, 255, 255, 255) 
-								surface.DrawTexturedRect(SW(4), SH(12), SW(88), SH(88))
-							end
+							surface.DrawTexturedRect(SW(0), SH(0), SW(110), SH(115))
 						end
 					end
 				end
 			end
+
+			-- Helmet Icon
+			local HelmetIcon = HelmetPanel:Add("ixEquipmentSlot")
+			HelmetIcon:SetSize(SW(92), SH(92))
+			HelmetIcon:Center()
+			HelmetIcon:SetItemFilter(function(item) return item.isHelmet and (not item.isArmor and not item.isGasmask) end)
 
 			-- Helmet Durability
 			local HelmetDura = HelmetPanel:Add("DPanel")
@@ -1125,26 +1390,26 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			local HeadgearPanel = equipmentpanel:Add("DPanel")
 			HeadgearPanel:SetSize(SW(110), SH(115))
 			HeadgearPanel:SetPos(SW(117), SH(11))
-			function HeadgearPanel:Paint(w, h)
+			HeadgearPanel:SetPaintBackground(false)
+			function HeadgearPanel:PaintOver(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
 						if item.isArmor and item.isGasmask then
 							surface.SetMaterial(blocker)
 							surface.SetDrawColor(255, 255, 255, 255) 
 							surface.DrawTexturedRect(SW(0), SH(0), SW(110), SH(115))
-						elseif not item.isArmor then
-							if (item.isGasmask and item.isHelmet) or item.isGasmask then
-								local headgearImage = item.img or Material("placeholders/headgear_nomask.png")
-								surface.SetMaterial(headgearImage)
-								surface.SetDrawColor(255, 255, 255, 255) 
-								surface.DrawTexturedRect(SW(5), SH(3), SW(100), SH(100))
-							end
 						end
 					end
 				end
 			end
 
-			-- Headgear Durability
+			-- Gasmask/Headgear Icon
+			local HeadgearIcon = HeadgearPanel:Add("ixEquipmentSlot")
+			HeadgearIcon:SetSize(SW(100), SH(100))
+			HeadgearIcon:Center()
+			HeadgearIcon:SetItemFilter(function(item) return not item.isArmor and ((item.isGasmask and item.isHelmet) or item.isGasmask) end)
+			
+			-- Gasmask/Headgear Durability
 			local HeadgearDura = HeadgearPanel:Add("DPanel")
 			HeadgearDura:SetSize(SW(58), SH(4))
 			HeadgearDura:SetPos(SW(26), SH(108))
@@ -1185,25 +1450,35 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
+			-- Backpack
+			local BackpackPanel = equipmentpanel:Add("DPanel")
+			BackpackPanel:SetSize(SW(92), SH(115))
+			BackpackPanel:SetPos(SW(238), SH(11))
+			BackpackPanel:SetPaintBackground(false)
+			
+			-- Backpack Icon
+			local BackpackIcon = BackpackPanel:Add("ixEquipmentSlot")
+			BackpackIcon:SetSize(SW(92), SH(92))
+			BackpackIcon:Center()
+			BackpackIcon:SetItemFilter(function(item) return item.isBackpack end)
+
 			-- Armor
 			local ArmorPanel = equipmentpanel:Add("DPanel")
-			ArmorPanel:SetSize(SW(110), SH(181))
+			ArmorPanel:SetSize(SW(110), SH(180))
 			ArmorPanel:SetPos(SW(117), SH(135))
-			function ArmorPanel:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.isArmor and item:GetData("equip", false) then
-						local armorImage = item.img or Material("placeholders/armor_nosuit.png")
-						surface.SetMaterial(armorImage)
-						surface.SetDrawColor(255, 255, 255, 255) 
-						surface.DrawTexturedRect(SW(2), SH(10), SW(106), SH(159))
-					end
-				end
-			end
+			ArmorPanel:SetPaintBackground(false)
+
+			-- Armor Icon
+			local ArmorIcon = ArmorPanel:Add("ixEquipmentSlot")
+			ArmorIcon:SetSize(SW(106), SH(170))
+			ArmorIcon:SetPos(SW(2), SH(2))
+			ArmorIcon:SetItemFilter(function(item) return item.isArmor end)
 
 			-- Armor Durability
 			local ArmorDura = ArmorPanel:Add("DPanel")
 			ArmorDura:SetSize(SW(58), SH(4))
 			ArmorDura:SetPos(SW(26), SH(174))
+			ArmorDura:SetPaintBackground(false)
 			function ArmorDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item:GetData("equip", false) then
@@ -1243,54 +1518,21 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 
 			-- Secondary Weapon (Left)
 			local LWepPanel = equipmentpanel:Add("DPanel")
-			LWepPanel:SetSize(SW(92), SH(248))
+			LWepPanel:SetSize(SW(92), SH(179))
 			LWepPanel:SetPos(SW(14), SH(137))
-			function LWepPanel:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
-						local LWepImage = item.img or Material("placeholders/weapon_secondary.png")
-						
-						surface.SetMaterial(LWepImage)
-						surface.SetDrawColor(255, 255, 255, 255)
-
-						-- Padding
-						local pad = SW(2)
-						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
-
-						-- Source aspect. If unknown, assume horizontal image (e.g., rifle) -> wider than tall.
-						-- Example: store item.width/item.height to be exact. Here we assume 3:1 landscape.
-						local srcW, srcH
-						if item.width and item.height then
-							srcW, srcH = item.width, item.height
-						end
-						local aspect = srcW / srcH
-
-						-- When rotating 90°, the on-screen bounding box swaps W/H.
-						-- We want the rotated image to fit inside maxW x maxH.
-						-- Let drawW/drawH be the un-rotated draw size. After rotation, the
-						-- bounding width = drawH, bounding height = drawW.
-						-- So choose drawW/drawH such that:
-						--   drawH <= maxW  and  drawW <= maxH
-						-- With aspect = drawW/drawH => drawW = aspect * drawH.
-						local drawH = math.floor(math.min(maxW, maxH / aspect) + 0.5)
-						local drawW = math.floor(aspect * drawH + 0.5)
-
-						-- Center of the panel
-						local cx = w * 0.5
-						local cy = h * 0.5
-
-						-- Draw rotated 90 degrees
-						surface.DrawTexturedRectRotated(cx, cy, drawW, drawH, 90)
-
-						return
-					end
-				end
-			end
+			LWepPanel:SetPaintBackground(false)
+			
+			-- Secondary Weapon Icon
+			local LWepIcon = LWepPanel:Add("ixEquipmentSlot")
+			LWepIcon:SetSize(SW(92), SH(167))
+			LWepIcon:SetPos(SW(0), SH(2))
+			LWepIcon:SetItemFilter(function(item) return item.weaponCategory == "secondary" end)
+			LWepIcon:SetIconRotation(90)
 
 			-- Secondary Weapon Durability
 			local LWepDura = LWepPanel:Add("DPanel")
 			LWepDura:SetSize(SW(58), SH(4))
-			LWepDura:SetPos(SW(16), SH(241))
+			LWepDura:SetPos(SW(16), SH(172))
 			function LWepDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
@@ -1324,46 +1566,20 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 
 			-- Sidearm (Center)
 			local SidearmPanel = equipmentpanel:Add("DPanel")
-			SidearmPanel:SetSize(SW(110), SH(60))
-			SidearmPanel:SetPos(SW(117), SH(325))
-			function SidearmPanel:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
-						local SidearmImage = item.img or Material("placeholders/weapon_sidearm.png")
+			SidearmPanel:SetSize(SW(110), SH(58))
+			SidearmPanel:SetPos(SW(117), SH(327))
+			SidearmPanel:SetPaintBackground(false)
 
-						surface.SetMaterial(SidearmImage)
-						surface.SetDrawColor(255, 255, 255, 255)
-
-						-- Padding
-						local pad = SW(4)
-						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
-
-						-- Landscape
-						local srcW, srcH
-						if item.width and item.height then
-							srcW, srcH = item.width, item.height
-						end
-						local aspect = srcW / srcH
-
-						local drawW = math.floor(math.min(maxW, maxH * aspect) + 0.5)
-						local drawH = math.floor(drawW / aspect + 0.5)
-
-						-- Center of the panel
-						local cx = math.floor((w - drawW) * 0.5 + 0.5)
-						local cy = math.floor((h - drawH) * 0.5 + 0.5)
-
-						-- Draw rotated -90 degrees
-						surface.DrawTexturedRect(cx, cy, drawW, drawH)
-
-						return
-					end
-				end
-			end
+			-- Sidearm Icon
+			local SidearmIcon = SidearmPanel:Add("ixEquipmentSlot")
+			SidearmIcon:SetSize(SW(100), SH(50))
+			SidearmIcon:SetPos(SW(5), SH(0))
+			SidearmIcon:SetItemFilter(function(item) return item.weaponCategory == "sidearm" end)
 
 			-- Sidearm Durability
 			local SidearmDura = SidearmPanel:Add("DPanel")
 			SidearmDura:SetSize(SW(58), SH(4))
-			SidearmDura:SetPos(SW(26), SH(53))
+			SidearmDura:SetPos(SW(26), SH(51))
 			function SidearmDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
@@ -1397,46 +1613,21 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 
 			-- Primary Weapon (Right)
 			local RWepPanel = equipmentpanel:Add("DPanel")
-			RWepPanel:SetSize(SW(92), SH(248))
+			RWepPanel:SetSize(SW(92), SH(179))
 			RWepPanel:SetPos(SW(238), SH(137))
-			function RWepPanel:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "primary" and item:GetData("equip", false) then
-						local RWepImage = item.img or Material("placeholders/weapon_primary.png")
-						
-						surface.SetMaterial(RWepImage)
-						surface.SetDrawColor(255, 255, 255, 255)
+			RWepPanel:SetPaintBackground(false)
 
-						-- Padding
-						local pad = SW(2)
-						local maxW, maxH = math.max(0, w - pad * 2), math.max(0, h - pad * 2)
-
-						-- Landscape
-						local srcW, srcH
-						if item.width and item.height then
-							srcW, srcH = item.width, item.height
-						end
-						local aspect = srcW / srcH
-
-						local drawH = math.floor(math.min(maxW, maxH / aspect) + 0.5)
-						local drawW = math.floor(aspect * drawH + 0.5)
-
-						-- Center of the panel
-						local cx = w * 0.5
-						local cy = h * 0.5
-
-						-- Draw rotated -90 degrees
-						surface.DrawTexturedRectRotated(cx, cy, drawW, drawH, -90)
-
-						return
-					end
-				end
-			end
+			-- Primary Weapon Icon
+			local RWepIcon = RWepPanel:Add("ixEquipmentSlot")
+			RWepIcon:SetSize(SW(92), SH(167))
+			RWepIcon:SetPos(SW(0), SH(2))
+			RWepIcon:SetItemFilter(function(item) return item.weaponCategory == "primary" end)
+			RWepIcon:SetIconRotation(-90)
 
 			-- Primary Weapon Durability
 			local RWepDura = RWepPanel:Add("DPanel")
 			RWepDura:SetSize(SW(58), SH(4))
-			RWepDura:SetPos(SW(17), SH(241))
+			RWepDura:SetPos(SW(17), SH(172))
 			function RWepDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.weaponCategory == "primary" and item:GetData("equip", false) then
@@ -1468,64 +1659,74 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
-			-- PDA Panel
-			local PDAequip = equipmentpanel:Add("DPanel")
-			PDAequip:SetSize(SW(78), SH(67))
-			PDAequip:SetPos(SW(11), SH(395))
-			function PDAequip:Paint(w, h)
+			-- Night Vision (Left)
+			local NVPanel = equipmentpanel:Add("DPanel")
+			NVPanel:SetSize(SW(92), SH(58))
+			NVPanel:SetPos(SW(14), SH(327))
+			NVPanel:SetPaintBackground(false)
+
+			local NVIcon = NVPanel:Add("ixEquipmentSlot")
+			NVIcon:SetSize(SW(50), SH(50))
+			NVIcon:Dock(TOP)
+			NVIcon:SetItemFilter(function(item) return item.isNVG end)
+
+			-- Artifact Detector (Right)
+			local ArtDetPanel = equipmentpanel:Add("DPanel")
+			ArtDetPanel:SetSize(SW(92), SH(58))
+			ArtDetPanel:SetPos(SW(238), SH(327))
+			ArtDetPanel:SetPaintBackground(false)
+
+			local ArtDetIcon = ArtDetPanel:Add("ixEquipmentSlot")
+			ArtDetIcon:SetSize(SW(50), SH(50))
+			ArtDetIcon:SetPos(SW(21), SH(0))
+			ArtDetIcon:SetItemFilter(function(item) return item.isArtifactdetector end)
+
+			local ArtDetDura = ArtDetPanel:Add("DPanel")
+			ArtDetDura:SetSize(SW(58), SH(4))
+			ArtDetDura:SetPos(SW(17), SH(51))
+			function ArtDetDura:Paint(w, h)
 				for _, item in pairs(items) do
-					if item.isPDA and item:GetData("equip", false) then
-						local PDAiconImage = item.img
-						surface.SetMaterial(PDAiconImage)
-						surface.SetDrawColor(255, 255, 255, 255) 
-						surface.DrawTexturedRect(SW(7), SH(1), SW(64), SH(64))
+					if item.isArtifactdetector and item:GetData("equip", false) then
+						local durability = item:GetData("durability", 10000)
+						if durability == nil then return end
+
+						local maxDura = 10000
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 6000 then
+							surface.SetDrawColor(115, 180, 130, 200) -- green
+						elseif durability > 4000 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 2000 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
+						return
 					end
 				end
 			end
 
-			-- Geiger Counter Panel
-			local Geiger = equipmentpanel:Add("DPanel")
-			Geiger:SetSize(SW(78), SH(67))
-			Geiger:SetPos(SW(92), SH(395))
-			function Geiger:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.isGeiger and item:GetData("equip", false) then
-						local GeigerImage = item.img
-						surface.SetMaterial(GeigerImage)
-						surface.SetDrawColor(255, 255, 255, 255) 
-						surface.DrawTexturedRect(SW(7), SH(1), SW(64), SH(64))
-					end
-				end
-			end
+			-- Tool Panels
+			for i = 1, 4 do
+				local ToolPanel = equipmentpanel:Add("DPanel")
+				ToolPanel:SetSize(SW(78), SH(67))
+				ToolPanel:SetPos(SW(11 + (i - 1) * 81), SH(395))
+				ToolPanel:SetPaintBackground(false)
 
-			-- Anomaly Detector Panel
-			local AnomDet = equipmentpanel:Add("DPanel")
-			AnomDet:SetSize(SW(78), SH(67))
-			AnomDet:SetPos(SW(173), SH(395))
-			function AnomDet:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.isAnomalydetector and item:GetData("equip", false) then
-						local AnomDetImage = item.img
-						surface.SetMaterial(AnomDetImage)
-						surface.SetDrawColor(255, 255, 255, 255) 
-						surface.DrawTexturedRect(SW(7), SH(1), SW(64), SH(64))
-					end
-				end
-			end
-
-			-- Artifact Detector Panel
-			local ArtDet = equipmentpanel:Add("DPanel")
-			ArtDet:SetSize(SW(78), SH(67))
-			ArtDet:SetPos(SW(254), SH(395))
-			function ArtDet:Paint(w, h)
-				for _, item in pairs(items) do
-					if (item.class == "detector_veles" or item.class == "detector_bear" or item.class == "detector_echo") and item:GetData("equip", false) then
-						local detectorImage = item.img
-						surface.SetMaterial(detectorImage)
-						surface.SetDrawColor(255, 255, 255, 255) 
-						surface.DrawTexturedRect(SW(7), SH(1), SW(64), SH(64))
-					end
-				end
+				local ToolIcon = ToolPanel:Add("ixEquipmentSlot")
+				ToolIcon:SetSize(SW(65), SH(65))
+				ToolIcon:Center()
+				ToolIcon:SetSlotIndex(i)
+				ToolIcon:SetItemFilter(function(item) return item.isPDA or item.isAnomalydetector or item.isGeiger or item.isFlashlight end)
 			end
 
 			-- Artifacts panel

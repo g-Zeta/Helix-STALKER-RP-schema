@@ -32,7 +32,7 @@ ITEM.res = {
 ITEM.ballisticlevels = {"1", "1"}	--Replace "1" with: 0, l, ll-a, ll, lll-a, lll, lll+, lV or V
 ITEM.ballisticareas = {"  Head:", "  Face:"}	--No need to add this line to the items
 
-ITEM.img = Material("placeholders/headgear_nomask.png")
+ITEM.img = Material("placeholders/slot_gasmask.png")
 
 ITEM.overlayPath = nil
 
@@ -95,6 +95,7 @@ end
 
 -- Inventory drawing
 if (CLIENT) then
+--[[
 	function ITEM:PaintOver(item, w, h)
 		if (item:GetData("equip")) then
 			surface.SetDrawColor(110, 255, 110, 255)
@@ -105,7 +106,7 @@ if (CLIENT) then
 		surface.SetMaterial(item.equipIcon)
 		surface.DrawTexturedRect(w-23,h-23,19,19)
 	end
-
+]]
 	function ITEM:PopulateTooltip(tooltip)
 		if !self.entity then
 			local ballistictitle = tooltip:AddRowAfter("description", "ballistictitle")

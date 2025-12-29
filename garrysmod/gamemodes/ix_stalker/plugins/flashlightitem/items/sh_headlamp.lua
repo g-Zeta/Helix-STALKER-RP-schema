@@ -8,10 +8,43 @@ ITEM.flag = "1"
 ITEM.price = 2000
 ITEM.repairCost = ITEM.price/100*1
 ITEM.weight = 0.25
+ITEM.isFlashlight = true
 
 ITEM:Hook("drop", function(item)
+	if (item:GetData("equip")) then
+		item:SetData("equip", false)
+	end
 	item.player:Flashlight(false)
 end)
+
+ITEM.functions.Equip = {
+	name = "Equip",
+	tip = "equipTip",
+	icon = "icon16/stalker/equip.png",
+	OnRun = function(item)
+		item:SetData("equip", true)
+		item.player:EmitSound("stalkersound/inv_slot.mp3")
+		return false
+	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity) and item:GetData("equip") != true
+	end
+}
+
+ITEM.functions.EquipUn = {
+	name = "Unequip",
+	tip = "equipTip",
+	icon = "icon16/stalker/unequip.png",
+	OnRun = function(item)
+		item:SetData("equip", false)
+		item.player:EmitSound("stalkersound/inv_slot.mp3")
+		item.player:Flashlight(false)
+		return false
+	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity) and item:GetData("equip") == true
+	end
+}
 
 ITEM.functions.Sell = {
 	name = "Sell",

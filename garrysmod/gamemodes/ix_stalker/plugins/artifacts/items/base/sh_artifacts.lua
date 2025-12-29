@@ -44,7 +44,7 @@ ITEM.buffval = 0
 
 ITEM.debuffval = 0
 
-ITEM.img = Material("placeholders/artifact.png")
+ITEM.img = Material("placeholders/slot_artifact.png")
 
 ITEM.isArtefact = true
 
