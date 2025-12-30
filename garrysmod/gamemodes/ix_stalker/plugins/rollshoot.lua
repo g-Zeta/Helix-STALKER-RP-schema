@@ -534,7 +534,7 @@ function playerMeta:GetActiveWeaponItem()
 end 
 
 function playerMeta:ResetShotSfired()
-	client:SetData("shotsfired", 0)
+	self:SetData("shotsfired", 0)
 end 
 
 
