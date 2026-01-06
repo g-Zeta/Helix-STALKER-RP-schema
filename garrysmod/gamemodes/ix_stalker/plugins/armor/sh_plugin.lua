@@ -141,3 +141,7 @@ ix.command.Add("CheckCharRadProt", {
 ix.option.Add("gasmaskoverlay", ix.type.bool, true, {
 	category = "STALKER Settings",
 })
+
+ix.option.Add("gasmaskbreathsound", ix.type.bool, true, {
+	category = "STALKER Settings",
+})

@@ -2,23 +2,17 @@ ITEM.name = "Suit name"
 ITEM.model = "models/props_c17/BriefCase001a.mdl"
 ITEM.description = "Short description."
 ITEM.longdesc = "Long description."
-ITEM.category = "Armor"	--No need to add this line to the items
-ITEM.outfitCategory = "model"	--No need to add this line to the items
 
-ITEM.price = 1
-ITEM.weight = 1
-ITEM.width = 2	--No need to add this line to the items
-ITEM.height = 3	--No need to add this line to the items
+ITEM.weight = 1.0		--Weight in KG
 
---[[
-ITEM.flag = "?"	--Set the flag according to the faction or trade tier
+ITEM.price = 0
+ITEM.flag = nil			--Set the flag according to the faction or trade tier
 
-ITEM.radProt = 0.00	--Only add this line if the suit includes a gasmask
---]]
+ITEM.radProt = 0.00		--Radiation protection level (0.00-1.00)
 
 ITEM.BRC = 0
 
-ITEM.res = {
+ITEM.res = {			--Resistance values (0.00-1.00)
 	["Bullet"] = 0.00,
 	["Blast"] = 0.00,
 	["Slash"] = 0.00,
@@ -29,21 +23,6 @@ ITEM.res = {
 	["Psi"] = 0.00,
 	["Radiation"] = 0.00,
 }
-
-ITEM.ballisticlevels = {"1", "1", "1", "1", "1"}	--Replace "1" with: 0, l, ll-a, ll, lll-a, lll, lll+, lV or V
-ITEM.ballisticareas = {"  Head:", "  Face:", "  Arms:", "  Torso:", "  Legs:"}	--No need to add this line to the items
-ITEM.artifactcontainers = {"0"}	--Number of containers that come with the suit
-
-ITEM.img = Material("placeholders/slot_armor.png")
-
-ITEM.overlayPath = nil
-
-ITEM.isGasmask = false	--Add this line to the item if the suit comes with a gasmask and switch to true
-ITEM.isHelmet = false	--Add this line to the item if the suit comes with a helmet and switch to true
-ITEM.isArmor = true		--No need to add this line to the items
-ITEM.isBodyArmor = true	--No need to add this line to the items
-ITEM.playermodel = nil	--No need to add this line to the items
-ITEM.canRepair = true	--No need to add this line to the items
 
 --[[
 --Only use these lines if the model has to show in any specific skin and/or bodygroups
@@ -69,13 +48,36 @@ end
 ITEM.replacements = "playermodel_path"
 --]]
 
-ITEM.hands = nil -- Path to the c_arms model, e.g. "models/weapons/c_arms_sunrise.mdl"
-ITEM.handsSkin = nil -- The skin to apply to the c_arms model.
+ITEM.isGasmask = false	--Add this if the suit includes a gasmask and switch to true
+ITEM.isHelmet = false	--Add this if the suit includes a helmet and switch to true
 
-ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")	--No need to add this line to the items
+ITEM.artifactcontainers = {"0"}		--Number of artifact containers the suit has
+ITEM.miscslots = 0					--Number of misc attachment slots the suit has
+
+ITEM.img = Material("placeholders/slot_armor.png")	--Icon path
+
+ITEM.overlayPath = nil	--Path to the overlay material if a gasmask is included
+
+ITEM.hands = nil 		--Path to the c_arms model, e.g. "models/weapons/c_arms_sunrise.mdl"
+ITEM.handsSkin = nil 	--The skin to apply to the c_arms model
+
+
+----- Only copy what is above this line -----
+
+ITEM.category = "Armor"
+ITEM.outfitCategory = "model"
+
+ITEM.width = 2
+ITEM.height = 3
+
+ITEM.isArmor = true
+ITEM.isBodyArmor = true
+ITEM.canRepair = true
+
+ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 ITEM.skincustom = {}
 
-ITEM.miscslots = 1
+
 
 function ITEM:GetRepairCost()
 	return self.price * 0.001 -- 0.1% of price per %
@@ -233,10 +235,10 @@ if (CLIENT) then
 
 			end
 			
-			ix.util.PropertyDesc3(tooltip, ("Durability: " .. (math.floor(self:GetData("durability", 10000))/100) .. "%"), Color(255, 255, 255), Material("vgui/ui/stalker/misc/overdrive.png"), 980)
+			ix.util.PropertyDesc3(tooltip, ("Durability: " .. (math.floor(self:GetData("durability", 10000))/100) .. "%"), Color(255, 255, 255), Material("stalkerCoP/ui/icons/misc/overdrive.png"), 980)
 
 			local artifactContainersCount = tonumber(self.artifactcontainers[1]) or 0
-			ix.util.PropertyDesc3(tooltip, ("Artifact Containers: " .. artifactContainersCount), Color(255, 255, 255), Material("vgui/ui/stalker/armorupgrades/explosion.png"), 981)
+			ix.util.PropertyDesc3(tooltip, ("Artifact Containers: " .. artifactContainersCount), Color(255, 255, 255), Material("stalkerCoP/ui/icons/armorupgrades/explosion.png"), 981)
 
 	        if (self.PopulateTooltipIndividual) then
 		      self:PopulateTooltipIndividual(tooltip)
@@ -846,19 +848,19 @@ function ITEM:OnRemoved()
 end
 
 function ITEM:OnEquipped()
-	self.player:EmitSound("player/shove_02.wav")
+	self.player:EmitSound("stalker/inventory/shove_02.wav")
 
 	if self.isGasmask == true then
-		self.player:EmitSound("stalkersound/gasmask_on.ogg")
+		self.player:EmitSound("stalker/player/gasmask_on.ogg")
 		return
 	end
 end
 
 function ITEM:OnUnequipped()
-	self.player:EmitSound("player/shove_03.wav")
+	self.player:EmitSound("stalker/inventory/shove_03.wav")
 
 	if self.isGasmask == true then
-		self.player:EmitSound("stalkersound/gasmask_off.ogg")
+		self.player:EmitSound("stalker/player/gasmask_off.ogg")
 		return
 	end
 end

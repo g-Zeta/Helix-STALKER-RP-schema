@@ -313,8 +313,8 @@ ix.config.Add("characterCreationBudget", 50000, "Budget for character creation l
 	category = "Main menu"
 })
 
-ix.config.Add("inventoryWidth", 5, "How many slots in a row there is in a default inventory.", nil, {
-	data = {min = 1, max = 5},
+ix.config.Add("inventoryWidth", 8, "How many slots in a row there is in a default inventory.", nil, {
+	data = {min = 1, max = 8},
 	category = "characters"
 })
 

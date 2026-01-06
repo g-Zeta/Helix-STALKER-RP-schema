@@ -77,15 +77,31 @@ local function ixActMenu()
 		radiationLabel:SetSize( 36, 20 )
 		left:AddItem( radiationLabel )
 
+		local hungerLabel = vgui.Create( "DLabel", frame )
+		hungerLabel:Dock( TOP )
+		hungerLabel:DockMargin( 8, 0, 0, 0 )
+		hungerLabel:SetFont("ixSmallFont")
+		hungerLabel:SetSize( 36, 20 )
+		left:AddItem( hungerLabel )
+
+		local thirstLabel = vgui.Create( "DLabel", frame )
+		thirstLabel:Dock( TOP )
+		thirstLabel:DockMargin( 8, 0, 0, 0 )
+		thirstLabel:SetFont("ixSmallFont")
+		thirstLabel:SetSize( 36, 20 )
+		left:AddItem( thirstLabel )
+
 		local function updateLabels()
 			healthLabel:SetText("Health : " .. LocalPlayer():Health())
 			psyhealthLabel:SetText("Psyhealth : " .. (LocalPlayer():GetPsyHealth() or 100))
 			radiationLabel:SetText("Radiation : " .. (LocalPlayer():GetNetVar("AccumRads") or 0))
+			hungerLabel:SetText("Hunger : " .. (LocalPlayer():GetCharacter():GetData("hunger", 100)))
+			thirstLabel:SetText("Thirst : " .. (LocalPlayer():GetCharacter():GetData("thirst", 100)))
 		end
 
 		updateLabels()
 		timer.Create("UpdateLabelsTimer", 1, 0, function()
-			if (IsValid(healthLabel) and IsValid(psyhealthLabel) and IsValid(radiationLabel)) then
+			if (IsValid(healthLabel) and IsValid(psyhealthLabel) and IsValid(radiationLabel) and IsValid(hungerLabel) and IsValid(thirstLabel)) then
 				updateLabels()
 			else
 				timer.Remove("UpdateLabelsTimer")

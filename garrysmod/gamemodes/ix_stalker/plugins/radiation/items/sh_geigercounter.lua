@@ -33,7 +33,6 @@ ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",
 	icon = "icon16/stalker/equip.png",
-	sound = "stalkersound/inv_dozimetr.ogg",
 	OnRun = function(item)
 		local client = item.player
 		local char = client:GetCharacter()
@@ -55,6 +54,7 @@ ITEM.functions.Equip = { -- sorry, for name order.
 		item:SetData("equip", true)
 		item.player:SetNetVar("ixhasgeiger", true)
 		item.player:SetData("ixhasgeiger", true)
+		item:OnEquipped()
 
 		return false
 	end,
@@ -69,7 +69,6 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 	name = "Unequip",
 	tip = "equipTip",
 	icon = "icon16/stalker/unequip.png",
-	sound = "cw/switch1.wav",
 	OnRun = function(item)
 		local client = item.player
 		item:SetData("equip", false)
@@ -80,6 +79,8 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 			client.carryWeapons[item.weaponCategory] = nil
 		end
 		
+		item:OnUnequipped()
+
 		return false
 	end,
 	OnCanRun = function(item)
@@ -134,4 +135,16 @@ function ITEM:OnLoadout()
 	if self:GetData("equip") then
 		self:SetData("equip", false)
 	end
+end
+
+function ITEM:OnEquipped()
+    if IsValid(self.player) then
+        self.player:EmitSound("stalker/inventory/inv_dozimetr.ogg")
+    end
+end
+
+function ITEM:OnUnequipped()
+    if IsValid(self.player) then
+        self.player:EmitSound("cw/switch1.wav")
+    end
 end

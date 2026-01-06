@@ -35,6 +35,7 @@ ITEM.ballisticareas = {"  Head:", "  Face:"}	--No need to add this line to the i
 ITEM.img = Material("placeholders/slot_gasmask.png")
 
 ITEM.overlayPath = nil
+ITEM.breathPath = nil
 
 ITEM.canRepair = true	--No need to add this line to the items
 ITEM.isGasmask = false	--If the item is a gasmask add this line and switch it to true
@@ -206,7 +207,12 @@ if (CLIENT) then
 		tooltip:SizeToContents()
 	end
 
-	hook.Add("RenderScreenspaceEffects", "ixGasmaskOverlay", function()
+	local nextBreath = 0
+	local bBreathIn = true
+	local lastBreath = 0
+	local breathFactor = 1
+
+	hook.Add("HUDPaint", "ixGasmaskOverlay", function()
 		local client = LocalPlayer()
 
 		if (!IsValid(client) or !client:GetCharacter() or !client:Alive()) then
@@ -250,6 +256,91 @@ if (CLIENT) then
 					end
 				end
 			end
+		end
+	end)
+
+	hook.Add("HUDPaint", "ixGasmaskBreath", function()
+		local client = LocalPlayer()
+
+		if (!IsValid(client) or !client:GetCharacter() or !client:Alive()) then
+			return
+		end
+
+		local character = LocalPlayer():GetCharacter()
+
+		if character and ix.option.Get("gasmaskoverlay", false) then
+			local inventory = character:GetInventory()
+			local items = inventory:GetItems()
+
+			for k, v in pairs(items) do
+				if (v.isGasmask and v:GetData("equip") and bBreathIn and lastBreath > 0) then
+					local delta = CurTime() - lastBreath
+					local duration = 2.0 * breathFactor
+
+					if (delta < duration) then
+						local alpha = 100
+						if (delta < (0.5 * breathFactor)) then
+							alpha = (delta / (0.5 * breathFactor)) * 100
+						else
+							alpha = (1 - ((delta - (0.5 * breathFactor)) / (duration - (0.5 * breathFactor)))) * 100
+						end
+
+						surface.SetDrawColor(150, 150, 150, alpha)
+						surface.SetMaterial(Material(v.breathPath or "helix/gui/radial-gradient.png"))
+						surface.DrawTexturedRect(0, ScrH() * 0.6, ScrW(), ScrH())
+					end
+				end
+			end
+		end
+	end)
+
+	hook.Add("Think", "ixGasmaskBreathing", function()
+		local client = LocalPlayer()
+
+		if (!IsValid(client) or !client:GetCharacter() or !client:Alive()) then
+			return
+		end
+
+		local character = client:GetCharacter()
+		local inventory = character:GetInventory()
+		local items = inventory:GetItems()
+		local bHasGasmask = false
+
+		for k, v in pairs(items) do
+			if (v.isGasmask and v:GetData("equip")) then
+				bHasGasmask = true
+				break
+			end
+		end
+
+		if (bHasGasmask) then
+			if (CurTime() >= nextBreath) then
+				local stamina = client:GetLocalVar("stm", 100)
+				local factor = 0.4 + (stamina / 100) * 0.6
+				breathFactor = factor
+
+				if (client:GetVelocity():LengthSqr() > 10000) then
+					factor = factor * 0.85
+				end
+
+				if (bBreathIn) then
+					if (ix.option.Get("gasmaskbreathsound", true)) then
+						client:EmitSound("stalker/player/gasmask_breath_in.wav", 50, 100, 0.4)
+					end
+					nextBreath = CurTime() + (1.8 * factor)
+					bBreathIn = false
+				else
+					if (ix.option.Get("gasmaskbreathsound", true)) then
+						client:EmitSound("stalker/player/gasmask_breath_out.wav", 50, 100, 0.4)
+					end
+					nextBreath = CurTime() + (1.5 * factor)
+					bBreathIn = true
+					lastBreath = CurTime()
+				end
+			end
+		else
+			bBreathIn = true
+			nextBreath = 0
 		end
 	end)
 end
@@ -500,23 +591,23 @@ end
 
 function ITEM:OnEquipped()
 	if self.isGasmask == true then
-		self.player:EmitSound("stalkersound/gasmask_on.ogg")
+		self.player:EmitSound("stalker/player/gasmask_on.ogg")
 		return
 	end
 	
 	if self.isHelmet == true and self.isGasmask == false then
-		self.player:EmitSound("metro/gasmaskon.wav")
+		self.player:EmitSound("stalker/player/helmet_on.wav")
 	end
 end
 
 function ITEM:OnUnequipped()
 	if self.isGasmask == true then
-		self.player:EmitSound("stalkersound/gasmask_off.ogg")
+		self.player:EmitSound("stalker/player/gasmask_off.ogg")
 		return
 	end
 
 	if self.isHelmet == true and self.isGasmask == false then
-		self.player:EmitSound("metro/gasmaskoff.wav")
+		self.player:EmitSound("stalker/player/helmet_off.wav")
 	end
 end
 

@@ -23,7 +23,7 @@ ITEM.functions.Equip = {
 	icon = "icon16/stalker/equip.png",
 	OnRun = function(item)
 		item:SetData("equip", true)
-		item.player:EmitSound("stalkersound/inv_slot.mp3")
+		item.player:EmitSound("stalker/inventory/inv_slot.mp3")
 		return false
 	end,
 	OnCanRun = function(item)
@@ -37,7 +37,7 @@ ITEM.functions.EquipUn = {
 	icon = "icon16/stalker/unequip.png",
 	OnRun = function(item)
 		item:SetData("equip", false)
-		item.player:EmitSound("stalkersound/inv_slot.mp3")
+		item.player:EmitSound("stalker/inventory/inv_slot.mp3")
 		item.player:Flashlight(false)
 		return false
 	end,

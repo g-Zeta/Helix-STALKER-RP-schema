@@ -17,21 +17,21 @@ local SoundNames = {
 }
 
 local SoundPaths = {
-	"blowout/crows.mp3",
-	"blowout/announce2.wav",
-	"stalkersound/blowout_siren.wav",
-	"blowout/ambient1.wav",
-	"blowout/ambient2.wav",
-	"blowout/ambient3.wav",
-	"blowout/ambient4.wav",
-	"blowout/ambient5.wav",
-	"blowout/start.wav",
-	"blowout/buildup.wav",
-	"blowout/hit1.wav",
-	"blowout/hit2.wav",
-	"blowout/hit3.wav",
-	"blowout/end.wav",
-	"hgn/stalker/blowout/barman3.mp3"
+	"stalker/blowout/crows.mp3",
+	"stalker/blowout/announce2.wav",
+	"stalker/blowout/blowout_siren.wav",
+	"stalker/blowout/ambient1.wav",
+	"stalker/blowout/ambient2.wav",
+	"stalker/blowout/ambient3.wav",
+	"stalker/blowout/ambient4.wav",
+	"stalker/blowout/ambient5.wav",
+	"stalker/blowout/start.wav",
+	"stalker/blowout/buildup.wav",
+	"stalker/blowout/hit1.wav",
+	"stalker/blowout/hit2.wav",
+	"stalker/blowout/hit3.wav",
+	"stalker/blowout/end.wav",
+	"stalker/blowout/barman3.mp3"
 }
 do
 for i=1, #SoundNames do	--Registering custom sound scripts - probably the best way of playing multiple world-sounds on the client...

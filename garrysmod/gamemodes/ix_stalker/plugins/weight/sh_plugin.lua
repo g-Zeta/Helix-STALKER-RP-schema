@@ -68,35 +68,7 @@ end
 if (SERVER) then
 	function PLUGIN:CharacterLoaded(char) 
 		if char == nil then return end
-		local character = char
-		local carrybuff = character:GetData("WeightBuffCur") or 0
-		local inventory = character:GetInv()
-		local weight = 0
-		local totweight = 0
-		local maxweight = ix.config.Get("maxWeight", 30) + ix.config.Get("maxOverWeight", 20) + carrybuff
-
-		for x, y in pairs(inventory:GetItems()) do
-			if y.weight == nil then continue end
-			
-			local quantity = y:GetData("quantity", 1)
-			
-			if y:GetData("weight") ~= nil then
-				weight = y:GetData("weight", 0)
-			elseif y.weight ~= nil then
-				weight = y.weight
-			end
-			
-			if y.isCW then
-				if weight ~= (y.weight + y:GetData("weight", 0)) then
-					weight = y.weight + y:GetData("weight", 0)
-				end
-			end
-			
-			totweight = ((quantity * weight) + totweight)
-		end
-
-		character:SetData("Weight", totweight)
-		character:SetData("MaxWeight", maxweight)  -- Max weight already includes carrybuff
+		ix.weight.Update(char)
 	end
 end
 
@@ -119,13 +91,26 @@ function PLUGIN:CanPlayerTakeItem(client, itemEnt)
 	for x, y in pairs(inventory:GetItems()) do
 		if y.weight == nil then continue end
 		local quantity = y:GetData("quantity",1)
-        local weight = y:GetData("weight") or y.weight
+		if (y.isAmmo) then
+			quantity = 1
+		end
+        local weight = 0
+		if y:GetData("weight") then
+			weight = y:GetData("weight")
+		elseif y.GetWeight then
+			weight = y:GetWeight()
+		else
+			weight = y.weight or 0
+		end
         totweight = totweight + (quantity * weight)
     end
 	
     -- Include the weight of the item being taken
     if itemWeight ~= nil then
         local quantity = item:GetData("quantity", 1)
+		if (item.isAmmo) then
+			quantity = 1
+		end
         totweight = totweight + (quantity * itemWeight)
     end
 	
@@ -146,6 +131,9 @@ function PLUGIN:PlayerInteractItem(client, action, item)
 
     local itemWeight = item:GetWeight() or 0
     local quantity = item:GetData("quantity", 1)
+	if (item.isAmmo) then
+		quantity = 1
+	end
 
     if action == "take" then
         totalWeight = totalWeight + (quantity * itemWeight)

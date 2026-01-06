@@ -1,23 +1,49 @@
 ITEM.name = "Weapon"
-ITEM.description = "A Weapon."
-ITEM.category = "Weapons"
 ITEM.model = "models/weapons/w_pistol.mdl"
-ITEM.class = "weapon_pistol"
+ITEM.description = "A Weapon."
+ITEM.longdesc = "No longer description available."
+
+ITEM.weaponCategory = "sidearm"
+--[[ e.g.
+		"primary" (Rifles, RPGs, GLs and MGs)
+		"secondary" (Shotguns and SMGs)
+		"sidearm" (Pistols and Revolvers)
+]]
+
+ITEM.class = "weapon_pistol"	-- e.g. "cw_sil_val", "cw_kk_ins2_m9", "cw_ppsh41", etc.
+
 ITEM.width = 2
 ITEM.height = 2
+
+ITEM.weight = 1.0	-- Weight in KG
+
+ITEM.price = 0
+ITEM.flag = nil		-- "1", "2", "3", etc.
+
+ITEM.Range = 0		-- Effective Range modifier (in meters)
+ITEM.RoF = nil		-- Rate of Fire modifier (in RPM)
+ITEM.Dmg = nil 		-- Damage e.g. "1d10+2", "2d10", etc.
+ITEM.Pen = 0		-- Penetration value
+ITEM.Mag = 0		-- Magazine Capacity
+ITEM.Rld = nil		-- Reload time modifier (in seconds)
+ITEM.Special = nil	-- e.g. "Explosive", "Incendiary", "Armor Piercing", etc.
+ITEM.barrel = nil	-- e.g."short", "medium", "long"
+ITEM.modifier = 0	-- Damage modifier for caliber upgrades
+
+ITEM.img = Material("placeholders/slot_weapon_primary.png")	-- e.g. Material("stalker2/ui/weapons/asval.png", "smooth")
+
+----- Only copy what is above this line -----
+
+ITEM.category = "Weapons"
 ITEM.isWeapon = true
 ITEM.isGrenade = false
-ITEM.busflag = {"dev"}
-ITEM.weaponCategory = "sidearm"
+ITEM.isCW = true
+ITEM.isPLWeapon = true
+
+ITEM.repairCost = ITEM.price/100
+
 ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
-ITEM.longdesc = "No longer description available."
-ITEM.Range = 0
-ITEM.RoF = ""
-ITEM.Dmg = ""
-ITEM.Pen = 0
-ITEM.Mag = 0
-ITEM.Rld = ""
-ITEM.Special = ""
+
 
 -- Caliber Translator
 local calibers = {}
@@ -207,6 +233,8 @@ if (CLIENT) then
 			local name = tooltip:GetRow("name")
 			name:SetBackgroundColor(derma.GetColor("Success", tooltip))
 		end
+
+		ix.util.PropertyDesc3(tooltip, ("Durability: " .. (math.floor(self:GetData("durability", 10000))/100) .. "%"), Color(255, 255, 255), Material("stalkerCoP/ui/icons/misc/overdrive.png"), 980)
 	end
 end
 
@@ -258,7 +286,7 @@ function ITEM:GetDescription()
 	
 
 	if (self.entity) or self:GetData("durability") == nil then
-		return (self.description .. "\n \nDurability: " .. (math.floor(self:GetData("durability", 10000))/100) .. "%") --Durability is 10000/100
+		return self.description
 	else
 		local client = self:GetOwner()
 		local weapon = client:GetActiveWeapon()
@@ -284,7 +312,7 @@ function ITEM:GetDescription()
 				end
             end
         end
-        return (str .. "\n \nDurability: " .. (math.floor(self:GetData("durability", 10000))/100) .. "%")
+        return str
 	end
 end
 
@@ -338,7 +366,7 @@ ITEM:Hook("drop", function(item)
 			owner:StripWeapon(item.class)
 			wepslots[item.weaponCategory] = nil
 			character:SetData("wepSlots",wepslots)
-			owner:EmitSound("stalkersound/inv_drop.mp3", 80)
+			owner:EmitSound("stalker/inventory/inv_drop.mp3", 80)
 		end
 	end
 end)
@@ -438,7 +466,7 @@ function ITEM:Equip(client)
 		wepslots[self.weaponCategory] = weapon
 		character:SetData("wepSlots",wepslots)
 		client:SelectWeapon(weapon:GetClass())
-		client:EmitSound("stalkersound/items/inv_items_wpn_1.ogg")
+		client:EmitSound("stalker/inventory/weapons/inv_items_wpn_1.ogg")
 		weapon:SetWeaponHP((self:GetData("durability")/100),100)
 		if self:GetData("custom") then
 			timer.Simple(0, function()
@@ -552,7 +580,7 @@ function ITEM:Unequip(client, bPlaySound, bRemoveItem)
 	end
 
 	if (bPlaySound) then
-		client:EmitSound("stalkersound/inv_slot.mp3")
+		client:EmitSound("stalker/inventory/weapons/inv_items_wpn_2.ogg")
 	end
 
 	wepslots[self.weaponCategory] = nil
@@ -832,46 +860,6 @@ ITEM.functions.Custom = {
 		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
 	end
 }
-
-ITEM.functions.Inspect = {
-	name = "Inspect",
-	tip = "Inspect this item",
-	icon = "icon16/picture.png",
-	OnClick = function(item, test)
-		local customData = item:GetData("custom", {})
-
-		local frame = vgui.Create("DFrame")
-		frame:SetSize(540, 680)
-		frame:SetTitle(item.name)
-		frame:MakePopup()
-		frame:Center()
-
-		frame.html = frame:Add("DHTML")
-		frame.html:Dock(FILL)
-		
-		local imageCode = [[<img src = "]]..customData.img..[["/>]]
-		
-		frame.html:SetHTML([[<html><body style="background-color: #000000; color: #282B2D; font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Palatino LT STD', Georgia, serif; font-size 16px; text-align: justify;">]]..imageCode..[[</body></html>]])
-	end,
-	OnRun = function(item)
-		return false
-	end,
-	OnCanRun = function(item)
-		local customData = item:GetData("custom", {})
-	
-		if(!customData.img) then
-			return false
-		end
-		
-		if(item.entity) then
-			return false
-		end
-		
-		return true
-	end
-}
-
-
 
 local function ammoswap(item, data)
     local client = item.player

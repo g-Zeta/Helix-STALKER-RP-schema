@@ -39,12 +39,13 @@ function CHAR:GetTotalExtraCarry()
 end
 
 function CHAR:Overweight()
-	return self:GetData("carry", 0) > ix.weight.BaseWeight(self)
+	local carrybuff = self:GetData("WeightBuffCur") or 0
+	return self:GetData("carry", 0) > (ix.weight.BaseWeight(self) + ix.config.Get("maxOverWeight", 20) + carrybuff) * 0.75
 end
 
 function CHAR:HeavilyOverweight() -- checks if the character is above the max overweight limit
 	local carrybuff = self:GetData("WeightBuffCur") or 0
-	return self:GetData("carry", 0) >= (ix.weight.BaseWeight(self) + ix.config.Get("maxOverWeight", 20) + carrybuff - 5)
+	return self:GetData("carry", 0) >= (ix.weight.BaseWeight(self) + ix.config.Get("maxOverWeight", 20) + carrybuff) * 0.90
 end
 
 function CHAR:CanCarry(item)

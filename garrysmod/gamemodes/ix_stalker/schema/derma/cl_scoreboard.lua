@@ -175,7 +175,6 @@ function PANEL:Update()
 	local client = self.player
 	local model = client:GetModel()
 	local skin = client:GetSkin()
-	local name = client:GetName()
 	local description = hook.Run("GetCharacterDescription", client) or
 		(client:GetCharacter() and client:GetCharacter():GetDescription()) or ""
 
@@ -186,6 +185,12 @@ function PANEL:Update()
 	if (localCharacter and character) then
 		bRecognize = hook.Run("IsCharacterRecognized", localCharacter, character:GetID())
 			or hook.Run("IsPlayerRecognized", self.player)
+	end
+
+	local name = client:GetName()
+
+	if (!bRecognize) then
+		name = "Unknown"
 	end
 
 	self.icon:SetHidden(!bRecognize)
@@ -203,7 +208,13 @@ function PANEL:Update()
 	
 	self.icon.Paint = function(this, w, h)
 		local client = self.player
-		surface.SetMaterial(Material(client:GetCharacter():GetData("pdaavatar") or "stalker/ui/avatars/nodata.png"))
+		local path = "stalker/ui/avatars/nodata.png"
+
+		if (bRecognize) then
+			path = client:GetCharacter():GetData("pdaavatar") or path
+		end
+
+		surface.SetMaterial(Material(path))
 		surface.SetDrawColor(255, 255, 255)
 		surface.DrawTexturedRect(0, 0, w, h)
 	end

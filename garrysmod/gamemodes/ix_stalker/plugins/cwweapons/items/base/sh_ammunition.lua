@@ -1,14 +1,31 @@
 ITEM.name = "Ammo Base"
 ITEM.model = "models/Items/BoxSRounds.mdl"
-ITEM.width = 2
-ITEM.height = 1
+ITEM.description = "A box with %s rounds of ammunition."
+ITEM.longdesc = nil
+
 ITEM.ammo = "pistol" -- type of the ammo
 ITEM.ammoAmount = 30 -- amount of the ammo
 ITEM.ammoMax = 150
-ITEM.description = "A box with %s rounds of ammunition."
+
+ITEM.stats = {
+	["BR"] = nil,
+	["Pierce"] = nil,
+}
+
+ITEM.price = nil
+ITEM.flag = nil
+
+ITEM.width = 2
+ITEM.height = 1
+
+ITEM.weight = nil -- weight of the full box in KG
+
+ITEM.img = nil -- e.g. Material("vgui/hud/ammo_box.png")
+
+---- Only copy what is above this line ----
+
 ITEM.category = "Ammunition"
-ITEM.busflag = {"dev"}
-ITEM.splitSize = {5, 10, 15, 30}
+ITEM.splitSize = {1, 2, 5, 10, 15, 30, 50}
 ITEM.isAmmo = true
 
 function ITEM:GetDescription()
@@ -42,6 +59,11 @@ function ITEM:GetName()
 	return name
 end
 
+-- Calculate weight based on amount of rounds left in the box
+function ITEM:GetWeight()
+	return (self:GetData("quantity", self.ammoAmount) / self.ammoAmount) * self.weight
+end
+
 ITEM.functions.Custom = {
 	name = "Customize",
 	tip = "Customize this item",
@@ -55,44 +77,6 @@ ITEM.functions.Custom = {
 	OnCanRun = function(item)
 		local client = item.player
 		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
-	end
-}
-
-ITEM.functions.Inspect = {
-	name = "Inspect",
-	tip = "Inspect this item",
-	icon = "icon16/picture.png",
-	OnClick = function(item, test)
-		local customData = item:GetData("custom", {})
-
-		local frame = vgui.Create("DFrame")
-		frame:SetSize(540, 680)
-		frame:SetTitle(item.name)
-		frame:MakePopup()
-		frame:Center()
-
-		frame.html = frame:Add("DHTML")
-		frame.html:Dock(FILL)
-		
-		local imageCode = [[<img src = "]]..customData.img..[["/>]]
-		
-		frame.html:SetHTML([[<html><body style="background-color: #000000; color: #282B2D; font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Palatino LT STD', Georgia, serif; font-size 16px; text-align: justify;">]]..imageCode..[[</body></html>]])
-	end,
-	OnRun = function(item)
-		return false
-	end,
-	OnCanRun = function(item)
-		local customData = item:GetData("custom", {})
-	
-		if(!customData.img) then
-			return false
-		end
-		
-		if(item.entity) then
-			return false
-		end
-		
-		return true
 	end
 }
 
@@ -136,7 +120,7 @@ ITEM.functions.split = {
     multiOptions = function(item, client)
 		local targets = {}
         local quantity = item:GetData("quantity", item.ammoAmount)
-		
+
         for i=1,#item.splitSize-1 do
 			if quantity > item.splitSize[i] then
 				table.insert(targets, {
@@ -147,26 +131,35 @@ ITEM.functions.split = {
 		end
         return targets
 	end,
-	OnCanRun = function(item)				
-		return (!IsValid(item.entity))
+	OnCanRun = function(item)
+		if item:GetData("quantity", item.ammoAmount) == 1 then
+			return false
+		end
+
+		return (!IsValid(item.entity) and item.invID == item.player:GetCharacter():GetInventory():GetID())
 	end,
     OnRun = function(item, data)
 		if data[1] then
 			local quantity = item:GetData("quantity", item.ammoAmount)
 			local client = item.player
-			
-			if quantity < data[1] then
+
+			quantity = quantity - data[1]
+
+			if quantity <= 0 then
 				return false
 			end
 			
-			client:GetCharacter():GetInventory():Add(item.uniqueID, 1, {["quantity"] = data[1]})
-			
-			quantity = quantity - data[1]
-
-			item.player:EmitSound("stalkersound/inv_properties.mp3", 110)
-			
 			item:SetData("quantity", quantity)
-			
+
+			local x, y, bagInvID = client:GetCharacter():GetInventory():Add(item.uniqueID, 1, {["quantity"] = data[1]})
+
+			if (!x) then
+				item:SetData("quantity", quantity + data[1])
+				client:NotifyLocalized("noSpace")
+				return false
+			end
+
+			item.player:EmitSound("stalker/inventory/inv_properties.mp3", 110)
 		end
 		return false
 	end,
@@ -177,37 +170,32 @@ ITEM.functions.combine = {
 		if !data then
 			return false
 		end
-		
-		if !data[1] then
+
+		if (data[1] == item.id) then
 			return false
 		end
-		
+
 		local targetItem = ix.item.instances[data[1]]
 
-		if targetItem.uniqueID == item.uniqueID then
+		if targetItem and targetItem.ammo == item.ammo then
 			return true
 		else
 			return false
 		end
 	end,
 	OnRun = function(item, data)
-		local targetItem = ix.item.instances[data[1]]
+		local sourceItem = ix.item.instances[data[1]]
+		local targetAmmoDiff = item.ammoMax - item:GetData("quantity", item.ammoAmount)
 		local localQuant = item:GetData("quantity", item.ammoAmount)
-		local targetQuant = targetItem:GetData("quantity", targetItem.ammoAmount)
-		local combinedQuant = (localQuant + targetQuant)
-
-		item.player:EmitSound("stalkersound/inv_properties.mp3", 110)
-
-		if combinedQuant <= item.ammoMax then
-			targetItem:SetData("quantity", combinedQuant)
-			return true
-		elseif localQuant >= targetQuant then
-			targetItem:SetData("quantity",item.ammoMax)
-			item:SetData("quantity",(localQuant - (item.ammoMax - targetQuant)))
+		local sourceQuant = sourceItem:GetData("quantity", sourceItem.ammoAmount)
+		item.player:EmitSound("stalker/inventory/inv_properties.mp3", 110)
+		if targetAmmoDiff >= sourceQuant then
+			item:SetData("quantity", localQuant + sourceQuant)
+			sourceItem:Remove()
 			return false
 		else
-			targetItem:SetData("quantity",(targetQuant - (item.ammoMax - localQuant)))
-			item:SetData("quantity",item.ammoMax)
+			sourceItem:SetData("quantity", sourceQuant - targetAmmoDiff)
+			item:SetData("quantity", item.ammoMax)
 			return false
 		end
 	end,
@@ -221,11 +209,9 @@ function ITEM:OnRegistered()
 end
 
 function ITEM:OnInstanced()
-	timer.Simple(0.5,function()
-		if self:GetData("quantity",0) == 0 then
-			self:SetData("quantity",self.ammoAmount)
-		end
-	end)
+	if (self:GetData("quantity", 0) == 0) then
+		self:SetData("quantity", self.ammoAmount)
+	end
 end
 
 ITEM.functions.Sell = {

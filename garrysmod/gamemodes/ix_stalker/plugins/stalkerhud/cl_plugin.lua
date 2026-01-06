@@ -838,7 +838,7 @@ function PLUGIN:WeightIconHUDPaint()
 		elseif char:Overweight() then
 			surface.SetMaterial(weight2)
 			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif currentCarry >= (ix.config.Get("maxWeight", 30) - 10) then
+		elseif currentCarry >= (ix.config.Get("maxWeight", 30)) then
 			surface.SetMaterial(weight)
 			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 		else

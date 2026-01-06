@@ -331,7 +331,6 @@ ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",
 	icon = "icon16/stalker/equip.png",
-	sound = "stalkersound/inv_dozimetr.ogg",
 	OnRun = function(item)
 		local client = item.player
 		local character = client:GetCharacter()
@@ -351,6 +350,7 @@ ITEM.functions.Equip = { -- sorry, for name order.
 		character:SetData("pdausername", item:GetData("username", item.player:GetName()))
 		item:SetData("equip", true)
 		character:SetData("pdaequipped", true)
+        item:OnEquipped()
 
 		return false
 	end,
@@ -366,7 +366,6 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 	name = "Unequip",
 	tip = "equipTip",
 	icon = "icon16/stalker/unequip.png",
-	sound = "cw/switch1.wav",
 	OnRun = function(item)
 		local client = item.player
 		local character = client:GetCharacter()
@@ -376,6 +375,8 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 		character:SetData("pdausername", "NIL")
 		wepslots[item.weaponCategory] = nil
 		character:SetData("wepSlots",wepslots)
+        item:OnUnequipped(client)
+        
 		return false 
 	end,
 	OnCanRun = function(item)
@@ -451,9 +452,13 @@ ITEM.functions.setusername = {
 function ITEM:OnEquipped()
 	self.player:GetCharacter():SetData("pdaavatar", self:GetData("avatar", "lutz"))
 	self.player:GetCharacter():SetData("pdausername", self:GetData("username", "lutz"))
+
+    if IsValid(self.player) then
+        self.player:EmitSound("stalker/inventory/inv_dozimetr.ogg")
+    end
 end
 
-function ITEM:OnUnEquipped(client, slot, data)
+function ITEM:OnUnequipped(client, slot, data)
     local character = client:GetCharacter()
     if not character then return end
     character:SetData("RankPublic", false)
@@ -465,6 +470,10 @@ function ITEM:OnUnEquipped(client, slot, data)
         avatar = "stalker/ui/avatars/nodata.png",
         hasPDA = false,
     })
+
+    if IsValid(self.player) then
+        self.player:EmitSound("cw/switch1.wav")
+    end
 end
 
 function ITEM:OnInstanced()

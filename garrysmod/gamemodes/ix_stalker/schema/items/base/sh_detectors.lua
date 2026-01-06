@@ -166,7 +166,7 @@ ITEM:Hook("drop", function(item)
 
 			owner:StripWeapon(item.class)
 			owner.carryWeapons[item.weaponCategory] = nil
-			owner:EmitSound("stalkersound/inv_drop.mp3", 80)
+			owner:EmitSound("stalker/inventory/inv_drop.mp3", 80)
 		end
 	end
 end)
@@ -225,7 +225,7 @@ function ITEM:Equip(client)
 		wepslots[self.weaponCategory] = weapon
 		character:SetData("wepSlots",wepslots)
 		client:SelectWeapon(weapon:GetClass())
-		client:EmitSound("stalkersound/items/inv_items_wpn_1.ogg")
+		client:EmitSound("stalker/inventory/weapons/inv_items_wpn_1.ogg")
 
 		-- Remove default given ammo.
 		if (client:GetAmmoCount(ammoType) == weapon:Clip1() and self:GetData("ammo", 0) == 0) then
@@ -296,7 +296,7 @@ function ITEM:Unequip(client, bPlaySound, bRemoveItem)
 	end
 
 	if (bPlaySound) then
-		client:EmitSound("stalkersound/inv_slot.mp3")
+		client:EmitSound("stalker/inventory/inv_slot.mp3")
 	end
 
 	wepslots[self.weaponCategory] = nil

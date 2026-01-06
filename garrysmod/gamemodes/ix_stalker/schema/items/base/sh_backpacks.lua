@@ -10,6 +10,7 @@ ITEM.width = 2
 ITEM.height = 2
 ITEM.outfitCategory = "backpack"
 ITEM.isBackpack = true
+ITEM.img = Material("placeholders/slot_backpack.png")
 ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 
 --Weight buff
@@ -177,6 +178,26 @@ ITEM.functions.Value = {
 	end
 }
 
+ITEM.functions.SetDurability = {
+	name = "Set Durability",
+	tip = "Dura",
+	icon = "icon16/wrench.png",
+	
+	OnCanRun = function(item)
+		local char = item.player:GetChar()
+		if char:HasFlags("N") then
+			return true
+		else
+			return false
+		end
+	end,
+	
+	OnRun = function(item)
+		netstream.Start(item.player, "armordurabilityAdjust", item:GetData("durability", 10000), item.id)
+		return false
+	end,
+}
+
 function ITEM:GetDescription()
 	local str = self.description
 	if self.longdesc and !IsValid(self.entity) then
@@ -246,15 +267,21 @@ ITEM.functions.Clone = {
 	end
 }
 
+function ITEM:OnInstanced(invID, x, y)
+	if !self:GetData("durability") then
+		self:SetData("durability", 10000)
+	end
+end
+
 function ITEM:OnEquipped()
     if IsValid(self.player) then
-        self.player:EmitSound("stalkersound/inv_slot.mp3")
+        self.player:EmitSound("stalker/inventory/inv_bag_open.wav")
     end
 end
 
 function ITEM:OnUnequipped()
     if IsValid(self.player) then
-        self.player:EmitSound("stalkersound/inv_slot.mp3")
+        self.player:EmitSound("stalker/inventory/inv_bag_close.wav")
     end
 end
 
@@ -265,6 +292,12 @@ hook.Add("PlayerDeath", "ixStripBackpackOnDeath", function(client)
     for _, item in pairs(character:GetInventory():GetItems()) do
         -- Check if the item is a backpack and equipped
         if item.outfitCategory == "backpack" and item:GetData("equip") then
+            -- Remove the weight buff if applicable
+            if item.buff == "weight" then
+                local curweight = character:GetData("WeightBuff") or 0
+                local newweight = (curweight - item.buffval)
+                character:SetData("WeightBuff", newweight)
+            end
             -- Unequip the backpack
             item:SetData("equip", nil)
         end

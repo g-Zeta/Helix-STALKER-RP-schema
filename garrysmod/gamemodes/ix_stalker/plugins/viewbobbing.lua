@@ -147,7 +147,17 @@ if CLIENT then
         hulltr.endpos = hulltr.start - Vector(0,0,8)
         util.TraceHull(hulltr)
         
-        ply:EmitSound(string.format("player/footsteps/LandingSounds/%s_land%d.ogg", matsounds[hulltr_out.MatType] or "stone", math.random(1,3)), 75, 100, math.min(1 * (math.abs(lastvel+100)/85), 1))
+        local materialName = matsounds[hulltr_out.MatType] or "stone"
+        local maxVariants = 1
+        for i = 1, 10 do
+            if file.Exists(string.format("sound/player/footsteps/LandingSounds/%s_land%d.ogg", materialName, i), "GAME") then
+                maxVariants = i
+            else
+                break
+            end
+        end
+        
+        ply:EmitSound(string.format("player/footsteps/LandingSounds/%s_land%d.ogg", materialName, math.random(1, maxVariants)), 75, 100, math.min(1 * (math.abs(lastvel+100)/85), 1))
         if hard then
             ply:EmitSound(string.format("player/footsteps/LandingSounds/hardland%d.wav", math.random(1,5)), 40)
         end

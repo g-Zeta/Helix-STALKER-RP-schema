@@ -4,3 +4,5 @@ ITEM.price = 45000
 ITEM.model = "models/ethprops/other/sumka5.mdl"
 
 ITEM.buffval = 25
+
+ITEM.img = Material("stalker/ui/backpacks/backpack5.png")

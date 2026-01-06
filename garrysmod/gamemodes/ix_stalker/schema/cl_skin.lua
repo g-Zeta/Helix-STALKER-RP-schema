@@ -8,7 +8,7 @@ local menubg = Material("stalker2/ui/menu/main_menu", "smooth")
 local pdabackground = Material("stalkerSHoC/ui/pda/pda_on_skin0.png")
 
 ix.option.Add("PDAskin", ix.type.number, 0, {
-	category = "STALKER Settings",
+	category = "PDA",
 	min = 0,
 	max = 4,
 	OnChanged = function(oldValue, newValue)
@@ -222,17 +222,34 @@ local WEBM_BG_HTML = [[
   video {
     position: fixed; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    min-width: 100%; min-height: 100%;
-    width: auto; height: auto;
-    object-fit: cover;
-    background: #0a0a0a;
+    -webkit-transform: translate(-50%, -50%);
+  }
+  @media (min-aspect-ratio: 16/9) {
+    video { width: 100%; height: auto; }
+  }
+  @media (max-aspect-ratio: 16/9) {
+    video { width: auto; height: 100%; }
   }
 </style>
 </head>
 <body>
-  <video id="bg" autoplay playsinline muted loop preload="auto">
-    <source src="asset://garrysmod/materials/stalker2/ui/menu/main_menu.webm" type="video/webm; codecs=vp8,vorbis">
-  </video>
+  <video id="bg" autoplay playsinline muted preload="auto"></video>
+  <script>
+    var playlist = [
+      "asset://garrysmod/materials/stalker2/ui/menu/main_menu.webm",
+      "asset://garrysmod/materials/stalker2/ui/menu/main_menu2.webm"
+    ];
+    for (var i = playlist.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = playlist[i];
+      playlist[i] = playlist[j];
+      playlist[j] = temp;
+    }
+    var idx = 0;
+    var vid = document.getElementById("bg");
+    vid.onended = function() { idx = (idx + 1) % playlist.length; vid.src = playlist[idx]; vid.play(); };
+    vid.src = playlist[0];
+  </script>
 </body>
 </html>
 ]]

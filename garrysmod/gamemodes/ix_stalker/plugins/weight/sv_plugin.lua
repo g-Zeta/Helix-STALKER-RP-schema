@@ -3,14 +3,23 @@ function ix.weight.CalculateWeight(character) -- Calculates the total weight of 
     local weight = 0
 
     for i, v in pairs(inventory:GetItems()) do
-        if (v:GetWeight()) then
-            weight = weight + v:GetWeight()
-        end
+		local itemWeight = 0
+		if (v:GetData("weight")) then
+			itemWeight = v:GetData("weight")
+		elseif (v.GetWeight) then
+			itemWeight = v:GetWeight() or 0
+		else
+			itemWeight = v.weight or 0
+		end
+
+		local quantity = v:GetData("quantity", 1)
+		if (v.isAmmo) then
+			quantity = 1
+		end
+
+		weight = weight + (itemWeight * quantity)
     end
 
-    -- Include extra carry capacity from equipped items
-    weight = weight + character:GetTotalExtraCarry()
-    
     return weight
 end
 
@@ -23,7 +32,7 @@ local function UpdateCharacterSpeeds(character)
             client:SetRunSpeed(ix.config.Get("runSpeed") * 0.4)
         elseif character:Overweight() then
             client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.8)
-            client:SetRunSpeed(ix.config.Get("runSpeed") * 0.65)
+            client:SetRunSpeed(ix.config.Get("runSpeed") * 0.7)
         else
             client:SetWalkSpeed(ix.config.Get("walkSpeed"))
             client:SetRunSpeed(ix.config.Get("runSpeed"))
@@ -41,7 +50,22 @@ end
 
 -- Update the existing function to use the new UpdateCharacterSpeeds function
 function ix.weight.Update(character)
-    character:SetData("carry", ix.weight.CalculateWeight(character))
+    local weight = ix.weight.CalculateWeight(character)
+    character:SetData("carry", weight)
+    character:SetData("Weight", weight)
+
+    local carrybuff = character:GetData("WeightBuffCur") or 0
+    local maxweight = ix.config.Get("maxWeight", 30) + ix.config.Get("maxOverWeight", 20) + carrybuff
+    character:SetData("MaxWeight", maxweight)
+
+    local carryInc = 0
+    for _, v in pairs(character:GetInventory():GetItems()) do
+        if (v:GetData("equip") and v.GetCarryInc) then
+            carryInc = carryInc + (v:GetCarryInc() or 0)
+        end
+    end
+    character:SetData("carryInc", carryInc)
+
     UpdateCharacterSpeeds(character)
 end
 

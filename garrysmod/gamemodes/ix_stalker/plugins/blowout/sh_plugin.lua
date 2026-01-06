@@ -29,7 +29,7 @@ end, {
     category = "Blowout"
 })
 
-ix.config.Add("blowoutSkybox", true, "If true, the blowout skybox will draw.", nil, {
+ix.config.Add("blowoutSkybox", true, "If true, the blowout skybox will draw. Disable this if you get performance issues.", nil, {
     category = "Blowout"
 })
 
