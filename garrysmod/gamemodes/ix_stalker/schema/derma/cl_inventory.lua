@@ -1909,13 +1909,13 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 					if health == 100 then
 						surface.SetMaterial(bleedImage)
 						surface.SetDrawColor(Color(0, 0, 0, 0))
-					elseif health < 100 and health >= 89 then
+					elseif health < 100 and health >= 80 then
 						surface.SetMaterial(bleedImage)
 						surface.SetDrawColor(Color(255, 255, 255, alpha))
-					elseif health < 89 and health >= 60 then
+					elseif health < 80 and health >= 50 then
 						surface.SetMaterial(bleedImage2)
 						surface.SetDrawColor(Color(255, 255, 255, alpha))
-					elseif health < 60 and health >= 25 then
+					elseif health < 50 and health >= 25 then
 						surface.SetMaterial(bleedImage3)
 						surface.SetDrawColor(Color(255, 255, 255, alpha))
 					else -- health < 25
@@ -1993,10 +1993,27 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 					-- Iterate through equipped items
 					for _, item in pairs(items) do
 						if item:GetData("equip", false) then
-							if item.res and item.res[resistanceType] then
-								totalRes = totalRes + item.res[resistanceType]
+							local customData = item:GetData("custom")
+							local itemRes = (customData and customData.res) or item.res
+							if itemRes and itemRes[resistanceType] then
+								totalRes = totalRes + itemRes[resistanceType]
 							end
 						end
+					end
+
+					-- Chemical resistance buff
+					if (resistanceType == "Chemical") then
+						totalRes = totalRes + (LocalPlayer():GetNetVar("ix_chemprot", 0) / 100)
+					end
+
+					-- Radiation resistance buff
+					if (resistanceType == "Radiation") then
+						totalRes = totalRes + (LocalPlayer():GetNetVar("ix_radprot", 0) / 100)
+					end
+
+					-- Psi resistance buff
+					if (resistanceType == "Psi") then
+						totalRes = totalRes + (LocalPlayer():GetNetVar("ix_psyblock", 0) / 100)
 					end
 
 					return math.Clamp(totalRes, 0, 1)
@@ -2009,10 +2026,10 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						surface.SetDrawColor(0, 150, 0, 255) -- green for radiation
 					elseif resistanceType == "Chemical" then
 						surface.SetDrawColor(150, 150, 0, 255) -- yellow for chemical
-					elseif resistanceType == "Shock" then
-						surface.SetDrawColor(0, 100, 168, 255) -- light blue for shock
-					elseif resistanceType == "Burn" then
-						surface.SetDrawColor(150, 0, 0, 255) -- red for burn
+					elseif resistanceType == "Electrical" then
+						surface.SetDrawColor(0, 100, 168, 255) -- light blue for electrical
+					elseif resistanceType == "Thermal" then
+						surface.SetDrawColor(150, 0, 0, 255) -- red for thermal
 					elseif resistanceType == "Psi" then
 						surface.SetDrawColor(85, 0, 140, 255) -- purple for psi
 					elseif resistanceType == "Slash" then
@@ -2035,14 +2052,14 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			end
 
 			-- Create resistances bars using the unified function
-			local radiationBar = CreateResistanceBar(ResPanel, resbarImage, "Radiation", SW(0), 	SH(0))
-			local chemicalBar  = CreateResistanceBar(ResPanel, resbarImage, "Chemical",  SW(0), 	SH(28))
-			local shockBar     = CreateResistanceBar(ResPanel, resbarImage, "Shock",     SW(0), 	SH(56))
-			local burnBar      = CreateResistanceBar(ResPanel, resbarImage, "Burn",      SW(0), 	SH(84))
-			local psiBar       = CreateResistanceBar(ResPanel, resbarImage, "Psi",       SW(159), 	SH(0))
-			local slashBar     = CreateResistanceBar(ResPanel, resbarImage, "Slash",     SW(159), 	SH(28))
-			local bulletBar      = CreateResistanceBar(ResPanel, resbarImage, "Bullet",      SW(159), 	SH(56))
-			local impactBar      = CreateResistanceBar(ResPanel, resbarImage, "Impact",      SW(159), 	SH(84))
+			local radiationBar	= CreateResistanceBar(ResPanel, resbarImage, "Radiation", 	SW(0), 		SH(0))
+			local chemicalBar	= CreateResistanceBar(ResPanel, resbarImage, "Chemical",  	SW(0), 		SH(28))
+			local electricalBar	= CreateResistanceBar(ResPanel, resbarImage, "Electrical",	SW(0),		SH(56))
+			local thermalBar    = CreateResistanceBar(ResPanel, resbarImage, "Thermal",     SW(0),		SH(84))
+			local psiBar       	= CreateResistanceBar(ResPanel, resbarImage, "Psi",       	SW(159),	SH(0))
+			local slashBar     	= CreateResistanceBar(ResPanel, resbarImage, "Slash",     	SW(159), 	SH(28))
+			local bulletBar     = CreateResistanceBar(ResPanel, resbarImage, "Bullet",    	SW(159), 	SH(56))
+			local impactBar     = CreateResistanceBar(ResPanel, resbarImage, "Impact",    	SW(159), 	SH(84))
 
 			local inventory = inv or (LocalPlayer():GetCharacter() and LocalPlayer():GetCharacter():GetInventory())
 
