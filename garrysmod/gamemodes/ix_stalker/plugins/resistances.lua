@@ -84,14 +84,14 @@ local function chemBleed(client, res, dmg)
 end
 
 PLUGIN.damageTypes = {
-    [DMG_FALL] = { name = "Fall", max = 1 },
     [8194] = { name = "Bullet", func = bulBleed, max = 1 },
     [DMG_BULLET] = { name = "Bullet", func = bulBleed, max = 1 },
-    [DMG_SLASH] = { name = "Bullet", func = bulBleed, max = 1 },
-    [DMG_BLAST] = { name = "Blast", max = 1 },
-    [DMG_BURN] = { name = "Burn", max = 1 },
-    [DMG_ACID] = { name = "Chemical", max = 1 },
-    [DMG_SHOCK] = { name = "Shock", max = 1 },
+    [DMG_FALL] = { name = "Impact", max = 1 },
+    [DMG_BLAST] = { name = "Impact", max = 1 },
+	[DMG_SLASH] = { name = "Slash", func = bulBleed, max = 1 },
+    [DMG_BURN] = { name = "Thermal", max = 1 },
+    [DMG_SHOCK] = { name = "Electrical", max = 1 },
+	[DMG_ACID] = { name = "Chemical", max = 1 },
     [DMG_SONIC] = { name = "Psi", max = 1 },
     [DMG_RADIATION] = { name = "Radiation", max = 1 }
 }
@@ -139,7 +139,8 @@ function PLUGIN:calculateRes(client, dmgType)
 	    local dura = v:GetData("durability", 10000)
 		if(dura <= 0) then continue end --ignores items with 0 durability
 	
-		local res = v.res and v.res[dmgType.name] --grabs resistance values from item
+		local customRes = v:GetData("custom", {}).res
+		local res = (customRes and customRes[dmgType.name]) or (v.res and v.res[dmgType.name]) --grabs resistance values from item
 		if (res) then
 			table.insert(resItems, v)
 			total = total + res
@@ -156,6 +157,14 @@ function PLUGIN:calculateRes(client, dmgType)
 				total = total + modItem.res[dmgType.name]
 			end
 		end
+	end
+
+	if (dmgType.name == "Chemical") then
+		total = total + (client:GetNetVar("ix_chemprot", 0) / 100)
+	elseif (dmgType.name == "Radiation") then
+		total = total + (client:GetNetVar("ix_radprot", 0) / 100)
+	elseif (dmgType.name == "Psi" and client:GetNetVar("ix_psyblock", 0) > 0) then
+		total = total + 1
 	end
 	
 	--prevents resistance from going over 100%
