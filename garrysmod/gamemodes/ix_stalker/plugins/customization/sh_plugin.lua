@@ -49,32 +49,31 @@ if(SERVER) then
 		
 		if(item.isWeapon) then
 			itemInfo.weapon = true
-			
-			--durability stuff
 			itemInfo.dura = item:GetData("durability", 100)
 		end
 		
 		if(item.isArmor) then
 			itemInfo.armor = true
-			
 			itemInfo.dura = item:GetData("durability", 100)
 		end
 
 		if(item.isGasmask and not item.isArmor) then
 			itemInfo.gasmask = true
-			
 			itemInfo.dura = item:GetData("durability", 100)
 		end
 
 		if(item.isHelmet and not item.isArmor) then
 			itemInfo.helmet = true
-			
 			itemInfo.dura = item:GetData("durability", 100)
 		end
 
 		if(item.quantity or item.maxStack or item.ammoAmount) then
 			itemInfo.quantity = true		
 			itemInfo.quantity = item:GetData("quantity", item.maxStack or item.quantity or item.ammoAmount) or customData.quantity or 100
+		end
+
+		if (item.res) then
+			itemInfo.res = customData.res or item.res
 		end
 		
 		netstream.Start(client, "nut_custom", itemInfo)
@@ -182,6 +181,7 @@ else
 		local acc = item.wepAcc
 		local rec = item.wepRec
 		local mag = item.wepMag
+		local res = item.res
 		
 
 		local frame = vgui.Create("DFrame")
@@ -395,6 +395,27 @@ else
 			quantityC:SetText(quantity or 100)
 			quantityC:Dock(TOP)		
 		end
+
+		local resC = {}
+		if (res) then
+			local resL = vgui.Create("DLabel", scroll)
+			resL:SetText("Resistances:")
+			resL:Dock(TOP)
+
+			local resTypes = {"Bullet", "Impact", "Slash", "Thermal", "Electrical", "Chemical", "Psi", "Radiation"}
+			
+			for _, type in ipairs(resTypes) do
+				local typeL = vgui.Create("DLabel", scroll)
+				typeL:SetText(" " .. type .. ":")
+				typeL:Dock(TOP)
+				
+				local typeC = vgui.Create("DTextEntry", scroll)
+				typeC:SetText(res[type] or 0)
+				typeC:Dock(TOP)
+				
+				resC[type] = typeC
+			end
+		end
 		
 		local finishB = vgui.Create("DButton", scroll)
 		finishB:SetSize(60,20)
@@ -432,6 +453,13 @@ else
 
 			if(item.quantity or item.maxStack or item.ammoAmount) then
 				customData[2].quantity = tonumber(quantityC:GetValue())
+			end
+
+			if (res) then
+				customData[2].res = {}
+				for type, panel in pairs(resC) do
+					customData[2].res[type] = tonumber(panel:GetValue()) or 0
+				end
 			end
 
 			netstream.Start("nut_customF", customData)
