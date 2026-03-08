@@ -22,14 +22,6 @@ if SERVER then
 		end
 	end
 	
-	local thinkTimer = 1
-	local artihealTimer = 1
-	local woundhealTimer = 1
-	local bleedingTimer = 1
-	local psyhealthTimer = 1
-	local psyRegenTimer = 1
-	local radsTimer = 1
-	
 	function PLUGIN:Think()
 		for k, v in ipairs(player.GetAll()) do
 			local character = v:GetCharacter()
@@ -57,8 +49,8 @@ if SERVER then
 			
 			-- Healing
 			if artiheal > 0 then
-				if artihealTimer < CurTime() then
-					artihealTimer = CurTime() + 2 -- healing every 2 seconds
+				if (v.nextArtiHeal or 0) < CurTime() then
+					v.nextArtiHeal = CurTime() + 2 -- healing every 2 seconds/ticks
 					if (v:IsValid() and v:Alive()) then
 						v:SetHealth(math.Clamp(v:Health() + math.Clamp(artiheal,1,100), 0, maxhealth))
 					end
@@ -67,8 +59,8 @@ if SERVER then
 
 			-- Wound healing
 			if woundheal > 0 then
-				if woundhealTimer < CurTime() then
-					woundhealTimer = CurTime() + 10	-- healing every 10 seconds
+				if (v.nextWoundHeal or 0) < CurTime() then
+					v.nextWoundHeal = CurTime() + 10	-- healing every 10 seconds/ticks
 					if woundheal >= bleeding then
 						character:SetData("Bleeding", 0)
 						if (v:IsValid() and v:Alive()) then
@@ -79,26 +71,37 @@ if SERVER then
 			end
 
 			-- Bleeding damage
-			if bleeding > 0 and bleedingTimer < CurTime() then
-				bleedingTimer = CurTime() + 2	-- bleeding every 2 seconds
+			if bleeding > 0 and (v.nextBleeding or 0) < CurTime() then
+				v.nextBleeding = CurTime() + 2	-- bleeding every 2 seconds/ticks
 				if (v:IsValid() and v:Alive()) then
 					local bleedingAmount = math.Clamp(bleeding, 1, 100)
 					v:SetHealth(math.Clamp(v:Health() - bleedingAmount, 0, maxhealth))
+
+					if (v:Health() <= 0) then
+						v:Kill()
+					end
 				end
 			end
 
 			-- Psi damage
-			if psyhealth < 80 and psyhealthTimer < CurTime() then
-				psyhealthTimer = CurTime() + 1 -- psi damage per second
-				if (v:IsValid() and v:Alive()) then
-					local psidamageAmount = math.Round(math.Clamp(ix.util.mapValueToRange(psyhealth, 0, 80, 5, 1), 1, 100))
-					v:SetHealth(math.Clamp(v:Health() - psidamageAmount, 0, maxhealth))
+			if psyhealth <= 40 and (v:IsValid() and v:Alive()) then
+				if (v.nextPsyDamage or 0) < CurTime() then
+					-- Damage frequency increases with psi accumulation
+					local psiAccumulation = 100 - psyhealth
+					local delay = 10 / psiAccumulation
+					v.nextPsyDamage = CurTime() + delay
+
+					v:SetHealth(math.Clamp(v:Health() - 1, 0, maxhealth))
+
+					if (v:Health() <= 0) then
+						v:Kill()
+					end
 				end
 			end
 
 			-- PsyHealth regeneration
-			if psyRegen > 0 and psyRegenTimer < CurTime() then
-				psyRegenTimer = CurTime() + 1 -- regeneration per second
+			if psyRegen > 0 and (v.nextPsyRegen or 0) < CurTime() then
+				v.nextPsyRegen = CurTime() + 1 -- regeneration per second/tick
 				if (v:IsValid() and v:Alive()) then
 					v:SetPsyHealth(math.Clamp(v:GetPsyHealth() + psyRegen, 0, 100))
 				end
@@ -107,8 +110,8 @@ if SERVER then
 			-- Radiation
 			if rads > 0 or accumrad > 0 then
 				if rads > antirads then
-					if radsTimer < CurTime() then
-						radsTimer = CurTime() + 1
+					if (v.nextRads or 0) < CurTime() then
+						v.nextRads = CurTime() + 1
 
 						if (v:IsValid() and v:Alive()) then
 							if v:Health() <= 0 then
@@ -122,16 +125,10 @@ if SERVER then
 							if v:Alive() == false then
 								v:SetNetVar("AccumRads", 0)
 							end
-
-							local damage = accumrad / 30
-
-							if accumrad > 25 then
-								v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
-							end
 						end
 					end
-				elseif radsTimer < CurTime() then
-					radsTimer = CurTime() + 1
+				elseif (v.nextRads or 0) < CurTime() then
+					v.nextRads = CurTime() + 1
 
 					local antiradcalc = (antirads - rads) or 0		-- antiradiation artis help
 					local radred = (accumrad - antiradcalc)			-- reduce the accumulated radiation
@@ -140,11 +137,20 @@ if SERVER then
 					if radred <= 0 or v:Alive() == false then
 						v:SetNetVar("AccumRads", 0)
 					end
+				end
 
-					local damage = accumrad / 30
-					
-					if accumrad > 25 then
-						v:SetHealth(math.Clamp((v:Health() - damage), 0, maxhealth))
+				-- Radiation Damage
+				if accumrad > 10 and (v:IsValid() and v:Alive()) then
+					if (v.nextRadDamage or 0) < CurTime() then
+						-- Damage frequency increases with radiation accumulation
+						local delay = 10 / accumrad
+						v.nextRadDamage = CurTime() + delay
+
+						v:SetHealth(math.Clamp((v:Health() - 1), 0, maxhealth))
+
+						if (v:Health() <= 0) then
+							v:Kill()
+						end
 					end
 				end
 			end

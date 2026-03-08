@@ -7,13 +7,12 @@ ITEM.price = 8000
 ITEM.weight = 0.40
 
 ITEM.res = {
-	["Blast"] = 0.00,
 	["Bullet"] = 0.00,
+	["Impact"] = 0.00,
 	["Slash"] = 0.00,
-	["Fall"] = 0.00,
-	["Burn"] = 0.00,
+	["Thermal"] = 0.00,
 	["Chemical"] = 0.00,
-	["Shock"] = 0.00,
+	["Electrical"] = 0.00,
 	["Psi"] = 0.00,
 	["Radiation"] = 0.30,
 }

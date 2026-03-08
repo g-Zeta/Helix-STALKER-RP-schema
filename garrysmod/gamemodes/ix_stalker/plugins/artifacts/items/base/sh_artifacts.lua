@@ -2,49 +2,44 @@ ITEM.name = "Artifact"
 ITEM.model = "models/props_junk/PopCan01a.mdl"
 ITEM.description = "An artifact. Valuable."
 ITEM.longdesc = "Longer description here."
-ITEM.category = "Artifacts"		-- No need to add this line to the item
 
 ITEM.price = 1
 ITEM.weight = 1
-ITEM.width = 1		-- No need to add this line to the item
-ITEM.height = 1		-- No need to add this line to the item
 
-ITEM.flag = "A"		-- No need to add this line to the item
-
---These are the anomalous resistances that stack up with the armor and headgear. 0.1 = 10% = 1pt
+--These are the anomalous resistances that stack up with the armor and headgear. (e.g. 0.1 = 10% = 1pt)
 ITEM.res = {
-	["Blast"] = 0.00,
 	["Bullet"] = 0.00,
-	["Slash"] = 0.00,
-	["Fall"] = 0.00,
-	["Burn"] = 0.00,
+	["Impact"] = 0.00,
+    ["Slash"] = 0.00,
+	["Thermal"] = 0.00,
+	["Electrical"] = 0.00,
 	["Chemical"] = 0.00,
-	["Shock"] = 0.00,
-	["Psi"] = 0.00,
+    ["Psi"] = 0.00,
 	["Radiation"] = 0.00,
 }
 
---[[
---If any, choose the buff and/or debuff class from the lists below, but only up to one for each class.
-ITEM.buff = --buff goes here
-	heal
-	woundheal
-	endbuff
-	antirad
-	psi
-	weight		--For weight, buffval has to be equal to the amount of kg that the artifact gives
-	
-ITEM.debuff = --debuff goes here
-	rads
-	bleeding
-	endred
---]]
+--If any, choose the buff and/or debuff from the lists below, but only up to one for each.
+ITEM.buff = nil --buff goes here
+/*	heal, woundheal, endbuff, antirad, psi, weight	*/	--For weight, buffval has to be equal to the amount of kg that the artifact gives
+
+ITEM.debuff = nil --debuff goes here
+/*	rads, bleeding, endred */
 
 ITEM.buffval = 0
 
 ITEM.debuffval = 0
 
 ITEM.img = Material("placeholders/slot_artifact.png")
+
+
+----- Only copy what is above this line -----
+
+ITEM.category = "Artifacts"
+
+ITEM.width = 1
+ITEM.height = 1
+
+ITEM.flag = "A"
 
 ITEM.isArtefact = true
 
@@ -77,7 +72,7 @@ if (CLIENT) then
 			local buffcolor = Color(0, 135, 0)	-- Buff value and the symbol will be displayed in green
 
             if self.buff == "antirad" then
-                ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), buffval, buffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/rad.png")
+                ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), buffval, buffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/radprot.png")
             end
 
             if self.buff == "heal" then
@@ -103,14 +98,15 @@ if (CLIENT) then
 
             -- Resistances
             local resistances = {
-                {"Impact", self.res["Fall"]},      -- Fall expressed as Impact
-                {"Thermal", self.res["Burn"]},     -- Burn expressed as Thermal
-                {"Chemical", self.res["Chemical"]}, -- Chemical remains unchanged
-                {"Electrical", self.res["Shock"]},  -- Shock expressed as Electrical
+                {"Bullet", self.res["Bullet"]},
+                {"Impact", self.res["Impact"]},
+                {"Thermal", self.res["Thermal"]},
+                {"Electrical", self.res["Electrical"]},
+                {"Chemical", self.res["Chemical"]},
             }
 
-            local resbuffColor = Color(0, 128, 0)	-- Green for buffs
-			local resdebuffColor = Color(235, 0, 0)	-- Red for debuffs
+            local resbuffColor = Color(0, 128, 0)   -- Green for buffs
+			local resdebuffColor = Color(235, 0, 0) -- Red for debuffs
 
             for _, resistance in ipairs(resistances) do
                 local resType, resValue = resistance[1], resistance[2]
@@ -122,10 +118,10 @@ if (CLIENT) then
                         ix.util.PropertyDesc4(tooltip, "Impact: ", Color(255, 255, 255), resbuffval, resbuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/armor.png")
                     elseif resType == "Thermal" then
                         ix.util.PropertyDesc4(tooltip, "Thermal: ", Color(255, 255, 255), resbuffval, resbuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/thermprot.png")
-                    elseif resType == "Chemical" then
-                        ix.util.PropertyDesc4(tooltip, "Chemical: ", Color(255, 255, 255), resbuffval, resbuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/chemprot.png")
                     elseif resType == "Electrical" then
                         ix.util.PropertyDesc4(tooltip, "Electrical: ", Color(255, 255, 255), resbuffval, resbuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/elect.png")
+                    elseif resType == "Chemical" then
+                        ix.util.PropertyDesc4(tooltip, "Chemical: ", Color(255, 255, 255), resbuffval, resbuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/chemprot.png")
                     end
 				end
 
@@ -136,10 +132,10 @@ if (CLIENT) then
                         ix.util.PropertyDesc4(tooltip, "Impact: ", Color(255, 255, 255), resdebuffval, resdebuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/armor.png")
                     elseif resType == "Thermal" then
                         ix.util.PropertyDesc4(tooltip, "Thermal: ", Color(255, 255, 255), resdebuffval, resdebuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/thermprot.png")
-                    elseif resType == "Chemical" then
-                        ix.util.PropertyDesc4(tooltip, "Chemical: ", Color(255, 255, 255), resdebuffval, resdebuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/chemprot.png")
                     elseif resType == "Electrical" then
                         ix.util.PropertyDesc4(tooltip, "Electrical: ", Color(255, 255, 255), resdebuffval, resdebuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/elect.png")
+                    elseif resType == "Chemical" then
+                        ix.util.PropertyDesc4(tooltip, "Chemical: ", Color(255, 255, 255), resdebuffval, resdebuffColor, "materials/stalkerCoP/ui/icons/armorupgrades/chemprot.png")
                     end
 				end
             end
@@ -149,7 +145,7 @@ if (CLIENT) then
 			local debuffcolor = Color(235, 0, 0)
 
             if self.debuff == "rads" then
-                ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), debuffval, debuffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/rad.png")
+                ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), debuffval, debuffcolor, "materials/stalkerCoP/ui/icons/armorupgrades/radprot.png")
             end
 
             if self.debuff == "endred" then
@@ -315,7 +311,7 @@ ITEM.functions.Equip =
     end;
 }
 
-ITEM.functions.UnEquip =
+ITEM.functions.EquipUn =
 {
     name = "Unequip",
     tip = "unequipTip",
@@ -444,6 +440,7 @@ if (CLIENT) then
 
         entity:DrawModel()
     end
+--[[
     function ITEM:PaintOver(item, w, h)
         if (item:GetData("equip")) then
             surface.SetDrawColor(110, 255, 110, 255)
@@ -454,6 +451,7 @@ if (CLIENT) then
         surface.SetMaterial(item.equipIcon)
         surface.DrawTexturedRect(w-23,h-23,19,19)
     end
+]]
 end
 
 ITEM.functions.Sell = {
