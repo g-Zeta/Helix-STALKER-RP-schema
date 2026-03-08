@@ -42,19 +42,9 @@ end
 
 function playerMeta:getRadProtection()
 	local protection = 0
-	local char = self:GetCharacter()
-	local items = char:GetInventory():GetItems(true)
-
-	for k,v in pairs(items) do
-		if (v.radProt and v:GetData("equip") == true) then
-			protection = protection + v.radProt
-		end
-	end
 
 	if ix.plugin.list["buffs"] then
-		if self:HasBuff("buff_radprotect") then
-			protection = protection + 0.5
-		end
+		protection = protection + self:GetNetVar("ix_radprot", 0)
 	end
 
 	return protection
@@ -64,17 +54,25 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
     -- RADIATION OVERRIDE
     if (entity:IsPlayer() and dmgInfo:IsDamageType(DMG_RADIATION)) then
         local radDamage = dmgInfo:GetDamage()
+        local inflictor = dmgInfo:GetInflictor()
 
         -- Calculate total radiation resistance from equipped items and artifacts
         local char = entity:GetCharacter()
         local items = char:GetInventory():GetItems(true)
         local totalRadResist = 0
+        local hasGasmask = false
         
         for _, item in pairs(items) do
             if (item.isArmor or item.isGasmask or item.isHelmet or item.isArtefact) and item:GetData("equip") then
                 totalRadResist = totalRadResist + (item.res and item.res["Radiation"] or 0)
+                if (item.isGasmask) then
+                    hasGasmask = true
+                end
             end
         end
+
+        -- Add buff resistance
+        totalRadResist = totalRadResist + (entity:GetNetVar("ix_radprot", 0) / 100)
 
         -- Clamp totalRadResist to ensure it does not exceed 1
         totalRadResist = math.Clamp(totalRadResist, 0, 1)
@@ -94,23 +92,104 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
             end
         end
 
-		local radProtection = entity:getRadProtection()
+        local bApplyRadiation = true
 
-        entity:addRadiation(math.Clamp(radDamage - radProtection, 0, 100))	-- Accumulated radiation the player gets
+        if (IsValid(inflictor)) then
+            local class = inflictor:GetClass()
+
+            if (string.find(class, "rad_light")) then
+                if (hasGasmask and totalRadResist >= 0.3) then
+                    bApplyRadiation = false
+                end
+            elseif (string.find(class, "rad_moderate")) then
+                if (hasGasmask and totalRadResist >= 0.6) then
+                    bApplyRadiation = false
+                end
+            elseif (string.find(class, "rad_heavy")) then
+                if (hasGasmask and totalRadResist >= 1.0) then
+                    bApplyRadiation = false
+                end
+            end
+        end
+
+        if (bApplyRadiation) then
+            entity:addRadiation(math.Clamp(radDamage * (1 - totalRadResist), 0, 100))	-- Accumulated radiation the player gets
+        end
 
         dmgInfo:SetDamage(0)
     end
 end
 
+ix.option.Add("RadScreenNoise", ix.type.bool, true, {
+	category = "STALKER Settings"
+})
+
+ix.lang.AddTable("english", {
+	optRadScreenNoise = "Radiation screen noise",
+	optdRadScreenNoise = "Enable or disable screen noise caused by radiation."
+})
+
 -- Register HUD Bars.
 if (CLIENT) then
 	local color = Color(39, 174, 96)
+	local vignette = Material("helix/gui/vignette.png")
+	local noiseTextures = {
+		"stalkerAnomaly/ui/screen_noise/screen_noise1.png",
+		"stalkerAnomaly/ui/screen_noise/screen_noise2.png",
+		"stalkerAnomaly/ui/screen_noise/screen_noise3.png",
+		"stalkerAnomaly/ui/screen_noise/screen_noise4.png",
+		"stalkerAnomaly/ui/screen_noise/screen_noise5.png",
+		"stalkerAnomaly/ui/screen_noise/screen_noise6.png"
+	}
 
 	function PLUGIN:RenderScreenspaceEffects()
-		if (LocalPlayer():getRadiation() > 45 and LocalPlayer():getRadiation() < 75) then
+		local client = LocalPlayer()
+		if (!IsValid(client)) then return end
+
+		if (client:getRadiation() > 45 and client:getRadiation() < 75) then
 			DrawMotionBlur(0.05, 0.15, 0.001)
-		elseif(LocalPlayer():getRadiation() > 75) then
+		elseif(client:getRadiation() > 75) then
 			DrawMotionBlur(0.1, 0.3, 0.001)
+		end
+
+		if (ix.option.Get("RadScreenNoise", true)) then
+			local maxIntensity = 0
+			local clientPos = client:GetPos()
+
+			for _, v in ipairs(ents.FindByClass("rad_*")) do
+				local range = v:GetNWInt("Range", 256)
+				local dist = clientPos:Distance(v:GetPos())
+
+				if (dist < range) then
+					local tr = util.TraceLine({
+						start = v:GetPos() + Vector(0, 0, 10),
+						endpos = client:WorldSpaceCenter(),
+						filter = {v, client},
+						mask = MASK_SOLID_BRUSHONLY
+					})
+
+					if (tr.Hit) then continue end
+
+					local intensity = 1 - (dist / range)
+					if (intensity > maxIntensity) then
+						maxIntensity = intensity
+					end
+				end
+			end
+
+			if (maxIntensity > 0) then
+				local frame = math.floor(RealTime() * 15) % #noiseTextures + 1
+				local material = Material(noiseTextures[frame])
+				cam.Start2D()
+					surface.SetDrawColor(200, 180, 0, maxIntensity * 255)
+					surface.SetMaterial(material)
+					surface.DrawTexturedRect(0, 0, ScrW(), ScrH())
+
+					surface.SetDrawColor(120, 100, 0, maxIntensity * 200)
+					surface.SetMaterial(vignette)
+					surface.DrawTexturedRect(0, 0, ScrW(), ScrH())
+				cam.End2D()
+			end
 		end
     end
 else
@@ -159,5 +238,39 @@ ix.command.Add("charsetradiation", {
             client:Notify("You have set "..target:Name().."'s radiation to "..radiation)
             target:Notify(client:Name().." has set your radiation to "..radiation)
         end
+	end
+})
+
+properties.Add("ixRadRange", {
+	MenuLabel = "Set Range",
+	Order = 400,
+	MenuIcon = "icon16/arrow_out.png",
+
+	Filter = function(self, ent, ply)
+		if (!IsValid(ent)) then return false end
+		if (!string.find(ent:GetClass(), "rad_")) then return false end
+		if (!gamemode.Call("CanProperty", ply, "ixRadRange", ent)) then return false end
+
+		return ply:IsAdmin()
+	end,
+
+	Action = function(self, ent)
+		Derma_StringRequest("Set Range", "Enter the new range for this radiation zone:", ent:GetNWInt("Range", 256), function(text)
+			self:MsgStart()
+				net.WriteEntity(ent)
+				net.WriteFloat(tonumber(text) or 256)
+			self:MsgEnd()
+		end)
+	end,
+
+	Receive = function(self, length, ply)
+		local ent = net.ReadEntity()
+		local range = net.ReadFloat()
+
+		if (!IsValid(ent)) then return end
+		if (!self:Filter(ent, ply)) then return end
+
+		ent:SetNWInt("Range", range)
+		ply:Notify("Radiation range set to " .. range)
 	end
 })
