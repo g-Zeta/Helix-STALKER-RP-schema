@@ -173,13 +173,6 @@ if (CLIENT) then
 					if IsValid(v) then
 						-- Draw the entity's class name
 						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
-						
-						-- Draw the range of the "rad_" entity
-						local range = v:GetNWFloat("Range", 0)
-						cam.Start3D()
-							render.SetColorMaterial()
-							render.DrawSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 50))
-						cam.End3D()
 					end
 				end
 
@@ -188,13 +181,6 @@ if (CLIENT) then
 					surface.DrawRect(x - size/2, y - size/2, size, size)	
 					if IsValid(v) then
 						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 255), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
-
-						-- Draw the range of the "psi_" entity
-						local range = v:GetNWFloat("Range", 0)
-						cam.Start3D()
-							render.SetColorMaterial()
-							render.DrawSphere(v:GetPos(), range, 30, 30, Color(0, 255, 255, 50))
-						cam.End3D()
 					end
 				end
 
@@ -213,6 +199,34 @@ if (CLIENT) then
 
 			end
 
+		end
+	end
+
+	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+		local client = LocalPlayer()
+
+		if (ix.option.Get("observerESP", true) and client:GetMoveType() == MOVETYPE_NOCLIP and
+			!client:InVehicle() and CAMI.PlayerHasAccess(client, "Helix - Observer", nil)) then
+			
+			if (ix.option.Get("observerESP - Radiation", true)) then
+				for _, v in ipairs(ents.GetAll()) do
+					if (string.match(v:GetClass(), "rad_")) then
+						local range = v:GetNWFloat("Range", 256)
+						render.SetColorMaterial()
+						render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 255), true)
+					end
+				end
+			end
+
+			if (ix.option.Get("observerESP - Psi", true)) then
+				for _, v in ipairs(ents.GetAll()) do
+					if (string.match(v:GetClass(), "psi_")) then
+						local range = v:GetNWFloat("Range", 256)
+						render.SetColorMaterial()
+						render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 255, 255), true)
+					end
+				end
+			end
 		end
 	end
 
