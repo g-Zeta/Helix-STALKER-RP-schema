@@ -14,11 +14,15 @@ end
 function att:attachFunc()
 	self.Shots = 20
 	self:unloadWeapon()
+	local str = self.Primary.Ammo.." -FT-"
+	self.Primary.Ammo = str
 end
 
 function att:detachFunc()
 	self.Shots = self.Shots_Orig
 	self:unloadWeapon()
+	local str = string.sub(self.Primary.Ammo, 1, -6)
+	self.Primary.Ammo = str
 end
 
 CustomizableWeaponry:registerAttachment(att)

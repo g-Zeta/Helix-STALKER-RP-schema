@@ -37,7 +37,7 @@ SWEP.MuzzleEffectWorld = "muzzleflash_m590_3rd"
 
 SWEP.Attachments = {
 	["+use"] = {header = "Sight Contract", offset = {400, 0}, atts = {"kk_ins2_sights_cstm"}},
-	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_zoneloaded", "am_slugrounds", "am_flechetterounds"}}
+	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_slugrounds", "am_flechetterounds"}}
 }
 
 SWEP.Animations = {

@@ -39,7 +39,7 @@ SWEP.MuzzleEffectWorld = "muzzleflash_mp5_3rd"
 
 SWEP.Attachments = {
 	{header = "Magazine", offset = {-300, -200}, atts = {"cw_sil_ppsh41_drum"}},
-	["+reload"] = {header = "Ammo", offset = {-300, 300}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {-300, 300}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

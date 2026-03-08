@@ -50,7 +50,7 @@ SWEP.Attachments = {
 	{header = "Barrel", offset = {-300, -700}, atts = {"kk_ins2_suppressor_sec"}},
 	{header = "Lasers", offset = {-500, -200}, atts = {"kk_ins2_lam", "kk_ins2_flashlight", "kk_ins2_anpeq15"}},
 	{header = "Caliber", offset = {-800, 350}, atts = {"am_cal_45mac10"}},
-	["+reload"] = {header = "Ammo", offset = {0, 300}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {0, 300}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

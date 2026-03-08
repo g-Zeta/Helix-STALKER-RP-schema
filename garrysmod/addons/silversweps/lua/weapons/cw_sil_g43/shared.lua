@@ -55,7 +55,7 @@ SWEP.MuzzleEffect = "muzzleflash_k98_1p"
 SWEP.MuzzleEffectWorld = "muzzleflash_k98_3p"
 
 SWEP.Attachments = {
-	["+reload"] = {header = "Ammo", offset = {700, 300}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {700, 300}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

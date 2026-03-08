@@ -89,7 +89,7 @@ SWEP.Attachments = {
 	{header = "Sight", offset = {400, -450}, atts = {"cw_sil_ip29_scope", "cw_sil_pso1_scope", "cw_sil_okp7_optic", "cw_sil_ekp_optic"}},
 	{header = "Barrel", offset = {-100, -450}, atts = {"kk_ins2_suppressor_sec", "kk_ins2_hoovy"}},
 	["+use"] = {header = "Sight Contract", offset = {400, -0}, atts = {"kk_ins2_sights_cstm"}},
-	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

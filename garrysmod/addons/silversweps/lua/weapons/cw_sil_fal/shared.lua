@@ -126,7 +126,7 @@ SWEP.Attachments = {
 	{header = "Magazine", offset = {-150, 500}, atts = {"kk_ins2_mag_fal_30"}},
 	{header = "Flavor", offset = {450, 500}, atts = {"kk_ins2_fnfal_skin", "kk_ins2_fnfal_skin2"}},
 	["+use"] = {header = "Sight Contract", offset = {200, -500}, atts = {"kk_ins2_sights_cstm"}},
-	["+reload"] = {header = "Ammo", offset = {1000, 500}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {1000, 500}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

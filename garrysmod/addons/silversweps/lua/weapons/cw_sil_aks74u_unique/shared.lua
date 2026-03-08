@@ -80,7 +80,7 @@ SWEP.MuzzleEffectWorld = "muzzleflash_mp40_3rd"
 SWEP.Attachments = {
 	{header = "Sight", offset = {400, -450}, atts = {"cw_sil_okp7_optic", "cw_sil_ekp_optic", "cw_sil_pk1_optic", "cw_sil_pka_optic", "cw_sil_ip78_scope",  "cw_sil_ip29_scope", "cw_sil_pso1_scope"}},
 	{header = "Barrel", offset = {-100, -450}, atts = {"kk_ins2_pbs5"}},
-	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {900, 500}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 SWEP.Animations = {

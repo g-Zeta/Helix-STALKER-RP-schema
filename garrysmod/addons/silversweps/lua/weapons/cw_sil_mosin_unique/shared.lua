@@ -131,7 +131,7 @@ SWEP.MuzzleEffectWorld = "muzzleflash_sks_3rd"
 
 SWEP.Attachments = {
 	{header = "Sight", offset = {500, -450}, atts = {"cw_sil_pilad_scope", "cw_sil_leupold_scope", "kk_ins2_scope_m40", "kk_ins2_kobra", "kk_ins2_eotech", "kk_ins2_aimpoint", "kk_ins2_elcan", "kk_ins2_po4", "kk_ins2_scope_mosin", "kk_ins2_cstm_cmore", "kk_ins2_cstm_barska", "kk_ins2_cstm_microt1", "kk_ins2_cstm_eotechxps", "kk_ins2_cstm_compm4s", "kk_ins2_cstm_acog"}},
-	["+reload"] = {header = "Ammo", offset = {1100, 500}, atts = {"am_magnum", "am_matchgrade"}}
+	["+reload"] = {header = "Ammo", offset = {1100, 500}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 }
 
 if CustomizableWeaponry_KK.ins2.ws then

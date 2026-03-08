@@ -58,7 +58,7 @@ if hasBase then
 	SWEP.Attachments = {
 		{header = "Sight", offset = {500, -450}, atts = {"cw_sil_pso1_scope"}},
 		{header = "Under", offset = {-500, 0}, atts = {"kk_ins2_bipod", "kk_ins2_vertgrip"}},
-		["+reload"] = {header = "Ammo", offset = {1100, 500}, atts = {"am_magnum", "am_matchgrade"}}
+		["+reload"] = {header = "Ammo", offset = {1100, 500}, atts = {"am_armorpiercing", "am_hollowpoint", "am_matchgrade", "am_zoneloaded"}}
 	}
 end
 
