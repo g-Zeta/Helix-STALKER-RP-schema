@@ -93,8 +93,8 @@ local function ixActMenu()
 
 		local function updateLabels()
 			healthLabel:SetText("Health : " .. LocalPlayer():Health())
-			psyhealthLabel:SetText("Psyhealth : " .. (LocalPlayer():GetPsyHealth() or 100))
-			radiationLabel:SetText("Radiation : " .. (LocalPlayer():GetNetVar("AccumRads") or 0))
+			psyhealthLabel:SetText("Psyhealth : " .. math.floor(LocalPlayer():GetPsyHealth() or 100))
+			radiationLabel:SetText("Radiation : " .. math.floor(LocalPlayer():GetNetVar("AccumRads") or 0))
 			hungerLabel:SetText("Hunger : " .. (LocalPlayer():GetCharacter():GetData("hunger", 100)))
 			thirstLabel:SetText("Thirst : " .. (LocalPlayer():GetCharacter():GetData("thirst", 100)))
 		end

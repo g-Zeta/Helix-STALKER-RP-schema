@@ -44,6 +44,32 @@ nut.command.add("nickremove", {
 })
 */
 
+ix.command.Add("PlySetHP", {
+	description = "Sets the health of a player.",
+	adminOnly = true,
+	arguments = {
+		ix.type.player,
+		ix.type.number
+	},
+	OnRun = function(self, client, target, amount)
+		target:SetHealth(amount)
+		client:Notify("Set " .. target:Name() .. "'s health to " .. amount .. ".")
+	end
+})
+
+ix.command.Add("PlySetArmor", {
+	description = "Sets the armor of a player.",
+	adminOnly = true,
+	arguments = {
+		ix.type.player,
+		ix.type.number
+	},
+	OnRun = function(self, client, target, amount)
+		target:SetArmor(amount)
+		client:Notify("Set " .. target:Name() .. "'s armor to " .. amount .. ".")
+	end
+})
+
 ix.command.Add("CharGiveFlag", {
 	description = "@cmdCharGiveFlag",
 	adminOnly = true,
