@@ -1,23 +1,23 @@
 ITEM.name = "Bandage"
-ITEM.description = "A small bandage for wounds."
-ITEM.longdesc = "A normal elastic bandage used to stop bleeding and prevent infection of wounds. For regular bleeding, carefully apply the bandage to the wound. For arterial bleeding, urgently tie the bandage around the affected area."
-ITEM.model = "models/kek1ch/dev_bandage.mdl"
+ITEM.description = "A small roll of elastic bandage."
+ITEM.longdesc = "It is used to stop bleeding and prevent infection of wounds. For regular bleeding, carefully apply the bandage to the wound. For arterial bleeding, urgently tie the bandage around the affected area."
+ITEM.model = "models/ethprops/medical/bandage.mdl"
+
+ITEM.weight = 0.1
 
 ITEM.flag = "1"
-
-ITEM.weight = 0.05
-
 ITEM.price = 500
 
-ITEM.quantMax = 1
-ITEM.quantity = 1
+ITEM.maxUses = 2
 
-ITEM.restore = 15
+ITEM.duration = 10
+ITEM.restore = 0.5
 
-ITEM.sound = "stalkersound/inv_bandage_2p9.mp3"
 ITEM.stopsBleed = true
+
+ITEM.sound = "stalker/inventory/inv_bandage.wav"
+
+ITEM.img = Material("stalkerCoP/ui/medicine/bandage.png")
 
 ITEM.useName = "Wrap"
 ITEM.useText = {"unwraps and ties a ", " around their wound."}
-
-ITEM.img = Material("stalkerCoP/ui/medicine/bandage.png")

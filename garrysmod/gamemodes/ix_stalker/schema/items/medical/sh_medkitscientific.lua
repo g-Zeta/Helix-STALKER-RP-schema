@@ -1,21 +1,21 @@
 ITEM.name = "Scientific First-Aid Kit"
-ITEM.description = "Medkit used by ecologists."
-ITEM.longdesc = "A medical kit designed specifically for use in the Zone.\nThe kit contains products for handling wounds, as well as preventing the development of radiation poisoning and reducing accumulated radiation in the body."
-ITEM.model = "models/kek1ch/dev_aptechka_mid.mdl"
-
-ITEM.flag = "2"
+ITEM.description = "A medkit mostly used by scientists."
+ITEM.longdesc = "The kit contains products for handling wounds, as well as preventing the development of radiation poisoning and reducing accumulated radiation in the body."
+ITEM.model = "models/ethprops/medical/medkit3.mdl"
 
 ITEM.weight = 0.4
 
+ITEM.flag = "2"
 ITEM.price = 8000
 
-ITEM.quantMax = 3
-ITEM.quantity = 3
+ITEM.maxUses = 3
 
-ITEM.restore = 4
+ITEM.duration = 15
+ITEM.restore = 5
 ITEM.radrem = 2
 
-ITEM.sound = "stalkersound/inv_bandage.mp3"
 ITEM.stopsBleed = true
+
+ITEM.sound = "stalker/inventory/inv_medkit.wav"
 
 ITEM.img = Material("stalkerCoP/ui/medicine/medkit_scientific.png")

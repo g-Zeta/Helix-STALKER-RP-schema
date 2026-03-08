@@ -8,6 +8,7 @@ ITEM.model = "models/props_c17/suitcase001a.mdl"
 ITEM.category = "Backpacks"
 ITEM.width = 2
 ITEM.height = 2
+ITEM.weight = 0
 ITEM.outfitCategory = "backpack"
 ITEM.isBackpack = true
 ITEM.img = Material("placeholders/slot_backpack.png")

@@ -1,20 +1,22 @@
 ITEM.name = "Antidote"
-ITEM.model = "models/kek1ch/drug_antidot.mdl"
-ITEM.description = "A combination drug that counter-acts poisoning and chemical weapons inhalation. +1 Chem protection tier (Max 2) for 1 hour and resets Chem hotspot. Makes user experience vertigo at random points, making climbing and acrobatic stunts impossible."
-ITEM.category = "Medical"
-
-ITEM.flag = "2"
+ITEM.description = "A pack of IP2 antitoxin pills."
+ITEM.longdesc = "The IP2 antitoxin is a complex drug comprising several antidotes, including metoclopramidum, pyridoxine, thiamine, riboxin and other pharmaceuticals. The drug is used to inject a range of antibiotics to neutralize natural poisons, together with synthetic poison absorbers, into the bloodstream. IP2 is not particularly popular in the Zone, as most stalkers rely on a gas mask and a protective suit, there are still those who have a pack of this antidote stashed away. The effects of the drug are long-lasting."
+ITEM.model = "models/ethprops/medical/antidote.mdl"
 
 ITEM.weight = 0.01
 
+ITEM.flag = "2"
 ITEM.price = 3000
 
-ITEM.quantMax = 5
-ITEM.quantity = 1
+ITEM.maxUses = 3
 
-ITEM.sound = "stalker/interface/inv_eat_pills_effect.ogg"
+ITEM.duration = 120
+ITEM.chemProt = 30
 
-ITEM.useName = "Swallow"
-ITEM.useText = {"opens an ", " and swallows one."}
+ITEM.sound = "stalker/inventory/inv_eat_pills_effect.mp3"
 
 ITEM.img = Material("stalkerCoP/ui/medicine/antidote.png")
+
+ITEM.useName = "Swallow"
+ITEM.useIcon = "stalkerCoP/ui/icons/misc/swallow.png"
+ITEM.useText = {"opens a pack of ", " and swallows one."}
