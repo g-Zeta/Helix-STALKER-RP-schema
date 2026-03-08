@@ -49,7 +49,9 @@ function CHAR:HeavilyOverweight() -- checks if the character is above the max ov
 end
 
 function CHAR:CanCarry(item)
-	return ix.weight.CanCarry(item:GetWeight(), self:GetData("carry", 0), self)
+	local weight = item:GetWeight() or 0
+	local quantity = item:GetData("quantity", 1)
+	return ix.weight.CanCarry(weight * quantity, self:GetData("carry", 0), self)
 end
 
 function CHAR:CanRemoveCarry(item) -- checks if the item being removed would make the character overweight

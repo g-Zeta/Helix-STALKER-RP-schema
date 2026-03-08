@@ -11,4 +11,4 @@ ITEM.flag = "2"
 
 ITEM.weight = 0.30
 
-ITEM.img = Material("stalker2/ui/ammunition/ammo_45acp_fmj.png")
+ITEM.img = Material("stalker2/ui/ammunition/ammo_45acp.png")

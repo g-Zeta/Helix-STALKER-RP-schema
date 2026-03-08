@@ -10,15 +10,16 @@ ITEM.ammoMax = 150
 ITEM.stats = {
 	["BR"] = nil,
 	["Pierce"] = nil,
+	["Blunt"] = nil,
 }
 
-ITEM.price = nil
-ITEM.flag = nil
+ITEM.price = nil	-- e.g. 1000
+ITEM.flag = nil		-- e.g. "1"
 
 ITEM.width = 2
 ITEM.height = 1
 
-ITEM.weight = nil -- weight of the full box in KG
+ITEM.weight = nil -- weight of the full box in KG e.g. 1
 
 ITEM.img = nil -- e.g. Material("vgui/hud/ammo_box.png")
 
@@ -61,7 +62,7 @@ end
 
 -- Calculate weight based on amount of rounds left in the box
 function ITEM:GetWeight()
-	return (self:GetData("quantity", self.ammoAmount) / self.ammoAmount) * self.weight
+	return (self:GetData("quantity", self.ammoAmount) / self.ammoAmount) * (self.weight or 0)
 end
 
 ITEM.functions.Custom = {
@@ -115,7 +116,7 @@ end
 ITEM.functions.split = {
     name = "Split",
     tip = "useTip",
-    icon = "icon16/stalker/split.png",
+    icon = "stalkerCoP/ui/icons/misc/split.png",
     isMulti = true,
     multiOptions = function(item, client)
 		local targets = {}
@@ -188,7 +189,7 @@ ITEM.functions.combine = {
 		local targetAmmoDiff = item.ammoMax - item:GetData("quantity", item.ammoAmount)
 		local localQuant = item:GetData("quantity", item.ammoAmount)
 		local sourceQuant = sourceItem:GetData("quantity", sourceItem.ammoAmount)
-		item.player:EmitSound("stalker/inventory/inv_properties.mp3", 110)
+		item.player:EmitSound("stalker/inventory/inv_properties.mp3", 100)
 		if targetAmmoDiff >= sourceQuant then
 			item:SetData("quantity", localQuant + sourceQuant)
 			sourceItem:Remove()
@@ -216,7 +217,7 @@ end
 
 ITEM.functions.Sell = {
 	name = "Sell",
-	icon = "icon16/stalker/sell.png",
+	icon = "stalkerCoP/ui/icons/misc/sell.png",
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player

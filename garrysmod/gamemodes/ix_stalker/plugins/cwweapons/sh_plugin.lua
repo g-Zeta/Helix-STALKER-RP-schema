@@ -5,6 +5,48 @@ PLUGIN.techFlag = "8"
 
 ix.flag.Add(PLUGIN.techFlag, "Access to apply internal weapon upgrades.")
 
+if (CLIENT) then
+	local PANEL = {}
+	function PANEL:Init()
+	    local DuraSlider = self:Add("DNumSlider")
+		DuraSlider:SetText("Weapon Durability")
+		DuraSlider:SetMin(0)
+		DuraSlider:SetMax(100)
+		DuraSlider:SetDecimals(0)
+		DuraSlider:Dock(FILL)
+		
+		self:SetTitle("Set Weapon Durability")
+		self:SetSize(400, 150)
+		self:Center()
+		self:MakePopup()
+
+		self.submit = self:Add("DButton")
+		self.submit:Dock(BOTTOM)
+		self.submit:DockMargin(0, 5, 0, 0)
+		self.submit:SetTall(25)
+		self.submit:SetText("Confirm")
+		self.submit.DoClick = function()
+		    local dura = DuraSlider:GetValue()
+    		netstream.Start("weapondurabilityAdjust", (dura * 100), self.itemID)
+    		self:Close()
+		end
+	end
+
+	function PANEL:Think()
+		self:MoveToFront()
+	end
+
+	vgui.Register("WeaponDurabilityMenu", PANEL, "DFrame")
+
+	netstream.Hook("weapondurabilityAdjust", function(dura, id)
+		local adjust = vgui.Create("WeaponDurabilityMenu")
+
+		if (id) then
+			adjust.itemID = id
+		end
+	end)
+end
+
 if (CLIENT) then return end
 
 local delay = 0
@@ -166,3 +208,29 @@ function PLUGIN:InitializedPlugins()
 
 	end
 end
+
+netstream.Hook("weapondurabilityAdjust", function(client, dura, id)
+	local inv = (client:GetChar() and client:GetChar():GetInv() or nil)
+
+	if (inv) then
+		local item
+		if (id) then
+			item = ix.item.instances[id]
+			local ent = item:GetEntity()
+			if (item and (IsValid(ent) or item:GetOwner() == client)) then
+				(ent or client):EmitSound("buttons/combine_button1.wav", 50, 170)
+				dura = math.Round(dura)
+				item:SetData("durability", dura)
+				
+				if item:GetData("equip") and item.player then
+					local wep = item.player:GetWeapon(item.class)
+					if IsValid(wep) then
+						wep:SetWeaponHP((dura/100), 100)
+					end
+				end
+			else
+				client:Notify("No Weapon")
+			end
+		end
+	end
+end)

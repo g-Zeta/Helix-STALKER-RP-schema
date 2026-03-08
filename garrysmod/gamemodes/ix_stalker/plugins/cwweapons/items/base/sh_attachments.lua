@@ -72,7 +72,7 @@ function ITEM:GetDescription()
 		str = str.."\n"..(customData.longdesc or "")
 	end
 
-    return (str.."\nWeight: "..self.weight.."kg")
+    return str
 end
 
 local function attachment(item, data)
@@ -153,7 +153,7 @@ local function attachment(item, data)
                 end
 				
 				local itemweight = item.weight or 0
-                local targetweight = target:GetData("weight",0)
+                local targetweight = target:GetData("weight", target.weight or 0)
                 local totweight = itemweight + targetweight
                 target:SetData("weight", totweight)
 				

@@ -63,6 +63,47 @@ if (CLIENT) then
 			ix.util.PropertyDesc3(tooltip, "Weight: "..ix.weight.WeightString(weight, ix.option.Get("imperial", false)), Color(255, 255, 255), Material("vgui/ui/stalker/weaponupgrades/weight.png"), 999)
 		end
 	end
+
+	local nextBreath = 0
+	local wasOverweight = false
+
+	function PLUGIN:Think()
+		local client = LocalPlayer()
+		if (!IsValid(client) or !client:Alive()) then return end
+
+		local character = client:GetCharacter()
+		if (!character) then return end
+
+		local max = ix.weight.BaseWeight(character) + ix.config.Get("maxOverWeight", 20) + (character:GetData("WeightBuffCur") or 0)
+		local isOverweight = character:GetData("carry", 0) > max
+
+		if (isOverweight) then
+			if (!wasOverweight) then
+				client:NotifyLocalized("You are overencumbered!")
+			end
+
+			if (CurTime() >= nextBreath) then
+				if (client:KeyDown(IN_FORWARD) or client:KeyDown(IN_BACK) or client:KeyDown(IN_MOVELEFT) or client:KeyDown(IN_MOVERIGHT) or client:KeyDown(IN_JUMP) or !wasOverweight) then
+					local gender = "male"
+					local model = client:GetModel():lower()
+
+					if (model:find("female") or model:find("alyx") or model:find("mossman")) then
+						gender = "female"
+					end
+
+					local sound = gender == "female" and "stalker/player/breath_female.wav" or "stalker/player/breath.wav"
+					local duration = SoundDuration(sound)
+
+					client:EmitSound(sound, 45, 100, 1, CHAN_VOICE)
+					nextBreath = CurTime() + (duration > 0 and duration or 2.5)
+				end
+			end
+		else
+			nextBreath = 0
+		end
+
+		wasOverweight = isOverweight
+	end
 end
 
 if (SERVER) then
@@ -78,70 +119,23 @@ function ix.weight.CanCarry(weight, carry, character) -- Calculate if you are ab
 end
 
 function PLUGIN:CanPlayerTakeItem(client, itemEnt)
-	local character = client:GetChar()
-	local carrybuff = character:GetData("WeightBuffCur") or 0
-    local inventory = character:GetInv()
-	local item = ix.item.list[itemEnt:GetItemID()]
-	local itemWeight = item.weight
-    local weight = 0
-    local totweight = 0
-    local maxweight = ix.config.Get("maxWeight", 30) + ix.config.Get("maxOverWeight", 20) + carrybuff
+	local character = client:GetCharacter()
+	if (!character) then return false end
 
-    -- Calculate current total weight in inventory	
-	for x, y in pairs(inventory:GetItems()) do
-		if y.weight == nil then continue end
-		local quantity = y:GetData("quantity",1)
-		if (y.isAmmo) then
-			quantity = 1
-		end
-        local weight = 0
-		if y:GetData("weight") then
-			weight = y:GetData("weight")
-		elseif y.GetWeight then
-			weight = y:GetWeight()
-		else
-			weight = y.weight or 0
-		end
-        totweight = totweight + (quantity * weight)
-    end
-	
-    -- Include the weight of the item being taken
-    if itemWeight ~= nil then
-        local quantity = item:GetData("quantity", 1)
-		if (item.isAmmo) then
-			quantity = 1
-		end
-        totweight = totweight + (quantity * itemWeight)
-    end
-	
-    -- Check if the total weight exceeds max weight allowed
-    if totweight > (maxweight + ix.config.Get("maxOverWeight", 20)) then
-        client:NotifyLocalized("You are carrying too much weight to pick that up.")
-        return false
-    end
+	local item = itemEnt:GetItemTable()
+	if (!item) then return false end
 
     return true
 end
 
-function PLUGIN:PlayerInteractItem(client, action, item)
-    local character = client:GetChar()
-    local carrybuff = character:GetData("WeightBuffCur") or 0
-    local inventory = character:GetInv()
-    local totalWeight = ix.weight.CalculateWeight(character) -- Calculate current total weight
+function PLUGIN:AdjustStaminaOffset(client, offset)
+	local character = client:GetCharacter()
 
-    local itemWeight = item:GetWeight() or 0
-    local quantity = item:GetData("quantity", 1)
-	if (item.isAmmo) then
-		quantity = 1
+	if (character and offset < 0) then
+		if (character:HeavilyOverweight()) then
+			return offset * 4
+		elseif (character:Overweight()) then
+			return offset * 2
+		end
 	end
-
-    if action == "take" then
-        totalWeight = totalWeight + (quantity * itemWeight)
-    elseif action == "drop" or action == "Sell" then
-        totalWeight = totalWeight - (quantity * itemWeight)
-    end
-
-    -- Update character weight and check if they can carry the new total weight
-    character:SetData("Weight", totalWeight)
-    character:SetData("MaxWeight", ix.config.Get("maxWeight", 30) + carrybuff) -- Include carrybuff in max weight check
 end

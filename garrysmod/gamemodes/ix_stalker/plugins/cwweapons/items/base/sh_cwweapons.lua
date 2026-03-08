@@ -743,7 +743,7 @@ end,
                 		end
                         item:SetData("RealPrice", (curPrice - ix.item.list[attData[1]].price))
                         
-                        local itemweight = item:GetData("weight",0)
+                        local itemweight = item:GetData("weight", item.weight or 0)
                         local targetweight = ix.item.list[attData[1]].weight
                         local totweight = itemweight - targetweight
                         item:SetData("weight", totweight)
@@ -827,7 +827,7 @@ ITEM.functions.RemoveUpgrade = {
                 		end
                         item:SetData("RealPrice", (curPrice - ix.item.list[attData[1]].price))
                         
-                        local itemweight = item:GetData("weight",0)
+                        local itemweight = item:GetData("weight", item.weight or 0)
                         local targetweight = ix.item.list[attData[1]].weight
                         local totweight = itemweight - targetweight
                         item:SetData("weight", totweight)
@@ -888,7 +888,9 @@ local function ammoswap(item, data)
                         end
 					elseif ammotype == "Normal" then
 						if (wepon) then
-							if name == "am_magnum" or name == "am_penetrator" or name == "am_matchgrade" or name == "am_slugrounds" or name == "am_flechetterounds" or name == "am_birdshot" or name == "am_zoneloaded" or name == "am_armorpiercing" then
+							if (name == "am_matchgrade" or name == "am_armorpiercing" or name == "am_hollowpoint" or name == "am_zoneloaded" or 
+								name == "am_slugrounds" or name == "am_flechetterounds" or  name == "am_birdshot" or name == "am_trishot" or 
+								name == "am_penetrator") then
 								client:GiveAmmo(wepon:Clip1(), wepon:GetPrimaryAmmoType(), true)
 								wepon:SetClip1(0)
 								wepon:detach(atcat, k, false)
@@ -943,19 +945,36 @@ ITEM.functions.SwapAmmo = {
                         name = ammoname,
                         data = {name},
                     })
-				elseif name == "am_penetrator" then
-                    ammoname = "Penetrator"
-                    table.insert(targets,{
-                        name = ammoname,
-                        data = {name},
-                    })
+				elseif name == "am_armorpiercing" then
+					ammoname = "Armor Piercing"
+					table.insert(targets,{
+						name = ammoname,
+						data = {name},
+					})
+				elseif name == "am_hollowpoint" then
+					ammoname = "Hollow Point"
+					table.insert(targets,{
+						name = ammoname,
+						data = {name},
+					})
+				elseif name == "am_zoneloaded" then
+					ammoname = "Zone Loaded"
+					table.insert(targets,{
+						name = ammoname,
+						data = {name},
+					})
                 elseif name == "am_slugrounds" then
                     ammoname = "Slug"
                     table.insert(targets,{
                         name = ammoname,
                         data = {name},
                     })
-              
+				elseif name == "am_flechetterounds" then
+					ammoname = "Flechetterounds"
+					table.insert(targets,{
+						name = ammoname,
+						data = {name},
+					})
 				elseif name == "am_birdshot" then
 					ammoname = "Birdshot"
 					table.insert(targets,{
@@ -968,25 +987,38 @@ ITEM.functions.SwapAmmo = {
 						name = ammoname,
 						data = {name},
 					})
-				elseif name == "am_zoneloaded" then
-					ammoname = "Zone Loaded"
-					table.insert(targets,{
-						name = ammoname,
-						data = {name},
-					})
-
-				elseif name == "am_armorpiercing" then
-					ammoname = "Armor Piercing"
-					table.insert(targets,{
-						name = ammoname,
-						data = {name},
-					})
-                end
+				elseif name == "am_penetrator" then
+                    ammoname = "Penetrator"
+                    table.insert(targets,{
+                        name = ammoname,
+                        data = {name},
+                    })
+				end
             end
         end
     end
     return targets
 end,
+}
+
+ITEM.functions.SetDurability = {
+	name = "Set Durability",
+	tip = "Dura",
+	icon = "icon16/wrench.png",
+	
+	OnCanRun = function(item)
+		local char = item.player:GetChar()
+		if char:HasFlags("N") then
+			return true
+		else
+			return false
+		end
+	end,
+	
+	OnRun = function(item)
+		netstream.Start(item.player, "weapondurabilityAdjust", item:GetData("durability",10000), item.id)
+		return false
+	end,
 }
 
 ITEM.functions.Clone = {
@@ -1025,3 +1057,319 @@ hook.Add("PlayerDeath", "ixStripClip", function(client)
 		end
 	end
 end)
+
+if (SERVER) then
+	concommand.Add("ix_cycle_ammo", function(client, cmd, args)
+		local weapon = client:GetActiveWeapon()
+		if (!IsValid(weapon)) then return end
+
+		local character = client:GetCharacter()
+		if (!character) then return end
+
+		local inventory = character:GetInventory()
+		if (!inventory) then return end
+
+		local item
+		for _, v in pairs(inventory:GetItems()) do
+			if (v.isWeapon and v:GetData("equip") and v.class == weapon:GetClass()) then
+				item = v
+				break
+			end
+		end
+
+		if (!item) then return end
+
+		local targets = {"Normal"}
+		local SWEP = weapons.Get(item.class)
+		
+		if (SWEP and SWEP.Attachments) then
+			for atcat, data in pairs(SWEP.Attachments) do
+				for k, name in pairs(data.atts) do
+					if (name == "am_matchgrade" or name == "am_armorpiercing" or name == "am_hollowpoint" or name == "am_zoneloaded" or 
+						name == "am_slugrounds" or name == "am_flechetterounds" or  name == "am_birdshot" or name == "am_trishot" or 
+						name == "am_penetrator") then
+						table.insert(targets, name)
+					end
+				end
+			end
+		end
+
+		local currentAmmo = item:GetData("ammoType", "Normal")
+		local nextAmmo = "Normal"
+		
+		for k, v in ipairs(targets) do
+			if (v == currentAmmo) then
+				if (targets[k + 1]) then
+					nextAmmo = targets[k + 1]
+				else
+					nextAmmo = targets[1]
+				end
+				break
+			end
+		end
+
+		item.player = client
+		ammoswap(item, {nextAmmo})
+		item.player = nil
+		
+		local niceName = nextAmmo
+		if (nextAmmo == "am_matchgrade") then niceName = "Match Grade"
+		elseif (nextAmmo == "am_armorpiercing") then niceName = "Armor Piercing"
+		elseif (nextAmmo == "am_hollowpoint") then niceName = "Hollow Point"
+		elseif (nextAmmo == "am_zoneloaded") then niceName = "Zone Loaded"
+		elseif (nextAmmo == "am_slugrounds") then niceName = "Slug"
+		elseif (nextAmmo == "am_flechetterounds") then niceName = "Flechetterounds"
+		elseif (nextAmmo == "am_birdshot") then niceName = "Birdshot"
+		elseif (nextAmmo == "am_trishot") then niceName = "Trishot"
+		elseif (nextAmmo == "am_penetrator") then niceName = "Penetrator"
+		end
+		
+	end)
+
+	netstream.Hook("ixAttachmentAction", function(client, itemID, action, data)
+		local item = ix.item.instances[itemID]
+		if (item) then
+			local owner = item:GetOwner()
+			if (owner == client) then
+				item.player = client
+				local func = item.functions[action]
+				if (func and func.OnCanRun(item)) then
+					local result = func.OnRun(item, data)
+
+					if (result != false) then
+						item:Remove()
+					end
+
+					netstream.Start(client, "ixAttachmentRefresh")
+				end
+				item.player = nil
+			end
+		end
+	end)
+else
+	ix.option.Add("ChangeAmmoType", ix.type.string, "X", {
+		category = "STALKER Controls",
+		OnChanged = function(oldValue, value)
+			LocalPlayer():Notify("Ammo cycle key changed to: " .. value)
+		end
+	})
+
+	hook.Add("PlayerButtonDown", "ixCycleAmmoKey", function(client, button)
+		local key = ix.option.Get("ChangeAmmoType", "X")
+		if (button == input.GetKeyCode(key) and IsFirstTimePredicted()) then
+			if (client:GetCharacter() and !vgui.GetKeyboardFocus()) then
+				RunConsoleCommand("ix_cycle_ammo")
+			end
+		end
+	end)
+
+	ix.option.Add("AttachmentMenuKey", ix.type.string, "T", {
+		category = "STALKER Controls",
+		OnChanged = function(oldValue, value)
+			LocalPlayer():Notify("Attachment menu key changed to: " .. value)
+		end
+	})
+
+	local matDefault = Material("stalker2/ui/hud/attachment_selector/Attachment_Default.png", "noclamp smooth")
+	local matHover = Material("stalker2/ui/hud/attachment_selector/Attachment_Hover.png", "noclamp smooth")
+	local matSelected = Material("stalker2/ui/hud/attachment_selector/Attachment_Selected.png", "noclamp smooth")
+
+	local PANEL = {}
+
+	function PANEL:Init()
+		self:SetSize(ScrW(), ScrH())
+		self:MakePopup()
+		self:SetAlpha(0)
+		self:AlphaTo(255, 0.2)
+	end
+
+	function PANEL:AddButton(x, y, itemTable, isAttached, callback)
+		local btn = self:Add("DButton")
+		btn:SetPos(x, y)
+		btn:SetSize(64, 64)
+		btn:SetText("")
+		btn:SetTooltip(itemTable:GetName())
+		btn.DoClick = callback
+		btn.OnCursorEntered = function()
+			surface.PlaySound("cw/selector.wav")
+		end
+		btn.Paint = function(s, w, h)
+			surface.SetDrawColor(255, 255, 255, 255)
+			if (isAttached) then
+				surface.SetMaterial(matSelected)
+			else
+				surface.SetMaterial(matDefault)
+			end
+			surface.DrawTexturedRect(0, 0, w, h)
+
+			if (s:IsHovered()) then
+				surface.SetMaterial(matHover)
+				surface.DrawTexturedRect(0, 0, w, h)
+			end
+		end
+		
+		local icon = btn:Add("SpawnIcon")
+		icon:SetSize(64, 64)
+		icon:SetPos(0, 0)
+		icon:SetModel(itemTable:GetModel() or "models/error.mdl", itemTable:GetSkin())
+		icon:SetMouseInputEnabled(false)
+		icon.PaintOver = function() end
+	end
+
+	function PANEL:Rebuild()
+		self:Clear()
+		self:Populate(self.item, self.weapon)
+	end
+
+	function PANEL:Populate(item, weapon)
+		self.item = item
+		self.weapon = weapon
+		
+		local char = LocalPlayer():GetCharacter()
+		local inv = char:GetInventory()
+		local items = inv:GetItems()
+		local attached = item:GetData("attachments", {})
+
+		local slotItems = {
+			[1] = {}, -- Sights
+			[2] = {}, -- Barrels
+			[3] = {}, -- Tactical/Underbarrel (3 and 5)
+			[4] = {}, -- Magazines
+		}
+
+		local function AddToSlot(slot, data)
+			if slot == 5 then slot = 3 end
+			if not slotItems[slot] then return end
+			table.insert(slotItems[slot], data)
+		end
+
+		for slot, data in pairs(attached) do
+			local attID = data[1]
+			local attItem = ix.item.list[attID]
+			if attItem then
+				AddToSlot(slot, {item = attItem, attached = true, id = attID, originalSlot = slot})
+			end
+		end
+
+		local SWEP = weapons.Get(item.class)
+		if not SWEP or not SWEP.Attachments then return end
+
+		for _, invItem in pairs(items) do
+			if invItem.isAttachment and invItem.attSearch then
+				local fits = false
+				local targetSlot = nil
+				
+				for atcat, data in pairs(SWEP.Attachments) do
+					for k, name in pairs(data.atts) do
+						for _, doAtt in pairs(invItem.attSearch) do
+							if name == doAtt then
+								fits = true
+								targetSlot = invItem.slot
+								break
+							end
+						end
+						if fits then break end
+					end
+					if fits then break end
+				end
+				
+				if fits and targetSlot then
+					AddToSlot(targetSlot, {item = invItem, attached = false, invID = invItem.id, originalSlot = targetSlot})
+				end
+			end
+		end
+
+		local centerW, centerH = ScrW()/2, ScrH()/2
+		local iconSize = 64
+		local spacing = 5
+		local offset = 40
+
+		local configs = {
+			[1] = { dirX = 0, dirY = -1, startX = centerW - iconSize/2, startY = centerH - offset - iconSize },
+			[2] = { dirX = -1, dirY = 0, startX = centerW - offset - iconSize, startY = centerH - iconSize/2 },
+			[4] = { dirX = 1, dirY = 0, startX = centerW + offset, startY = centerH - iconSize/2 },
+			[3] = { dirX = 0, dirY = 1, startX = centerW - iconSize/2, startY = centerH + offset },
+		}
+
+		for slot, itemsList in pairs(slotItems) do
+			local cfg = configs[slot]
+			if cfg then
+				table.sort(itemsList, function(a, b)
+					return a.item:GetName() < b.item:GetName()
+				end)
+
+				for i, data in ipairs(itemsList) do
+					local x = cfg.startX + (i-1) * (iconSize + spacing) * cfg.dirX
+					local y = cfg.startY + (i-1) * (iconSize + spacing) * cfg.dirY
+					
+					self:AddButton(x, y, data.item, data.attached, function()
+						if data.attached then
+							netstream.Start("ixAttachmentAction", item.id, "Detach", {data.originalSlot})
+						else
+							netstream.Start("ixAttachmentAction", data.invID, "Attach", {item.id})
+						end
+					end)
+				end
+			end
+		end
+	end
+
+	vgui.Register("ixAttachmentMenu", PANEL, "EditablePanel")
+
+	local attMenuPanel
+
+	netstream.Hook("ixAttachmentRefresh", function()
+		if (IsValid(attMenuPanel)) then
+			attMenuPanel:Rebuild()
+		end
+	end)
+
+	hook.Add("Think", "ixAttachmentMenuThink", function()
+		local client = LocalPlayer()
+		if not IsValid(client) or not client:GetCharacter() then return end
+		
+		local keyName = ix.option.Get("AttachmentMenuKey", "T")
+		local keyCode = input.GetKeyCode(keyName)
+
+		if (not keyCode) then return end
+		
+		if input.IsButtonDown(keyCode) then
+			if not IsValid(attMenuPanel) and not vgui.GetKeyboardFocus() and not gui.IsGameUIVisible() then
+				local weapon = client:GetActiveWeapon()
+				if IsValid(weapon) then
+					local item = weapon.ixItem
+
+					if (!item) then
+						local inventory = client:GetCharacter():GetInventory()
+						
+						if (inventory) then
+							for _, v in pairs(inventory:GetItems()) do
+								if (v.class == weapon:GetClass() and v:GetData("equip")) then
+									item = v
+									break
+								end
+							end
+						end
+					end
+
+					if (item) then
+						attMenuPanel = vgui.Create("ixAttachmentMenu")
+						attMenuPanel:Populate(item, weapon)
+					end
+				end
+			end
+		else
+			if IsValid(attMenuPanel) then
+				attMenuPanel:Remove()
+			end
+		end
+	end)
+end
+
+ix.lang.AddTable("english", {
+	optChangeAmmoType = "Change Ammo Type",
+	optdChangeAmmoType = "The key to change the ammo type of the equipped weapon.",
+
+	optAttachmentMenuKey = "Attachment Menu",
+	optdAttachmentMenuKey = "The key to hold to open the attachment menu."
+})

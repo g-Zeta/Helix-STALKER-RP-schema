@@ -1,20 +1,23 @@
-function ix.weight.CalculateWeight(character) -- Calculates the total weight of all items a character is carrying.
+-- Calculates the total weight of all items a character is carrying
+function ix.weight.CalculateWeight(character)
     local inventory = character:GetInventory()
     local weight = 0
 
     for i, v in pairs(inventory:GetItems()) do
-		local itemWeight = 0
-		if (v:GetData("weight")) then
-			itemWeight = v:GetData("weight")
-		elseif (v.GetWeight) then
-			itemWeight = v:GetWeight() or 0
-		else
-			itemWeight = v.weight or 0
+		local itemWeight = v:GetData("weight")
+
+		if (!itemWeight) then
+			if (v.GetWeight) then
+				itemWeight = v:GetWeight() or 0
+			else
+				itemWeight = v.weight or 0
+			end
 		end
 
-		local quantity = v:GetData("quantity", 1)
-		if (v.isAmmo) then
-			quantity = 1
+		local quantity = 1
+
+		if (!v.isAmmo) then
+			quantity = v:GetData("quantity", 1)
 		end
 
 		weight = weight + (itemWeight * quantity)
@@ -24,10 +27,15 @@ function ix.weight.CalculateWeight(character) -- Calculates the total weight of 
 end
 
 -- Define a function to update the character's movement speeds based on their weight condition
-local function UpdateCharacterSpeeds(character)
+function ix.weight.UpdateSpeeds(character)
     local client = character:GetPlayer()
     if client then
-        if character:HeavilyOverweight() then
+        local max = ix.weight.BaseWeight(character) + ix.config.Get("maxOverWeight", 20) + (character:GetData("WeightBuffCur") or 0)
+
+        if (character:GetData("carry", 0) > max) then
+            client:SetWalkSpeed(1)
+            client:SetRunSpeed(1)
+        elseif character:HeavilyOverweight() then
             client:SetWalkSpeed(ix.config.Get("walkSpeed") * 0.5)
             client:SetRunSpeed(ix.config.Get("runSpeed") * 0.4)
         elseif character:Overweight() then
@@ -44,7 +52,7 @@ end
 function PLUGIN:PostPlayerLoadout(client)
     local character = client:GetCharacter()
     if character then
-        UpdateCharacterSpeeds(character)
+        ix.weight.UpdateSpeeds(character)
     end
 end
 
@@ -66,7 +74,7 @@ function ix.weight.Update(character)
     end
     character:SetData("carryInc", carryInc)
 
-    UpdateCharacterSpeeds(character)
+    ix.weight.UpdateSpeeds(character)
 end
 
 function PLUGIN:CharacterLoaded(character) -- This is just a safety net to make sure the carry weight data is up-to-date.
@@ -78,15 +86,6 @@ function PLUGIN:AmmoCheck(client) -- updates weight after each reload, do we kee
 end
 
 function PLUGIN:CanTransferItem(item, old, inv) -- When a player attempts to take an item out of a container.
-	if (inv.owner and item:GetWeight() and (old and old.owner != inv.owner)) then
-		local character = ix.char.loaded[inv.owner]
-
-		if (!character:CanCarry(item)) then
-			character:GetPlayer():NotifyLocalized("You are extremely overencumbered and cannot take that.")
-			return false
-		end
-	end
-
 	if(old.owner and item:GetCarryInc() and item:GetData("equip", nil) == true and (inv and inv.owner != old.owner)) then
 		local character = ix.char.loaded[old.owner]
 
@@ -115,15 +114,16 @@ function PLUGIN:InventoryItemAdded(old, new, item)
 	end
 end
 
-function PLUGIN:CanPlayerTradeWithVendor(client, entity, uniqueID, selling)
-	if (!selling) then
-		local item = ix.item.list[uniqueID]
-
-		if (item:GetWeight() and !client:GetCharacter():CanCarry(item)) then
-			client:NotifyLocalized("You are carrying too much weight to buy that.")
-			return false
+function PLUGIN:InventoryItemRemoved(inventory, item)
+	if (inventory.owner and item:GetWeight()) then
+		local character = ix.char.loaded[inventory.owner]
+		if (character) then
+			ix.weight.Update(character)
 		end
 	end
+end
+
+function PLUGIN:CanPlayerTradeWithVendor(client, entity, uniqueID, selling)
 end
 
 function PLUGIN:CharacterVendorTraded(client, entity, uniqueID, selling)
