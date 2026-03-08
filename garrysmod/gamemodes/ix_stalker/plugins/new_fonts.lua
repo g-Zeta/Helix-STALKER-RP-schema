@@ -13,6 +13,14 @@ if (CLIENT) then
 		antialias = true
 	})
 
+	surface.CreateFont("stalker2regularboldfont", {	--Stalker 2 regular bold font
+		font = "stalker2",
+		size = ScreenScale(8),
+		extended = true,
+		weight = 600,
+		antialias = true
+	})
+
 	surface.CreateFont("stalkerregularsmallfont", {	--Regular Small
 		font = "arial",
 		size = ScreenScale(6),
