@@ -13,17 +13,14 @@ ITEM.height = 2	--No need to add this line to the items
 ITEM.flag = "?"	--Set the flag according to the faction or trade tier
 --]]
 
-ITEM.radProt = 0.00 --Add this line if the item is a Gasmask
-
 ITEM.BRC = 0
 
 ITEM.res = {
 	["Bullet"] = 0.00,
-	["Blast"] = 0.00,
+	["Impact"] = 0.00,
 	["Slash"] = 0.00,
-	["Fall"] = 0.00,
-	["Burn"] = 0.00,
-	["Shock"] = 0.00,
+	["Thermal"] = 0.00,
+	["Electrical"] = 0.00,
 	["Chemical"] = 0.00,
 	["Psi"] = 0.00,
 	["Radiation"] = 0.00,
@@ -114,25 +111,22 @@ if (CLIENT) then
 			ballistictitle:SetText("\nBRC: " .. self.BRC or 0)
 			ballistictitle:SizeToContents()
 
-			local anomPtitle = tooltip:AddRowAfter("ballisticdesc", "anomPtitle")
-			anomPtitle:SetText("\nANOMALOUS PROTECTION LEVELS:")
-			anomPtitle:SizeToContents()
-
 			-- Calculate resistances
-			if self.res then
+			local baseRes = self:GetData("custom", {}).res or self.res
+			if baseRes then
 				local resistances = {
 					["Bullet"] = 0,
 					["Impact"] = 0,
 					["Slash"] = 0,
-					["Burn"] = 0,
-					["Shock"] = 0,
+					["Thermal"] = 0,
+					["Electrical"] = 0,
 					["Chemical"] = 0,
-					["Radiation"] = 0,
 					["Psi"] = 0,
+					["Radiation"] = 0,
 				}
 
 				-- Add base resistances
-				for k, v in pairs(self.res) do
+				for k, v in pairs(baseRes) do
 					if resistances[k] then
 						resistances[k] = resistances[k] + v
 					end
@@ -156,22 +150,24 @@ if (CLIENT) then
 				end
 
 				-- Display the calculated resistances in the tooltip
-				local str = ""
-				for k, v in pairs(resistances) do
-					if k == "Fall" then
-						str = str .. "  Impact" .. ": " .. (v * 100) .. "%"
-					elseif k == "Burn" then
-						str = str .. "\n" .. "  Thermal" .. ": " .. (v * 100) .. "%"
-					elseif k == "Shock" then
-						str = str .. "\n" .. "  Electrical" .. ": " .. (v * 100) .. "%"
-					else
-						str = str .. "\n" .. "  " .. k .. ": " .. (v * 100) .. "%"
+				local resIcons = {
+					["Bullet"] = Material("stalkerCoP/ui/icons/armorupgrades/suit.png"),
+					["Impact"] = Material("stalkerCoP/ui/icons/armorupgrades/armor.png"),
+					["Slash"] = Material("stalkerCoP/ui/icons/armorupgrades/splat.png"),
+					["Thermal"] = Material("stalkerCoP/ui/icons/armorupgrades/thermprot.png"),
+					["Electrical"] = Material("stalkerCoP/ui/icons/armorupgrades/elect.png"),
+					["Chemical"] = Material("stalkerCoP/ui/icons/armorupgrades/chemprot.png"),
+					["Psi"] = Material("stalkerCoP/ui/icons/armorupgrades/psiprot.png"),
+					["Radiation"] = Material("stalkerCoP/ui/icons/armorupgrades/radprot.png"),
+				}
+
+				local order = {"Bullet", "Impact", "Slash", "Thermal", "Electrical", "Chemical", "Psi", "Radiation"}
+				for _, k in ipairs(order) do
+					local v = resistances[k]
+					if resIcons[k] then
+						ix.util.PropertyDescResistances(tooltip, k, (math.Round(v * 100)) .. "%", resIcons[k])
 					end
 				end
-
-				local resistanceDesc = tooltip:AddRowAfter("anomPtitle", "resistances")
-				resistanceDesc:SetText(str)
-				resistanceDesc:SizeToContents()
 			end
 
 			if((self.miscslots or 0) > 0) then

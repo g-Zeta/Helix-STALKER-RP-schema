@@ -8,14 +8,12 @@ ITEM.weight = 8
 
 ITEM.flag = "D"
 
-ITEM.radProt = 2
-
 ITEM.res = {
 	["Bullet"] = 0.16,
 	["Impact"] = 0.17,
 	["Slash"] = 0.31,
-	["Burn"] = 0.12,
-	["Shock"] = 0.13,
+	["Thermal"] = 0.12,
+	["Electrical"] = 0.13,
 	["Chemical"] = 0.12,
 	["Radiation"] = 0.25,
 	["Psi"] = 0.16,

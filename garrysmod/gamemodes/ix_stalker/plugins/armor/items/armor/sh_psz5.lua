@@ -10,11 +10,10 @@ ITEM.flag = "2"
 
 ITEM.res = {
 	["Bullet"] = 0.25,
-	["Blast"] = 0.25,
+	["Impact"] = 0.25,
 	["Slash"] = 0.25,
-	["Fall"] = 0.25,
-	["Burn"] = 0.11,
-	["Shock"] = 0.13,
+	["Thermal"] = 0.11,
+	["Electrical"] = 0.13,
 	["Chemical"] = 0.13,
 	["Psi"] = 0.00,
 	["Radiation"] = 0.30,
