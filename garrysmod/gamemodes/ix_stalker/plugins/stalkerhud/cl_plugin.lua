@@ -7,7 +7,6 @@ local posewalking = Material("stalkerSHoC/ui/hud/hud_walking.png" , "noclamp smo
 local poserunning = Material("stalkerSHoC/ui/hud/hud_sprinting.png" , "noclamp smooth")
 local posecrouching = Material("stalkerSHoC/ui/hud/hud_crouching.png" , "noclamp smooth")
 local posecrouchmove = Material("stalkerSHoC/ui/hud/hud_crouchmove.png", "noclamp smooth")
-
 local Ammo = Material("stalkerSHoC/ui/hud/ammo.png", "noclamp smooth")
 
 --STALKER 2 HUD textures
@@ -16,43 +15,8 @@ local hpbar = Material("stalker2/ui/hud/hpbar.png", "noclamp smooth")
 local stmbar = Material("stalker2/ui/hud/stmbar.png", "noclamp smooth")
 local radicon = Material("stalker2/ui/hud/radicon.png", "noclamp smooth")
 local radsmeter = Material("stalker2/ui/hud/rads.vtf", "noclamp smooth")
-
 local ammoS2 = Material("stalker2/ui/hud/ammo.png", "noclamp smooth")
-
-local ammo9x18 = Material("stalker2/ui/ammunition/ammo_9x18_fmj.png", "noclamp smooth")
-local ammo9x18ap = Material("stalker2/ui/ammunition/ammo_9x18_ap.png", "noclamp smooth")
-local ammo9x19 = Material("stalker2/ui/ammunition/ammo_9x19_fmj.png", "noclamp smooth")
-local ammo9x19ap = Material("stalker2/ui/ammunition/ammo_9x19_ap.png", "noclamp smooth")
-local ammo45acp = Material("stalker2/ui/ammunition/ammo_45acp_fmj.png", "noclamp smooth")
-local ammo45acpap = Material("stalker2/ui/ammunition/ammo_45acp_ap.png", "noclamp smooth")
-local ammo45acphp = Material("stalker2/ui/ammunition/ammo_45acp_hp.png", "noclamp smooth")
-local ammo12x70buck = Material("stalker2/ui/ammunition/ammo_12x70_buck.png", "noclamp smooth")
-local ammo12x70dart = Material("stalker2/ui/ammunition/ammo_12x70_dart.png", "noclamp smooth")
-local ammo12x70slug = Material("stalker2/ui/ammunition/ammo_12x70_slug.png", "noclamp smooth")
-local ammo545x39 = Material("stalker2/ui/ammunition/ammo_545x39_fmj.png", "noclamp smooth")
-local ammo545x39ap = Material("stalker2/ui/ammunition/ammo_545x39_ap.png", "noclamp smooth")
-local ammo545x39hp = Material("stalker2/ui/ammunition/ammo_545x39_hp.png", "noclamp smooth")
-local ammo556x45 = Material("stalker2/ui/ammunition/ammo_556x45_fmj.png", "noclamp smooth")
-local ammo556x45ap = Material("stalker2/ui/ammunition/ammo_556x45_ap.png", "noclamp smooth")
-local ammo556x45hp = Material("stalker2/ui/ammunition/ammo_556x45_hp.png", "noclamp smooth")
-local ammo556x45ss = Material("stalker2/ui/ammunition/ammo_556x45_ss.png", "noclamp smooth")
-local ammo762x39 = Material("stalker2/ui/ammunition/ammo_762x39_fmj.png", "noclamp smooth")
-local ammo762x39ap = Material("stalker2/ui/ammunition/ammo_762x39_ap.png", "noclamp smooth")
-local ammo762x39hp = Material("stalker2/ui/ammunition/ammo_762x39_hp.png", "noclamp smooth")
-local ammo762x51 = Material("stalker2/ui/ammunition/ammo_308_fmj.png", "noclamp smooth")
-local ammo762x51ap = Material("stalker2/ui/ammunition/ammo_308_ap.png", "noclamp smooth")
-local ammo762x51match = Material("stalker2/ui/ammunition/ammo_308_match.png", "noclamp smooth")
-local ammo762x54 = Material("stalker2/ui/ammunition/ammo_762x54_fmj.png", "noclamp smooth")
-local ammo762x54ap = Material("stalker2/ui/ammunition/ammo_762x54_ap.png", "noclamp smooth")
-local ammo762x54ss = Material("stalker2/ui/ammunition/ammo_762x54_ss.png", "noclamp smooth")
-local ammo9x39 = Material("stalker2/ui/ammunition/ammo_9x39_fmj.png", "noclamp smooth")
-local ammo9x39ppe = Material("stalker2/ui/ammunition/ammo_9x39_ppe.png", "noclamp smooth")
-local ammo9x39sp5 = Material("stalker2/ui/ammunition/ammo_9x39_sp5.png", "noclamp smooth")
-local ammo9x39sp6 = Material("stalker2/ui/ammunition/ammo_9x39_sp6.png", "noclamp smooth")
-local ammogauss = Material("stalker2/ui/ammunition/ammo_gauss.png", "noclamp smooth")
-local ammorpg = Material("stalker2/ui/ammunition/ammo_pg7v.png", "noclamp smooth")
-local ammom203 = Material("stalker2/ui/ammunition/ammo_m203.png", "noclamp smooth")
-local ammovog25 = Material("stalker2/ui/ammunition/ammo_vog25.png", "noclamp smooth")
+local ammoSelector = Material("stalker2/ui/hud/ammotype_selector.png", "noclamp smooth")
 
 local minScale = 0.9
 local maxScale = 1.3
@@ -176,6 +140,12 @@ surface.CreateFont("AmmoFont", {
 	extended = true,
 	weight = 500,
 })
+surface.CreateFont("AmmoNameFont", {
+	font = "arial",
+	size = ScreenScale(5),
+	extended = true,
+	weight = 500,
+})
 
 local color = {}
 color["$pp_colour_addr"] = 0
@@ -213,20 +183,20 @@ end;
 hook.Add("DrawOverlay", "Draw_Cursor_Function_FGSHAR", cursorDraw)
 hook.Add("Think", "Cursor_Think_Function_FGSHAR", cursorThink)
 
-function PLUGIN:HUDPaint()
+function DrawBuffTimer(endTime, x, y)
+	local timeLeft = math.ceil(endTime - CurTime())
+	if (timeLeft > 0 and timeLeft < 9999) then
+		draw.SimpleTextOutlined(timeLeft, "ixSmallFont", x + 14, y, Color(180, 180, 180), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, color_black)
+	end
+end
+
+function PLUGIN:PostDrawHUD()
 	if (hudAlpha <= 0) then return end
 	-- Also hide the HUD if the tab menu is open and our custom blur is active.
 	if ix.option.Get("DisableHUD", false) or (not ix.option.Get("cheapBlur", false) and IsValid(ix.gui.menu)) then
 		return false
 	else
 
-		self:SurvivalIconHUDPaint()
-		self:ArmorIconHUDPaint()
-		self:WeaponIconHUDPaint()
-		self:WeightIconHUDPaint()
-		self:RadiationIconHUDPaint()
-		self:PsyhealthIconHUDPaint()
-		self:HeadgearIconHUDPaint()
 		self:ArtifactBeltHUDPaint()
 
 		-- Check which HUD style to use
@@ -291,16 +261,416 @@ function PLUGIN:SHoCHUDPaint()
 	--Ammo display
 	if IsValid( wep ) then
 		if wep:HasAmmo() and wep:Clip1() >= 0 then
-			draw.DrawText( tostring(wep:Clip1()) .. " / " .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalker2regularfont", ScrW()-120 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
+			draw.DrawText( tostring(wep:Clip1()) .. "/" .. tostring(lp:GetAmmoCount( wep:GetPrimaryAmmoType() )), "stalker2regularboldfont", ScrW()-110 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
 			if wep:GetPrimaryAmmoType() then
 				if string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()) or "no", -1) == "-" then
-					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalker2regularfont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
+					draw.DrawText( string.sub(game.GetAmmoName(wep:GetPrimaryAmmoType()), -3, -2) , "stalker2regularboldfont", ScrW()-210 * (ScrW() / 1920), ScrH()-75 * (ScrH() / 1080), Color( 193, 136, 21, hudAlpha ), TEXT_ALIGN_CENTER )
 				end
 			end
 		end
 	end
---// End HUD Code //--
+
+	local ammo9x18 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x18.png", "noclamp smooth")
+	local ammo9x18ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x18_ap.png", "noclamp smooth")
+	local ammo9x19 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x19.png", "noclamp smooth")
+	local ammo9x19ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x19_ap.png", "noclamp smooth")
+	local ammo45acp = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_45acp.png", "noclamp smooth")
+	local ammo45acpap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_45acp_ap.png", "noclamp smooth")
+	local ammo12x70buck = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_12x70_buck.png", "noclamp smooth")
+	local ammo12x70dart = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_12x70_ap.png", "noclamp smooth")
+	local ammo12x70slug = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_12x70_slug.png", "noclamp smooth")
+	local ammo545x39 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_545x39.png", "noclamp smooth")
+	local ammo545x39ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_545x39_ap.png", "noclamp smooth")
+	local ammo545x39hp = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_545x39_hp.png", "noclamp smooth")
+	local ammo556x45 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_556x45.png", "noclamp smooth")
+	local ammo556x45ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_556x45_ap.png", "noclamp smooth")
+	local ammo556x45hp = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_556x45_hp.png", "noclamp smooth")
+	local ammo762x39 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x39.png", "noclamp smooth")
+	local ammo762x39ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x39_ap.png", "noclamp smooth")
+	local ammo762x51 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x51.png", "noclamp smooth")
+	local ammo762x51ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x51_ap.png", "noclamp smooth")
+	local ammo762x54 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x54.png", "noclamp smooth")
+	local ammo762x54ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x54_ap.png", "noclamp smooth")
+	local ammo762x54hp = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_762x54_hp.png", "noclamp smooth")
+	local ammo9x39 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x39.png", "noclamp smooth")
+	local ammo9x39ap = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_9x39_ap.png", "noclamp smooth")
+	local ammogauss = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_gauss.png", "noclamp smooth")
+	local ammorpg = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_rpg.png", "noclamp smooth")
+	local ammom203 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_m203.png", "noclamp smooth")
+	local ammovog25 = Material("stalkerAnomaly/mods/Maids_Vanilla_HD_icons/ui/ammunition/ammo_vog25.png", "noclamp smooth")
+
+	local statusiconSize = 35
+
+	--Hunger and thirst status icons
+	local hunger = Material("stalkerCoP/ui/hud/status/hunger.png", "noclamp smooth") 
+	local hunger2 = Material("stalkerCoP/ui/hud/status/hunger2.png", "noclamp smooth") 
+	local hunger3 = Material("stalkerCoP/ui/hud/status/hunger3.png", "noclamp smooth") 
+	local hunger4 = Material("stalkerCoP/ui/hud/status/hunger4.png", "noclamp smooth") 
+	
+	local thirst = Material("stalkerCoP/ui/hud/status/thirst.png", "noclamp smooth") 
+	local thirst2 = Material("stalkerCoP/ui/hud/status/thirst2.png", "noclamp smooth") 
+	local thirst3 = Material("stalkerCoP/ui/hud/status/thirst3.png", "noclamp smooth") 
+	local thirst4 = Material("stalkerCoP/ui/hud/status/thirst4.png", "noclamp smooth")
+
+	--Thirst
+	surface.SetMaterial(thirst)
+	if LocalPlayer():GetThirst() > 60 then
+		surface.SetMaterial(thirst)
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	elseif LocalPlayer():GetThirst() <= 60 and LocalPlayer():GetThirst() > 45 then
+		surface.SetMaterial(thirst)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetThirst() <= 45 and LocalPlayer():GetThirst() > 30 then
+		surface.SetMaterial(thirst2)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetThirst() <= 30 and LocalPlayer():GetThirst() > 15 then
+		surface.SetMaterial(thirst3)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetThirst() <= 15 then
+		surface.SetMaterial(thirst4)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-700 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))	
+
+	--Hunger
+	surface.SetMaterial(hunger)
+	if LocalPlayer():GetHunger() > 60 then
+		surface.SetMaterial(hunger)
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	elseif LocalPlayer():GetHunger() <= 60 and LocalPlayer():GetHunger() > 45 then
+		surface.SetMaterial(hunger)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetHunger() <= 45 and LocalPlayer():GetHunger() > 30 then
+		surface.SetMaterial(hunger2)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetHunger() <= 30 and LocalPlayer():GetHunger() > 15 then
+		surface.SetMaterial(hunger3)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif LocalPlayer():GetHunger() <= 15 then
+		surface.SetMaterial(hunger4)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-650 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Headgear status icon
+	local equippedgasmask = LocalPlayer():getEquippedGasmask()
+	local equippedhelmet = LocalPlayer():getEquippedHelmet() 
+	local equippedpartdura = 10000
+	local equippedpartdurafinal = 10000
+
+	local helmet = Material("stalkerCoP/ui/hud/status/helmet.png", "noclamp smooth") 
+	local helmet2 = Material("stalkerCoP/ui/hud/status/helmet2.png", "noclamp smooth") 
+	local helmet3 = Material("stalkerCoP/ui/hud/status/helmet3.png", "noclamp smooth") 
+	local helmet4 = Material("stalkerCoP/ui/hud/status/helmet4.png", "noclamp smooth") 
+
+	if equippedgasmask then
+		if equippedgasmask:GetData("durability") and equippedgasmask:GetData("durability") < equippedpartdura then
+			equippedpartdura = equippedgasmask:GetData("durability")
+			if equippedpartdurafinal > equippedpartdura then
+				equippedpartdurafinal = equippedpartdura
+			end
+		end
+	end
+
+	if equippedhelmet then
+		if equippedhelmet:GetData("durability") and equippedhelmet:GetData("durability") < equippedpartdura then
+			equippedpartdura = equippedhelmet:GetData("durability")
+			if equippedpartdurafinal > equippedpartdura then
+				equippedpartdurafinal = equippedpartdura
+			end
+		end
+	end
+
+	if equippedpartdura then
+	surface.SetMaterial(helmet)
+		if equippedpartdurafinal >= 8000 then
+			surface.SetDrawColor(Color(0, 0, 0, 0))
+		elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
+			surface.SetMaterial(helmet)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
+			surface.SetMaterial(helmet2)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
+			surface.SetMaterial(helmet3)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
+			surface.SetMaterial(helmet4)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		end
+	else
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-600 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Armor status icon
+	local equippedarmor = LocalPlayer():getEquippedBodyArmor()
+	local equippedpartdura = 10000
+	local equippedpartdurafinal = 10000
+
+	local armor = Material("stalkerCoP/ui/hud/status/armor.png", "noclamp smooth") 
+	local armor2 = Material("stalkerCoP/ui/hud/status/armor2.png", "noclamp smooth") 
+	local armor3 = Material("stalkerCoP/ui/hud/status/armor3.png", "noclamp smooth") 
+	local armor4 = Material("stalkerCoP/ui/hud/status/armor4.png", "noclamp smooth") 
+
+	if equippedarmor then
+		if equippedarmor:GetData("durability") and equippedarmor:GetData("durability") < equippedpartdura then
+			equippedpartdura = equippedarmor:GetData("durability")
+			if equippedpartdurafinal > equippedpartdura then
+				equippedpartdurafinal = equippedpartdura
+			end
+		end
+	end
+
+	if equippedpartdura then
+	surface.SetMaterial(armor)
+		if equippedpartdurafinal >= 8000 then
+			surface.SetDrawColor(Color(0, 0, 0, 0))
+		elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
+			surface.SetMaterial(armor)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
+			surface.SetMaterial(armor2)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
+			surface.SetMaterial(armor3)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
+			surface.SetMaterial(armor4)
+			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		end
+	else
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-550 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Weapon status icon
+	local gun = Material("stalkerCoP/ui/hud/status/gun.png", "noclamp smooth")
+	local gun2 = Material("stalkerCoP/ui/hud/status/gun2.png", "noclamp smooth")
+	local gun3 = Material("stalkerCoP/ui/hud/status/gun3.png", "noclamp smooth")
+	local gun4 = Material("stalkerCoP/ui/hud/status/gun4.png", "noclamp smooth")
+
+	--Weapon condition
+	surface.SetMaterial(gun)
+	if IsValid( wep ) then
+		if string.sub(wep:GetClass(),1,3) == "cw_" and not string.match(wep:GetClass(),"nade") then
+			if LocalPlayer():GetActiveWeapon():GetWeaponHP() then
+				local weapondura = LocalPlayer():GetActiveWeapon():GetWeaponHP()
+				if weapondura > 80 then
+					surface.SetDrawColor(Color(0, 0, 0, 0))
+				elseif weapondura > 60 and weapondura <= 80 then
+					surface.SetMaterial(gun)
+					surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+				elseif weapondura > 40 and weapondura <= 60 then
+					surface.SetMaterial(gun2)
+					surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+				elseif weapondura > 20 and weapondura <= 40 then
+					surface.SetMaterial(gun3)
+					surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+				elseif weapondura > 0 and weapondura <= 20 then
+					surface.SetMaterial(gun4)
+					surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+				end
+			end
+		else
+			surface.SetDrawColor(Color(0, 0, 0, 0))
+		end
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-500 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Weight status icon
+	local weight = Material("stalkerCoP/ui/hud/status/weight.png", "noclamp smooth") 
+	local weight2 = Material("stalkerCoP/ui/hud/status/weight2.png", "noclamp smooth") 
+	local weight4 = Material("stalkerCoP/ui/hud/status/weight4.png", "noclamp smooth") 
+
+	local currentCarry = char:GetData("carry", 0)
+	local baseWeight = ix.weight.BaseWeight(char)
+	local maxOverweight = ix.config.Get("maxOverWeight", 20)
+
+	if char:HeavilyOverweight() then
+		surface.SetMaterial(weight4)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif char:Overweight() then
+		surface.SetMaterial(weight2)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	elseif currentCarry >= (ix.config.Get("maxWeight", 30)) then
+		surface.SetMaterial(weight)
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+	else
+		surface.SetDrawColor(Color(255, 255, 255, 0))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-450 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Radiation status icon
+	local rad = Material("stalkerCoP/ui/hud/status/rad.png", "noclamp smooth") 
+	local rad2 = Material("stalkerCoP/ui/hud/status/rad2.png", "noclamp smooth") 
+	local rad3 = Material("stalkerCoP/ui/hud/status/rad3.png", "noclamp smooth") 
+	local rad4 = Material("stalkerCoP/ui/hud/status/rad4.png", "noclamp smooth")
+
+	local heartbeatSpeed = 2.5 -- Speed of the heartbeat effect
+	local maxAlpha = 255 -- Maximum alpha value
+	local minAlpha = 50 -- Minimum alpha value (to avoid complete transparency)
+	local time = CurTime() * heartbeatSpeed
+	local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
+
+	surface.SetMaterial(rad)
+	if LocalPlayer():getRadiation() == 0 then
+		surface.SetMaterial(rad)
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	elseif LocalPlayer():getRadiation() > 0 and LocalPlayer():getRadiation() <= 25 then
+		surface.SetMaterial(rad)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	elseif LocalPlayer():getRadiation() > 25 and LocalPlayer():getRadiation() <= 60 then
+		surface.SetMaterial(rad2)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	elseif LocalPlayer():getRadiation() > 60 and LocalPlayer():getRadiation() <= 89 then
+		surface.SetMaterial(rad3)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	elseif LocalPlayer():getRadiation() > 89 and LocalPlayer():getRadiation() <= 100 then
+		surface.SetMaterial(rad4)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	end
+
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-400 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	--Psyhealth status icon
+	local psy1 = Material("stalkerCoP/ui/hud/status/psyhealth.png", "noclamp smooth") 
+	local psy2 = Material("stalkerCoP/ui/hud/status/psyhealth2.png", "noclamp smooth") 
+	local psy3 = Material("stalkerCoP/ui/hud/status/psyhealth3.png", "noclamp smooth") 
+	local psy4 = Material("stalkerCoP/ui/hud/status/psyhealth4.png", "noclamp smooth") 
+
+	surface.SetDrawColor(Color(255, 255, 255, 0))
+	if (lp:GetPsyHealth() <= 99) then
+		surface.SetMaterial(psy1)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	end
+	if (lp:GetPsyHealth() <= 75) then
+		surface.SetMaterial(psy2)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	end
+	if (lp:GetPsyHealth() <= 50) then
+		surface.SetMaterial(psy3)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	end
+	if (lp:GetPsyHealth() <= 20) then
+		surface.SetMaterial(psy4)
+		surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+	end
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-350 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
+
+	-- Bleeding status icon
+	local bleed1 = Material("stalkerCoP/ui/hud/status/bleed.png", "noclamp smooth")
+	local bleed2 = Material("stalkerCoP/ui/hud/status/bleed2.png", "noclamp smooth")
+	local bleed3 = Material("stalkerCoP/ui/hud/status/bleed3.png", "noclamp smooth")
+	local bleed4 = Material("stalkerCoP/ui/hud/status/bleed4.png", "noclamp smooth")
+
+	local bleeding = char:GetData("Bleeding", 0) > 0
+	local health = lp:Health()
+
+	if bleeding or timer.Exists(lp:Name() .. "res_bleed") then
+		if health == 100 then
+			surface.SetMaterial(bleed1)
+			surface.SetDrawColor(Color(0, 0, 0, 0))
+		elseif health < 100 and health >= 80 then
+			surface.SetMaterial(bleed1)
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+		elseif health < 80 and health >= 50 then
+			surface.SetMaterial(bleed2)
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+		elseif health < 50 and health >= 25 then
+			surface.SetMaterial(bleed3)
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+		else -- health < 25
+			surface.SetMaterial(bleed4)
+			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
+		end
+	else
+		surface.SetMaterial(bleed1)
+		surface.SetDrawColor(Color(0, 0, 0, 0))
+	end
+
+	surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-300 * (ScrH() / 1080), statusiconSize * (ScrW() / 1920), statusiconSize * (ScrH() / 1080))
+
+	-- Buff stat icons
+	local stat1 = Material("stalkerCoP/ui/hud/status/healmin.png", "noclamp smooth") 
+	local stat2 = Material("stalkerCoP/ui/hud/status/radmin.png", "noclamp smooth")
+	local stat3 = Material("stalkerCoP/ui/hud/status/staminamin.png", "noclamp smooth")
+	local stat4 = Material("stalkerCoP/ui/hud/status/weightmin.png", "noclamp smooth")
+	local stat5 = Material("stalkerCoP/ui/hud/status/chempro.png", "noclamp smooth")
+	local stat6 = Material("stalkerCoP/ui/hud/status/psypro.png", "noclamp smooth") 
+	local stat7 = Material("stalkerCoP/ui/hud/status/radpro.png", "noclamp smooth") 
+
+	local buff = LocalPlayer():HasBuff("buff_slowheal")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat1)
+		surface.DrawTexturedRect(ScrW()-260, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-260, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_radiationremoval")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat2)
+		surface.DrawTexturedRect(ScrW()-230, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-230, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_staminarestore")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat3)
+		surface.DrawTexturedRect(ScrW()-200, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-200, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_weight")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat4)
+		surface.DrawTexturedRect(ScrW()-170, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-170, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_chemprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat5)
+		surface.DrawTexturedRect(ScrW()-140, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-140, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_psyprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat6)
+		surface.DrawTexturedRect(ScrW()-110, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-110, ScrH()-229)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_radprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat7)
+		surface.DrawTexturedRect(ScrW()-80, ScrH()-229, 28, 32, Color(255, 255, 255, 255))
+		DrawBuffTimer(buff[1], ScrW()-80, ScrH()-229)
+	end
+
+	--// End HUD Code //--
 end
+
+local ammoOrder = {
+	["Normal"] = 1,
+	["am_armorpiercing"] = 2,
+	["am_hollowpoint"] = 3,
+	["am_matchgrade"] = 4,
+	["am_slugrounds"] = 5,
+	["am_flechetterounds"] = 6,
+	["am_birdshot"] = 7,
+	["am_trishot"] = 8,
+	["am_penetrator"] = 9,
+	["am_zoneloaded"] = 10,
+}
 
 --STALKER 2 HUD New
 function PLUGIN:S2HUDPaint()
@@ -319,7 +689,139 @@ function PLUGIN:S2HUDPaint()
 	surface.SetMaterial(s2hud)
 	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(hudX, hudY, hudW, hudH)
+
+	local status1 = Material("stalker2/ui/hud/stat_weight.png", "noclamp smooth")
+	local status2 = Material("stalker2/ui/hud/stat_hunger.png", "noclamp smooth")
+	local status3 = Material("stalker2/ui/hud/stat_thirst.png", "noclamp smooth")
+	local status4 = Material("stalker2/ui/hud/stat_bleeding.png", "noclamp smooth")
+
+	local statusiconSize = 25
 	
+	-- Weight status icon
+	local currentCarry = char:GetData("carry", 0)
+	local maxWeight = ix.config.Get("maxWeight", 30)
+	local maxOverWeight = ix.config.Get("maxOverWeight", 20)
+
+	if (currentCarry > maxWeight) then
+		local weightAlpha = math.Clamp((currentCarry / (maxWeight + maxOverWeight) + 0.1) * 255, 0, 255)
+		local colorX = math.min(weightAlpha, 255)
+		local color = Color(colorX, colorX, colorX, math.min(weightAlpha, hudAlpha))
+
+		if (char:HeavilyOverweight()) then
+			color = Color(200, 0, 0, hudAlpha)
+		end
+
+		surface.SetMaterial(status1)
+		surface.SetDrawColor(color)
+		surface.DrawTexturedRect(hudX + 70 * scaleX, hudY + 70 * scaleY, statusiconSize, statusiconSize)
+	end
+
+	-- Hunger status icon
+	local hunger = lp:GetHunger()
+	if (hunger < 75) then
+		local hungerAlpha = math.Clamp(((100 - hunger) / 75) * 255, 0, 255)
+		local colorX = math.min(hungerAlpha, 255)
+		local color = Color(colorX, colorX, colorX, math.min(hungerAlpha, hudAlpha))
+
+		if (hunger < 15) then
+			color = Color(200, 0, 0, hudAlpha)
+		end
+
+		surface.SetMaterial(status2)
+		surface.SetDrawColor(color)
+		surface.DrawTexturedRect(hudX + 100 * scaleX, hudY + 70 * scaleY, statusiconSize * scaleX, statusiconSize * scaleY)
+	end
+
+	-- Thirst status icon
+	local thirst = lp:GetThirst()
+	if (thirst < 75) then
+		local thirstAlpha = math.Clamp(((100 - thirst) / 75) * 255, 0, 255)
+		local colorX = math.min(thirstAlpha, 255)
+		local color = Color(colorX, colorX, colorX, math.min(thirstAlpha, hudAlpha))
+
+		if (thirst < 15) then
+			color = Color(200, 0, 0, hudAlpha)
+		end
+
+		surface.SetMaterial(status3)
+		surface.SetDrawColor(color)
+		surface.DrawTexturedRect(hudX + 130 * scaleX, hudY + 70 * scaleY, statusiconSize, statusiconSize)
+	end
+
+	-- Bleeding status icon
+	local bleeding = char:GetData("Bleeding", 0) > 0
+
+	if (bleeding or timer.Exists(lp:Name() .. "res_bleed")) then
+		surface.SetMaterial(status4)
+		surface.SetDrawColor(Color(200, 0, 0, hudAlpha))
+		surface.DrawTexturedRect(hudX + 160 * scaleX, hudY + 70 * scaleY, statusiconSize, statusiconSize)
+	end
+
+	-- Buff stat icons
+	local stat1 = Material("stalker2/ui/hud/stat_healing.png", "noclamp smooth")
+	local stat2 = Material("stalker2/ui/hud/stat_rads.png", "noclamp smooth")
+	local stat3 = Material("stalker2/ui/hud/stat_stamina.png", "noclamp smooth")
+	local stat4 = Material("stalker2/ui/hud/stat_weightboost.png", "noclamp smooth")
+	local stat5 = Material("stalker2/ui/hud/stat_prot_chemical.png", "noclamp smooth")
+	local stat6 = Material("stalker2/ui/hud/stat_prot_psi.png", "noclamp smooth")
+	local stat7 = Material("stalker2/ui/hud/stat_prot_rads.png", "noclamp smooth")
+
+	local buff = LocalPlayer():HasBuff("buff_slowheal")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat1)
+		surface.DrawTexturedRect(hudX + 70 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 70 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_radiationremoval")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat2)
+		surface.DrawTexturedRect(hudX + 100 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 100 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_staminarestore")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat3)
+		surface.DrawTexturedRect(hudX + 130 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 130 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_weight")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat4)
+		surface.DrawTexturedRect(hudX + 160 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 160 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_chemprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat5)
+		surface.DrawTexturedRect(hudX + 190 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 190 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_psyprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat6)
+		surface.DrawTexturedRect(hudX + 220 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 220 * scaleX, hudY - 15 * scaleY)
+	end
+
+	buff = LocalPlayer():HasBuff("buff_radprotect")
+	if buff then
+		surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+		surface.SetMaterial(stat7)
+		surface.DrawTexturedRect(hudX + 250 * scaleX, hudY - 15 * scaleY, statusiconSize, statusiconSize)
+		DrawBuffTimer(buff[1], hudX + 250 * scaleX, hudY - 15 * scaleY)
+	end
+
 	--Health bar
 	local hpFraction = math.Clamp(lp:Health() / lp:GetMaxHealth(), 0, 1)
 	local hpBarX, hpBarY = hudX + 94 * scaleX, hudY + 27 * scaleY
@@ -494,6 +996,41 @@ function PLUGIN:S2HUDPaint()
 		end
 	end
 
+	local ammo9x18 = Material("stalker2/ui/ammunition/ammo_9x18.png", "noclamp smooth")
+	local ammo9x18ap = Material("stalker2/ui/ammunition/ammo_9x18_ap.png", "noclamp smooth")
+	local ammo9x19 = Material("stalker2/ui/ammunition/ammo_9x19.png", "noclamp smooth")
+	local ammo9x19ap = Material("stalker2/ui/ammunition/ammo_9x19_ap.png", "noclamp smooth")
+	local ammo45acp = Material("stalker2/ui/ammunition/ammo_45acp.png", "noclamp smooth")
+	local ammo45acpap = Material("stalker2/ui/ammunition/ammo_45acp_ap.png", "noclamp smooth")
+	local ammo45acphp = Material("stalker2/ui/ammunition/ammo_45acp_hp.png", "noclamp smooth")
+	local ammo12x70buck = Material("stalker2/ui/ammunition/ammo_12x70_buck.png", "noclamp smooth")
+	local ammo12x70dart = Material("stalker2/ui/ammunition/ammo_12x70_dart.png", "noclamp smooth")
+	local ammo12x70slug = Material("stalker2/ui/ammunition/ammo_12x70_slug.png", "noclamp smooth")
+	local ammo545x39 = Material("stalker2/ui/ammunition/ammo_545x39.png", "noclamp smooth")
+	local ammo545x39ap = Material("stalker2/ui/ammunition/ammo_545x39_ap.png", "noclamp smooth")
+	local ammo545x39hp = Material("stalker2/ui/ammunition/ammo_545x39_hp.png", "noclamp smooth")
+	local ammo556x45 = Material("stalker2/ui/ammunition/ammo_556x45.png", "noclamp smooth")
+	local ammo556x45ap = Material("stalker2/ui/ammunition/ammo_556x45_ap.png", "noclamp smooth")
+	local ammo556x45hp = Material("stalker2/ui/ammunition/ammo_556x45_hp.png", "noclamp smooth")
+	local ammo556x45mg = Material("stalker2/ui/ammunition/ammo_556x45_mg.png", "noclamp smooth")
+	local ammo762x39 = Material("stalker2/ui/ammunition/ammo_762x39.png", "noclamp smooth")
+	local ammo762x39ap = Material("stalker2/ui/ammunition/ammo_762x39_ap.png", "noclamp smooth")
+	local ammo762x39hp = Material("stalker2/ui/ammunition/ammo_762x39_hp.png", "noclamp smooth")
+	local ammo762x51 = Material("stalker2/ui/ammunition/ammo_308.png", "noclamp smooth")
+	local ammo762x51ap = Material("stalker2/ui/ammunition/ammo_308_ap.png", "noclamp smooth")
+	local ammo762x51mg = Material("stalker2/ui/ammunition/ammo_308_mg.png", "noclamp smooth")
+	local ammo762x54 = Material("stalker2/ui/ammunition/ammo_762x54.png", "noclamp smooth")
+	local ammo762x54ap = Material("stalker2/ui/ammunition/ammo_762x54_ap.png", "noclamp smooth")
+	local ammo762x54mg = Material("stalker2/ui/ammunition/ammo_762x54_mg.png", "noclamp smooth")
+	local ammo9x39 = Material("stalker2/ui/ammunition/ammo_9x39.png", "noclamp smooth")
+	local ammo9x39ap = Material("stalker2/ui/ammunition/ammo_9x39_ap.png", "noclamp smooth")
+	local ammo9x39hp = Material("stalker2/ui/ammunition/ammo_9x39_hp.png", "noclamp smooth")
+	local ammo9x39mg = Material("stalker2/ui/ammunition/ammo_9x39_mg.png", "noclamp smooth")
+	local ammogauss = Material("stalker2/ui/ammunition/ammo_gauss.png", "noclamp smooth")
+	local ammorpg = Material("stalker2/ui/ammunition/ammo_pg7v.png", "noclamp smooth")
+	local ammom203 = Material("stalker2/ui/ammunition/ammo_m203.png", "noclamp smooth")
+	local ammovog25 = Material("stalker2/ui/ammunition/ammo_vog25.png", "noclamp smooth")
+
     -- Display ammo icon based on the weapon's primary ammo type
     if IsValid(wep) and wep.Primary then
         local ammoMaterial = nil
@@ -501,32 +1038,132 @@ function PLUGIN:S2HUDPaint()
         -- Determine the material based on the ammo type
         if wep.Primary.Ammo == "9x18MM" then
             ammoMaterial = ammo9x18
+		elseif wep.Primary.Ammo == "9x18MM -AP-" then
+			ammoMaterial = ammo9x18ap
+		elseif wep.Primary.Ammo == "9x18MM -HP-" then
+			ammoMaterial = ammo9x18hp
+		elseif wep.Primary.Ammo == "9x18MM -MG-" then
+			ammoMaterial = ammo9x18
+		elseif wep.Primary.Ammo == "9x18MM -ZL-" then
+			ammoMaterial = ammo9x18
         elseif wep.Primary.Ammo == "9x19MM" then
             ammoMaterial = ammo9x19
+		elseif wep.Primary.Ammo == "9x19MM -AP-" then
+			ammoMaterial = ammo9x19ap
+		elseif wep.Primary.Ammo == "9x19MM -HP-" then
+			ammoMaterial = ammo9x19hp
+		elseif wep.Primary.Ammo == "9x19MM -MG-" then
+			ammoMaterial = ammo9x19
+		elseif wep.Primary.Ammo == "9x19MM -ZL-" then
+			ammoMaterial = ammo9x19
+		elseif wep.Primary.Ammo == ".45 ACP" then
+			ammoMaterial = ammo45acp
+		elseif wep.Primary.Ammo == ".45 ACP -AP-" then
+			ammoMaterial = ammo45acpap
+		elseif wep.Primary.Ammo == ".45 ACP -HP-" then
+			ammoMaterial = ammo45acphp
+		elseif wep.Primary.Ammo == ".45 ACP -MG-" then
+			ammoMaterial = ammo45acp
+		elseif wep.Primary.Ammo == ".45 ACP -ZL-" then
+			ammoMaterial = ammo45acp
         elseif wep.Primary.Ammo == "12 Gauge" then
             ammoMaterial = ammo12x70buck
+		elseif wep.Primary.Ammo == "12 Gauge -SG-" then
+			ammoMaterial = ammo12x70slug
+		elseif wep.Primary.Ammo == "12 Gauge -FT-" then
+			ammoMaterial = ammo12x70dart
         elseif wep.Primary.Ammo == "5.45x39MM" then
             ammoMaterial = ammo545x39
+		elseif wep.Primary.Ammo == "5.45x39MM -AP-" then
+			ammoMaterial = ammo545x39ap
+		elseif wep.Primary.Ammo == "5.45x39MM -HP-" then
+			ammoMaterial = ammo545x39hp
+		elseif wep.Primary.Ammo == "5.45x39MM -MG-" then
+			ammoMaterial = ammo545x39
+		elseif wep.Primary.Ammo == "5.45x39MM -ZL-" then
+			ammoMaterial = ammo545x39
         elseif wep.Primary.Ammo == "5.56x45MM" then
             ammoMaterial = ammo556x45
+		elseif wep.Primary.Ammo == "5.56x45MM -AP-" then
+			ammoMaterial = ammo556x45ap
+		elseif wep.Primary.Ammo == "5.56x45MM -HP-" then
+			ammoMaterial = ammo556x45hp
+		elseif wep.Primary.Ammo == "5.56x45MM -MG-" then
+			ammoMaterial = ammo556x45mg
         elseif wep.Primary.Ammo == "7.62x39MM" then
             ammoMaterial = ammo762x39
+		elseif wep.Primary.Ammo == "7.62x39MM -AP-" then
+			ammoMaterial = ammo762x39ap
+		elseif wep.Primary.Ammo == "7.62x39MM -HP-" then
+			ammoMaterial = ammo762x39hp
+		elseif wep.Primary.Ammo == "7.62x39MM -MG-" then
+			ammoMaterial = ammo762x39
+		elseif wep.Primary.Ammo == "7.62x39MM -ZL-" then
+			ammoMaterial = ammo762x39
+		elseif wep.Primary.Ammo == "7.62x51MM" then
+            ammoMaterial = ammo762x51
+		elseif wep.Primary.Ammo == "7.62x51MM -AP-" then
+			ammoMaterial = ammo762x51ap
+		elseif wep.Primary.Ammo == "7.62x51MM -MG-" then
+			ammoMaterial = ammo762x51mg
+		elseif wep.Primary.Ammo == "7.62x51MM -ZL-" then
+			ammoMaterial = ammo762x51
         elseif wep.Primary.Ammo == "7.62x54MM" then
             ammoMaterial = ammo762x54
+		elseif wep.Primary.Ammo == "7.62x54MM -AP-" then
+			ammoMaterial = ammo762x54ap
+		elseif wep.Primary.Ammo == "7.62x54MM -MG-" then
+			ammoMaterial = ammo762x54mg
+		elseif wep.Primary.Ammo == "7.62x54MM -ZL-" then
+			ammoMaterial = ammo762x54
         elseif wep.Primary.Ammo == "9x39MM" then
             ammoMaterial = ammo9x39
-        elseif wep.Primary.Ammo == "Batteries" then
+		elseif wep.Primary.Ammo == "9x39MM -AP-" then
+			ammoMaterial = ammo9x39ap
+		elseif wep.Primary.Ammo == "9x39MM -HP-" then
+			ammoMaterial = ammo9x39hp
+		elseif wep.Primary.Ammo == "9x39MM -MG-" then
+			ammoMaterial = ammo9x39mg
+		elseif wep.Primary.Ammo == "9x39MM -ZL-" then
+			ammoMaterial = ammo9x39
+         elseif wep.Primary.Ammo == "Batteries" then
             ammoMaterial = ammogauss
+		elseif wep.Primary.Ammo == "PG-7VM Grenade" then
+			ammoMaterial = ammorpg
         end
 
         -- If a valid ammo material was found, draw it
         if ammoMaterial then
             surface.SetMaterial(ammoMaterial)
             surface.SetDrawColor(Color(255, 255, 255, hudAlpha))			
-			local ammoIconX = ammoX + 141 * scaleX
-			local ammoIconY = ammoY + 22 * scaleY
-			local ammoIconW, ammoIconH = 77 * scaleX, 39 * scaleY
-            surface.DrawTexturedRect(ammoIconX, ammoIconY, ammoIconW, ammoIconH)
+			local ammoIconX = ammoX + 147 * scaleX
+			local ammoIconY = ammoY + 18 * scaleY
+			local maxW, maxH = 65 * scaleX, 33 * scaleY
+
+			local matW = ammoMaterial:Width()
+			local matH = ammoMaterial:Height()
+			local scale = math.min(maxW / matW, maxH / matH)
+
+			local drawW = matW * scale
+			local drawH = matH * scale
+
+			local drawX = ammoIconX + (maxW - drawW) / 2
+			local drawY = ammoIconY + (maxH - drawH) / 2
+            surface.DrawTexturedRect(drawX, drawY, drawW, drawH)
+
+			local ammoName = wep.Primary.Ammo
+			surface.SetFont("AmmoNameFont")
+			local textW, textH = surface.GetTextSize(ammoName)
+
+			if (textW > maxW) then
+				if (string.find(ammoName, " %-")) then
+					ammoName = string.gsub(ammoName, " %-", "\n-")
+				else
+					ammoName = string.gsub(ammoName, " ", "\n")
+				end
+			end
+
+			draw.DrawText(ammoName, "AmmoNameFont", ammoIconX + maxW / 2, ammoIconY + maxH, Color(215, 215, 215, hudAlpha), TEXT_ALIGN_CENTER)
         end
     end
 
@@ -579,362 +1216,60 @@ function PLUGIN:S2HUDPaint()
 			textSpec.xalign = TEXT_ALIGN_CENTER
 		end
 	end
+
+	-- Ammo type selector dots
+	local item = wep.ixItem
+	if not item and char then
+		local inv = char:GetInv()
+		if inv then
+			for _, v in pairs(inv:GetItems()) do
+				if v.class == wep:GetClass() and v:GetData("equip") then
+					item = v
+					break
+				end
+			end
+		end
+	end
+
+	if item then
+		local availableAmmoTypes = {"Normal"}
+		if wep.Attachments then
+			for _, category in pairs(wep.Attachments) do
+				for _, attName in pairs(category.atts) do
+					if ammoOrder[attName] then
+						table.insert(availableAmmoTypes, attName)
+					end
+				end
+			end
+		end
+
+		table.sort(availableAmmoTypes, function(a, b)
+			return (ammoOrder[a] or 99) < (ammoOrder[b] or 99)
+		end)
+
+		local currentAmmo = item:GetData("ammoType", "Normal")
+		local dotSize = 8 * scaleX
+		local dotSpacing = 12 * scaleY
+		local startX = ammoX + ammoW + 5 * scaleX
+		local totalHeight = #availableAmmoTypes * dotSpacing
+		local startY = ammoY + (ammoH - totalHeight) / 2
+
+		surface.SetMaterial(ammoSelector)
+		for i, ammoName in ipairs(availableAmmoTypes) do
+			if ammoName == currentAmmo then
+				surface.SetDrawColor(255, 255, 255, hudAlpha)
+			else
+				surface.SetDrawColor(100, 100, 100, hudAlpha)
+			end
+			surface.DrawTexturedRect(startX, startY + (i - 1) * dotSpacing, dotSize, dotSize)
+		end
+	end
 --// End HUD Code //--
 end
 
 ix.option.Add("StalkerHUD", ix.type.bool, false, { category = "STALKER Settings", })
 
---// STATUS HUD ICONS //--
-
--- Hunger and Thirst
-function PLUGIN:SurvivalIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-		local char = lp:GetCharacter()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-		
-		local hunger = Material("stalkerCoP/ui/hud/status/hunger.png", "noclamp smooth") 
-		local hunger2 = Material("stalkerCoP/ui/hud/status/hunger2.png", "noclamp smooth") 
-		local hunger3 = Material("stalkerCoP/ui/hud/status/hunger3.png", "noclamp smooth") 
-		local hunger4 = Material("stalkerCoP/ui/hud/status/hunger4.png", "noclamp smooth") 
-		
-		local thirst = Material("stalkerCoP/ui/hud/status/thirst.png", "noclamp smooth") 
-		local thirst2 = Material("stalkerCoP/ui/hud/status/thirst2.png", "noclamp smooth") 
-		local thirst3 = Material("stalkerCoP/ui/hud/status/thirst3.png", "noclamp smooth") 
-		local thirst4 = Material("stalkerCoP/ui/hud/status/thirst4.png", "noclamp smooth")
-		
-		--Hunger
-		surface.SetMaterial(hunger)
-		if LocalPlayer():GetHunger() > 60 then
-			surface.SetMaterial(hunger)
-			surface.SetDrawColor(Color(0, 0, 0, 0))
-		elseif LocalPlayer():GetHunger() <= 60 and LocalPlayer():GetHunger() > 45 then
-			surface.SetMaterial(hunger)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetHunger() <= 45 and LocalPlayer():GetHunger() > 30 then
-			surface.SetMaterial(hunger2)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetHunger() <= 30 and LocalPlayer():GetHunger() > 15 then
-			surface.SetMaterial(hunger3)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetHunger() <= 15 then
-			surface.SetMaterial(hunger4)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-550 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-
-		--Thirst
-		surface.SetMaterial(thirst)
-		if LocalPlayer():GetThirst() > 60 then
-			surface.SetMaterial(thirst)
-			surface.SetDrawColor(Color(0, 0, 0, 0))
-		elseif LocalPlayer():GetThirst() <= 60 and LocalPlayer():GetThirst() > 45 then
-			surface.SetMaterial(thirst)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetThirst() <= 45 and LocalPlayer():GetThirst() > 30 then
-			surface.SetMaterial(thirst2)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetThirst() <= 30 and LocalPlayer():GetThirst() > 15 then
-			surface.SetMaterial(thirst3)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif LocalPlayer():GetThirst() <= 15 then
-			surface.SetMaterial(thirst4)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-600 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Headgear
-function PLUGIN:HeadgearIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-		local char = lp:GetCharacter()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local equippedgasmask = LocalPlayer():getEquippedGasmask()
-		local equippedhelmet = LocalPlayer():getEquippedHelmet() 
-		local equippedpartdura = 10000
-		local equippedpartdurafinal = 10000
-
-		local helmet = Material("stalkerCoP/ui/hud/status/helmet.png", "noclamp smooth") 
-		local helmet2 = Material("stalkerCoP/ui/hud/status/helmet2.png", "noclamp smooth") 
-		local helmet3 = Material("stalkerCoP/ui/hud/status/helmet3.png", "noclamp smooth") 
-		local helmet4 = Material("stalkerCoP/ui/hud/status/helmet4.png", "noclamp smooth") 
-
-		if equippedgasmask then
-			if equippedgasmask:GetData("durability") and equippedgasmask:GetData("durability") < equippedpartdura then
-				equippedpartdura = equippedgasmask:GetData("durability")
-				if equippedpartdurafinal > equippedpartdura then
-					equippedpartdurafinal = equippedpartdura
-				end
-			end
-		end
-
-		if equippedhelmet then
-			if equippedhelmet:GetData("durability") and equippedhelmet:GetData("durability") < equippedpartdura then
-				equippedpartdura = equippedhelmet:GetData("durability")
-				if equippedpartdurafinal > equippedpartdura then
-					equippedpartdurafinal = equippedpartdura
-				end
-			end
-		end
-
-		if equippedpartdura then
-		surface.SetMaterial(helmet)
-			if equippedpartdurafinal >= 8000 then
-				surface.SetDrawColor(Color(0, 0, 0, 0))
-			elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
-				surface.SetMaterial(helmet)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
-				surface.SetMaterial(helmet2)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
-				surface.SetMaterial(helmet3)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
-				surface.SetMaterial(helmet4)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			end
-		else
-			surface.SetDrawColor(Color(0, 0, 0, 0))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-500 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Armor
-function PLUGIN:ArmorIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-		local wep = LocalPlayer():GetActiveWeapon()
-		local char = lp:GetCharacter()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local equippedarmor = LocalPlayer():getEquippedBodyArmor()
-		local equippedpartdura = 10000
-		local equippedpartdurafinal = 10000
-
-		local armor = Material("stalkerCoP/ui/hud/status/armor.png", "noclamp smooth") 
-		local armor2 = Material("stalkerCoP/ui/hud/status/armor2.png", "noclamp smooth") 
-		local armor3 = Material("stalkerCoP/ui/hud/status/armor3.png", "noclamp smooth") 
-		local armor4 = Material("stalkerCoP/ui/hud/status/armor4.png", "noclamp smooth") 
-
-		if equippedarmor then
-			if equippedarmor:GetData("durability") and equippedarmor:GetData("durability") < equippedpartdura then
-				equippedpartdura = equippedarmor:GetData("durability")
-				if equippedpartdurafinal > equippedpartdura then
-					equippedpartdurafinal = equippedpartdura
-				end
-			end
-		end
-
-		if equippedpartdura then
-		surface.SetMaterial(armor)
-			if equippedpartdurafinal >= 8000 then
-				surface.SetDrawColor(Color(0, 0, 0, 0))
-			elseif equippedpartdurafinal < 8000 and equippedpartdurafinal >= 6000 then
-				surface.SetMaterial(armor)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 6000 and equippedpartdurafinal >= 4000 then
-				surface.SetMaterial(armor2)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 4000 and equippedpartdurafinal >= 2000 then
-				surface.SetMaterial(armor3)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			elseif equippedpartdurafinal < 2000 and equippedpartdurafinal >= 0 then
-				surface.SetMaterial(armor4)
-				surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-			end
-		else
-			surface.SetDrawColor(Color(0, 0, 0, 0))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-450 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Weapon
-function PLUGIN:WeaponIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-		local wep = LocalPlayer():GetActiveWeapon()
-		local char = lp:GetCharacter()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local gun = Material("stalkerCoP/ui/hud/status/gun.png", "noclamp smooth")
-		local gun2 = Material("stalkerCoP/ui/hud/status/gun2.png", "noclamp smooth")
-		local gun3 = Material("stalkerCoP/ui/hud/status/gun3.png", "noclamp smooth")
-		local gun4 = Material("stalkerCoP/ui/hud/status/gun4.png", "noclamp smooth")
-
-		--Weapon condition
-		surface.SetMaterial(gun)
-		if IsValid( wep ) then
-			if string.sub(wep:GetClass(),1,3) == "cw_" and not string.match(wep:GetClass(),"nade") then
-				if LocalPlayer():GetActiveWeapon():GetWeaponHP() then
-					local weapondura = LocalPlayer():GetActiveWeapon():GetWeaponHP()
-					if weapondura > 80 then
-						surface.SetDrawColor(Color(0, 0, 0, 0))
-					elseif weapondura > 60 and weapondura <= 80 then
-						surface.SetMaterial(gun)
-						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-					elseif weapondura > 40 and weapondura <= 60 then
-						surface.SetMaterial(gun2)
-						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-					elseif weapondura > 20 and weapondura <= 40 then
-						surface.SetMaterial(gun3)
-						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-					elseif weapondura > 0 and weapondura <= 20 then
-						surface.SetMaterial(gun4)
-						surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-					end
-				end
-			else
-				surface.SetDrawColor(Color(0, 0, 0, 0))
-			end
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-400 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Weight
-function PLUGIN:WeightIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-		local char = lp:GetCharacter()
-		
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local weight = Material("stalkerCoP/ui/hud/status/weight.png", "noclamp smooth") 
-		local weight2 = Material("stalkerCoP/ui/hud/status/weight2.png", "noclamp smooth") 
-		local weight4 = Material("stalkerCoP/ui/hud/status/weight4.png", "noclamp smooth") 
-
-		local currentCarry = char:GetData("carry", 0)
-		local baseWeight = ix.weight.BaseWeight(char)
-		local maxOverweight = ix.config.Get("maxOverWeight", 20)
-
-		if char:HeavilyOverweight() then
-			surface.SetMaterial(weight4)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif char:Overweight() then
-			surface.SetMaterial(weight2)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		elseif currentCarry >= (ix.config.Get("maxWeight", 30)) then
-			surface.SetMaterial(weight)
-			surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-		else
-			surface.SetDrawColor(Color(255, 255, 255, 0))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-350 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Radiation
-function PLUGIN:RadiationIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-	
-		local lp = LocalPlayer()
-		local wep = LocalPlayer():GetActiveWeapon()
-		local char = lp:GetCharacter()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local rad = Material("stalkerCoP/ui/hud/status/rad.png", "noclamp smooth") 
-		local rad2 = Material("stalkerCoP/ui/hud/status/rad2.png", "noclamp smooth") 
-		local rad3 = Material("stalkerCoP/ui/hud/status/rad3.png", "noclamp smooth") 
-		local rad4 = Material("stalkerCoP/ui/hud/status/rad4.png", "noclamp smooth")
-
-		local heartbeatSpeed = 2.5 -- Speed of the heartbeat effect
-		local maxAlpha = 255 -- Maximum alpha value
-		local minAlpha = 50 -- Minimum alpha value (to avoid complete transparency)
-		local time = CurTime() * heartbeatSpeed
-		local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
-
-		surface.SetMaterial(rad)
-		if LocalPlayer():getRadiation() == 0 then
-			surface.SetMaterial(rad)
-			surface.SetDrawColor(Color(0, 0, 0, 0))
-		elseif LocalPlayer():getRadiation() > 0 and LocalPlayer():getRadiation() <= 25 then
-			surface.SetMaterial(rad)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		elseif LocalPlayer():getRadiation() > 25 and LocalPlayer():getRadiation() <= 60 then
-			surface.SetMaterial(rad2)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		elseif LocalPlayer():getRadiation() > 60 and LocalPlayer():getRadiation() <= 89 then
-			surface.SetMaterial(rad3)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		elseif LocalPlayer():getRadiation() > 89 and LocalPlayer():getRadiation() <= 100 then
-			surface.SetMaterial(rad4)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		end
-
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-300 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
--- Psyhealth
-function PLUGIN:PsyhealthIconHUDPaint()
-	if ix.option.Get("DisableHUD", false) then
-		return false
-	else
-
-		local lp = LocalPlayer()
-
-		if (!lp:GetCharacter() or !lp:Alive() or ix.gui.characterMenu:IsVisible()) then return end
-
-		local psy1 = Material("stalkerCoP/ui/hud/status/psyz.png", "noclamp smooth") 
-		local psy2 = Material("stalkerCoP/ui/hud/status/psyz2.png", "noclamp smooth") 
-		local psy3 = Material("stalkerCoP/ui/hud/status/psyz3.png", "noclamp smooth") 
-		local psy4 = Material("stalkerCoP/ui/hud/status/psyz4.png", "noclamp smooth") 
-
-		local heartbeatSpeed = 2.5 -- Speed of the heartbeat effect
-		local maxAlpha = 255 -- Maximum alpha value
-		local minAlpha = 50 -- Minimum alpha value (to avoid complete transparency)
-		local time = CurTime() * heartbeatSpeed
-		local alpha = math.abs(math.sin(time)) * (maxAlpha - minAlpha) + minAlpha
-
-		surface.SetDrawColor(Color(255, 255, 255, 0))
-		if (lp:GetPsyHealth() <= 99) then
-			surface.SetMaterial(psy1)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		end
-		if (lp:GetPsyHealth() <= 75) then
-			surface.SetMaterial(psy2)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		end
-		if (lp:GetPsyHealth() <= 50) then
-			surface.SetMaterial(psy3)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		end
-		if (lp:GetPsyHealth() <= 20) then
-			surface.SetMaterial(psy4)
-			surface.SetDrawColor(Color(255, 255, 255, math.min(alpha, hudAlpha)))
-		end
-		surface.DrawTexturedRect(ScrW()-80 * (ScrW() / 1920), ScrH()-250 * (ScrH() / 1080), 35 * (ScrW() / 1920), 35 * (ScrH() / 1080), Color(0, 255, 0, hudAlpha))
-	end
-end
-
+--ARTIFACT BELT HUD
 function PLUGIN:ArtifactBeltHUDPaint()
 	if ix.option.Get("DisableHUD", false) then
 		return false
