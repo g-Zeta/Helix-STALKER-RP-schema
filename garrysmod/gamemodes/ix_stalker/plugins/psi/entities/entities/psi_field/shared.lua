@@ -1,10 +1,10 @@
 ENT.Type = "anim"
 ENT.Base = "base_anim"
  
-ENT.PrintName		= "Psi-field - Medium"
+ENT.PrintName		= "Psi-field"
 ENT.Author			= "Zeta"
 ENT.Contact			= ""
-ENT.Purpose			= "Affects the psyche of players in a medium radius"
+ENT.Purpose			= "Affects the psyche of players within a radius."
 ENT.Category 		= "Anomalies"
 
 ENT.Spawnable			= true
