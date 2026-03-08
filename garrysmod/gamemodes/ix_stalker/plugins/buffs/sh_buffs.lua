@@ -5,7 +5,7 @@
 		nodisp = << boolean, Buff's Display Factor >>, -- This is the factor for displaying this buff. ( For advaced scripters )
 		func = << function, Buff's Think Function >>,
 		onbuffed = << function, Buff's Function that executes on buffed >>, 
-		onunbuffed = << function, Buff's Function that executes on Unbuffed >>, 
+		ondebuffed = << function, Buff's Function that executes on Unbuffed >>, 
 	}
 ]]--
 
@@ -17,9 +17,16 @@ PLUGIN.buffs[ "buff_slowheal" ] = {
 	func = function( player, parameter)
 		player.timeNextHeal = player.timeNextHeal or CurTime()
 		if player.timeNextHeal < CurTime() then
-			player:SetHealth(math.Clamp(player:Health() + (parameter.amount or 1), 0, player:GetMaxHealth()))
+			local amount = parameter.amount or 1
+			player.ixHealAcc = (player.ixHealAcc or 0) + amount
 
-			player.timeNextHeal = CurTime() + 0.5
+			if (player.ixHealAcc >= 1) then
+				local heal = math.floor(player.ixHealAcc)
+				player:SetHealth(math.Clamp(player:Health() + heal, 0, player:GetMaxHealth()))
+				player.ixHealAcc = player.ixHealAcc - heal
+			end
+
+			player.timeNextHeal = CurTime() +  1
 		end
 	end,
 }
@@ -45,16 +52,8 @@ PLUGIN.buffs[ "buff_radiationremoval" ] = {
 		if player.timeNextTickRadRem < CurTime() then
 			player:addRadiation(-parameter.amount)
 
-			player.timeNextTickRadRem = CurTime() + 0.5
+			player.timeNextTickRadRem = CurTime() + 1
 		end
-	end,
-}
-
-PLUGIN.buffs[ "buff_radprotect" ] = {
-	name = "Radiation Protection",
-	desc = "You're protected from radiation.",
-	func = function( player, parameter)
-		
 	end,
 }
 
@@ -68,6 +67,45 @@ PLUGIN.buffs[ "debuff_radiation" ] = {
 
 			player.timeNextTickRad = CurTime() + 0.5
 		end
+	end,
+}
+
+PLUGIN.buffs[ "buff_chemprotect" ] = {
+	name = "Chemical Protection",
+	desc = "You have increased resistance to chemicals.",
+	func = function(player, parameter)
+	end,
+	onbuffed = function(player, parameter)
+		player:SetNetVar("ix_chemprot", (player:GetNetVar("ix_chemprot", 0) + parameter.amount))
+	end,
+	ondebuffed = function(player, parameter)
+		player:SetNetVar("ix_chemprot", math.max(0, (player:GetNetVar("ix_chemprot", 0) - parameter.amount)))
+	end,
+}
+
+PLUGIN.buffs[ "buff_psyprotect" ] = {
+	name = "Psy Protection",
+	desc = "You are temporarily immune to psychic attacks.",
+	onbuffed = function( player, parameter )
+		player:SetNetVar("ix_psyblock", (player:GetNetVar("ix_psyblock", 0) + 100))
+	end,
+	ondebuffed = function( player, parameter )
+		player:SetNetVar("ix_psyblock", math.max(0, (player:GetNetVar("ix_psyblock", 0) - 100)))
+	end,
+	func = function( player, parameter)
+	end,
+}
+
+PLUGIN.buffs[ "buff_radprotect" ] = {
+	name = "Radiation Protection",
+	desc = "You have increased resistance to radiation.",
+	func = function(player, parameter)
+	end,
+	onbuffed = function(player, parameter)
+		player:SetNetVar("ix_radprot", (player:GetNetVar("ix_radprot", 0) + parameter.amount))
+	end,
+	ondebuffed = function(player, parameter)
+		player:SetNetVar("ix_radprot", math.max(0, (player:GetNetVar("ix_radprot", 0) - parameter.amount)))
 	end,
 }
 
