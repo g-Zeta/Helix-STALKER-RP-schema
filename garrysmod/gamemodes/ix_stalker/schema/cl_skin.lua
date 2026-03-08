@@ -209,6 +209,17 @@ function SKIN:PaintPanel(panel)
 end
 
 -- Animated background DHTML with a VP8 .webm
+local playlist = {}
+
+if (file.Exists("materials/stalker2/ui/menu/menu1.webm", "GAME")) then
+	table.insert(playlist, '"asset://garrysmod/materials/stalker2/ui/menu/menu1.webm"')
+end
+
+if (file.Exists("materials/stalker2/ui/menu/menu2.webm", "GAME")) then
+	table.insert(playlist, '"asset://garrysmod/materials/stalker2/ui/menu/menu2.webm"')
+end
+
+local playlistString = table.concat(playlist, ",")
 local WEBM_BG_HTML = [[
 <!doctype html>
 <html>
@@ -235,10 +246,7 @@ local WEBM_BG_HTML = [[
 <body>
   <video id="bg" autoplay playsinline muted preload="auto"></video>
   <script>
-    var playlist = [
-      "asset://garrysmod/materials/stalker2/ui/menu/main_menu.webm",
-      "asset://garrysmod/materials/stalker2/ui/menu/main_menu2.webm"
-    ];
+    var playlist = []] .. playlistString .. [[];
     for (var i = playlist.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var temp = playlist[i];
@@ -248,13 +256,34 @@ local WEBM_BG_HTML = [[
     var idx = 0;
     var vid = document.getElementById("bg");
     vid.onended = function() { idx = (idx + 1) % playlist.length; vid.src = playlist[idx]; vid.play(); };
-    vid.src = playlist[0];
+    if (playlist.length > 0) {
+        vid.src = playlist[0];
+    }
   </script>
 </body>
 </html>
 ]]
 
 local DHTMLBackground = nil
+local bHasVideo = #playlist > 0
+
+local fallbackImages = {}
+
+if (file.Exists("materials/stalker2/ui/menu/menu1.png", "GAME")) then
+	table.insert(fallbackImages, "stalker2/ui/menu/menu1.png")
+end
+
+if (file.Exists("materials/stalker2/ui/menu/menu2.png", "GAME")) then
+	table.insert(fallbackImages, "stalker2/ui/menu/menu2.png")
+end
+
+local fallbackMenu
+
+if (#fallbackImages > 0) then
+	fallbackMenu = Material(fallbackImages[math.random(1, #fallbackImages)])
+else
+	fallbackMenu = Material("stalker2/ui/menu/menu1.png")
+end
 
 local function EnsureBackgroundDHTML(parent)
     if IsValid(DHTMLBackground) then
@@ -287,8 +316,16 @@ end
 ix = ix or {}
 ix.webmBackground = ix.webmBackground or {}
 function ix.webmBackground.Show(parent)
+    if (!bHasVideo) then
+        if (IsValid(DHTMLBackground)) then
+            DHTMLBackground:SetVisible(false)
+        end
+        return false
+    end
+
     local pnl = EnsureBackgroundDHTML(parent)
     if IsValid(pnl) then pnl:SetVisible(true) pnl:MoveToBack() end
+    return true
 end
 function ix.webmBackground.Hide()
     if IsValid(DHTMLBackground) then DHTMLBackground:SetVisible(false) end
@@ -296,17 +333,29 @@ end
 
 -- Draw in Main menu
 function SKIN:PaintMainMenuBackground(panel, w, h)
-    ix.webmBackground.Show(panel)
+    if (!ix.webmBackground.Show(panel)) then
+        surface.SetDrawColor(color_white)
+        surface.SetMaterial(fallbackMenu)
+        surface.DrawTexturedRect(0, 0, w, h)
+    end
 end
 
 -- Draw in Character create menu
 function SKIN:PaintCharacterCreateBackground(panel, w, h)
-    ix.webmBackground.Show(panel)
+    if (!ix.webmBackground.Show(panel)) then
+        surface.SetDrawColor(color_white)
+        surface.SetMaterial(fallbackMenu)
+        surface.DrawTexturedRect(0, 0, w, h)
+    end
 end
 
 -- Draw in Character load screen
 function SKIN:PaintCharacterLoadBackground(panel, w, h)
-    ix.webmBackground.Show(panel)
+    if (!ix.webmBackground.Show(panel)) then
+        surface.SetDrawColor(color_white)
+        surface.SetMaterial(fallbackMenu)
+        surface.DrawTexturedRect(0, 0, w, h)
+    end
 end
 
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
