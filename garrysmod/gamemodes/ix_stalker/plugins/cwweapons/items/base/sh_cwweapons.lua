@@ -356,7 +356,15 @@ ITEM:Hook("drop", function(item)
 		local character = owner:GetCharacter()
 		local wepslots = character:GetData("wepSlots",{})
 
-		local weapon = wepslots[item.weaponCategory]
+		local weapon
+		local slot
+		for k, v in pairs(wepslots) do
+			if IsValid(v) and v:GetClass() == item.class then
+				weapon = v
+				slot = k
+				break
+			end
+		end
 
 		if (!IsValid(weapon)) then
 			weapon = owner:GetWeapon(item.class)
@@ -364,7 +372,9 @@ ITEM:Hook("drop", function(item)
 
 		if (IsValid(weapon)) then
 			owner:StripWeapon(item.class)
-			wepslots[item.weaponCategory] = nil
+			if slot then
+				wepslots[slot] = nil
+			end
 			character:SetData("wepSlots",wepslots)
 			owner:EmitSound("stalker/inventory/inv_drop.mp3", 80)
 		end
@@ -432,8 +442,8 @@ ITEM.functions.Equip = {
 	name = "Equip",
 	tip = "equipTip",
 	icon = "icon16/stalker/equip.png",
-	OnRun = function(item)
-		item:Equip(item.player)
+	OnRun = function(item, data)
+		item:Equip(item.player, data and data.equipSlot)
 		return false
 	end,
 	OnCanRun = function(item)
@@ -443,15 +453,27 @@ ITEM.functions.Equip = {
 	end
 }
 
-function ITEM:Equip(client)
+function ITEM:Equip(client, targetSlot)
 	local character = client:GetCharacter()
 	local items = character:GetInventory():GetItems()
 	local wepslots = character:GetData("wepSlots",{})
+	local slot
 
-	if wepslots[self.weaponCategory] then
-		client:NotifyLocalized("weaponSlotFilled", self.weaponCategory)
-		
-		return false
+	if (self.weaponCategory == "primary" or self.weaponCategory == "secondary") then
+		if (targetSlot and not IsValid(wepslots[targetSlot])) then
+			slot = targetSlot
+		elseif not IsValid(wepslots[1]) then slot = 1
+		elseif not IsValid(wepslots[2]) then slot = 2
+		else
+			client:NotifyLocalized("weaponSlotFilled", "Primary/Secondary")
+			return false
+		end
+	else
+		slot = self.weaponCategory
+		if IsValid(wepslots[slot]) then
+			client:NotifyLocalized("weaponSlotFilled", self.weaponCategory)
+			return false
+		end
 	end
 
 	if (client:HasWeapon(self.class)) then
@@ -463,9 +485,10 @@ function ITEM:Equip(client)
 	if (IsValid(weapon)) then
 		local ammoType = weapon:GetPrimaryAmmoType()
 
-		wepslots[self.weaponCategory] = weapon
+		wepslots[slot] = weapon
 		character:SetData("wepSlots",wepslots)
 		client:SelectWeapon(weapon:GetClass())
+		self:SetData("equipSlot", slot)
 		client:EmitSound("stalker/inventory/weapons/inv_items_wpn_1.ogg")
 		weapon:SetWeaponHP((self:GetData("durability")/100),100)
 		if self:GetData("custom") then
@@ -566,7 +589,16 @@ end
 function ITEM:Unequip(client, bPlaySound, bRemoveItem)
 	local character = client:GetCharacter()
 	local wepslots = character:GetData("wepSlots",{})
-	local weapon = wepslots[self.weaponCategory]
+	
+	local weapon
+	local slot
+	for k, v in pairs(wepslots) do
+		if IsValid(v) and v:GetClass() == self.class then
+			weapon = v
+			slot = k
+			break
+		end
+	end
 
 	if (!IsValid(weapon)) then
 		weapon = client:GetWeapon(self.class)
@@ -583,9 +615,12 @@ function ITEM:Unequip(client, bPlaySound, bRemoveItem)
 		client:EmitSound("stalker/inventory/weapons/inv_items_wpn_2.ogg")
 	end
 
-	wepslots[self.weaponCategory] = nil
+	if slot then
+		wepslots[slot] = nil
+	end
 	character:SetData("wepSlots",wepslots)
 	self:SetData("equip", nil)
+	self:SetData("equipSlot", nil)
 
 	if (self.OnUnequipWeapon) then
 		self:OnUnequipWeapon(client, weapon)
@@ -621,7 +656,23 @@ function ITEM:OnLoadout()
 		if (IsValid(weapon)) then
 			weapon:SetWeaponHP((self:GetData("durability")/100),100)
 			client:RemoveAmmo(weapon:Clip1(), weapon:GetPrimaryAmmoType())
-			wepslots[self.weaponCategory] = weapon
+			
+			local slot
+			if (self.weaponCategory == "primary" or self.weaponCategory == "secondary") then
+				local savedSlot = self:GetData("equipSlot")
+				if (savedSlot and not IsValid(wepslots[savedSlot])) then
+					slot = savedSlot
+				elseif not IsValid(wepslots[1]) then slot = 1
+				elseif not IsValid(wepslots[2]) then slot = 2
+				end
+			else
+				slot = self.weaponCategory
+			end
+			
+			if slot then 
+				wepslots[slot] = weapon 
+				self:SetData("equipSlot", slot)
+			end
 			character:SetData("wepSlots",wepslots)
 			timer.Simple(0.1,function()
 			local ammotype = self:GetData("ammoType", "Normal")

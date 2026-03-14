@@ -870,6 +870,7 @@ AccessorFunc(PANEL, "equipFunction", "EquipFunction")
 AccessorFunc(PANEL, "unequipFunction", "UnequipFunction")
 AccessorFunc(PANEL, "inventoryID", "InventoryID")
 AccessorFunc(PANEL, "iconRotation", "IconRotation", FORCE_NUMBER)
+AccessorFunc(PANEL, "iconMirrored", "IconMirrored", FORCE_BOOL)
 AccessorFunc(PANEL, "slotIndex", "SlotIndex", FORCE_NUMBER)
 AccessorFunc(PANEL, "placeholder", "Placeholder")
 
@@ -923,7 +924,11 @@ function PANEL:ReceiveDrop(panels, bDropped, menuIndex, x, y)
 				end
 
 				if (send != false) then
-					InventoryAction(actionName, item.id, panel.inventoryID)
+					local data = {}
+					if (self:GetSlotIndex()) then
+						data.equipSlot = self:GetSlotIndex()
+					end
+					InventoryAction(actionName, item.id, panel.inventoryID, data)
 				end
 			end
 
@@ -943,15 +948,25 @@ function PANEL:Think()
 	local equippedItem = nil
 
 	if (self:GetSlotIndex()) then
-		local found = {}
+		local unslotted = {}
+		local slotIndex = self:GetSlotIndex()
+
 		for _, item in pairs(inv:GetItems()) do
 			if (item:GetData("equip", false) and self.itemFilter(item)) then
-				table.insert(found, item)
+				local itemSlot = item:GetData("equipSlot")
+				if (itemSlot == slotIndex) then
+					equippedItem = item
+					break
+				elseif (itemSlot == nil) then
+					table.insert(unslotted, item)
+				end
 			end
 		end
-		-- Items are sorted by ID (creation order) to determine which item goes into which slot index (1-4)
-		table.sort(found, function(a, b) return a.id < b.id end)
-		equippedItem = found[self:GetSlotIndex()]
+
+		if (!equippedItem) then
+			table.sort(unslotted, function(a, b) return a.id < b.id end)
+			equippedItem = unslotted[slotIndex]
+		end
 	else
 		for _, item in pairs(inv:GetItems()) do
 			if (item:GetData("equip", false) and self.itemFilter(item)) then
@@ -988,7 +1003,31 @@ function PANEL:Think()
 						else
 							scale = math.min(panelX / w, panelY / h)
 						end
-						surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, w * scale, h * scale, rot)
+
+						local drawW, drawH = w * scale, h * scale
+						local midX, midY = panelX * 0.5, panelY * 0.5
+
+						if (self:GetIconMirrored()) then
+							local rad = -math.rad(rot)
+							local c = math.cos(rad)
+							local s = math.sin(rad)
+							
+							local dx, dy = drawW * 0.5, drawH * 0.5
+							
+							local p1x, p1y = -dx * c - -dy * s, -dx * s + -dy * c
+							local p2x, p2y =  dx * c - -dy * s,  dx * s + -dy * c
+							local p3x, p3y =  dx * c -  dy * s,  dx * s +  dy * c
+							local p4x, p4y = -dx * c -  dy * s, -dx * s +  dy * c
+
+							surface.DrawPoly({
+								{ x = midX + p1x, y = midY + p1y, u = 1, v = 0 },
+								{ x = midX + p2x, y = midY + p2y, u = 0, v = 0 },
+								{ x = midX + p3x, y = midY + p3y, u = 0, v = 1 },
+								{ x = midX + p4x, y = midY + p4y, u = 1, v = 1 },
+							})
+						else
+							surface.DrawTexturedRectRotated(midX, midY, drawW, drawH, rot)
+						end
 					end
 				end
 			else
@@ -1056,7 +1095,31 @@ function PANEL:Think()
 						else
 							scale = math.min(panelX / w, panelY / h)
 						end
-						surface.DrawTexturedRectRotated(panelX * 0.5, panelY * 0.5, w * scale, h * scale, rot)
+
+						local drawW, drawH = w * scale, h * scale
+						local midX, midY = panelX * 0.5, panelY * 0.5
+
+						if (self:GetIconMirrored()) then
+							local rad = -math.rad(rot)
+							local c = math.cos(rad)
+							local s = math.sin(rad)
+							
+							local dx, dy = drawW * 0.5, drawH * 0.5
+							
+							local p1x, p1y = -dx * c - -dy * s, -dx * s + -dy * c
+							local p2x, p2y =  dx * c - -dy * s,  dx * s + -dy * c
+							local p3x, p3y =  dx * c -  dy * s,  dx * s +  dy * c
+							local p4x, p4y = -dx * c -  dy * s, -dx * s +  dy * c
+
+							surface.DrawPoly({
+								{ x = midX + p1x, y = midY + p1y, u = 1, v = 0 },
+								{ x = midX + p2x, y = midY + p2y, u = 0, v = 0 },
+								{ x = midX + p3x, y = midY + p3y, u = 0, v = 1 },
+								{ x = midX + p4x, y = midY + p4y, u = 1, v = 1 },
+							})
+						else
+							surface.DrawTexturedRectRotated(midX, midY, drawW, drawH, rot)
+						end
 					end
 				end
 			else
@@ -1582,27 +1645,29 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
-			-- Secondary Weapon (Left)
-			local LWepPanel = equipmentpanel:Add("DPanel")
-			LWepPanel:SetSize(SW(92), SH(179))
-			LWepPanel:SetPos(SW(14), SH(137))
-			LWepPanel:SetPaintBackground(false)
-			
-			-- Secondary Weapon Icon
-			local LWepIcon = LWepPanel:Add("ixEquipmentSlot")
-			LWepIcon:SetSize(SW(92), SH(167))
-			LWepIcon:SetPos(SW(0), SH(2))
-			LWepIcon:SetPlaceholder(placeholders.wepsecondary)
-			LWepIcon:SetItemFilter(function(item) return item.weaponCategory == "secondary" end)
-			LWepIcon:SetIconRotation(90)
+			-- Primary Weapon (Right)
+			local RWepPanel = equipmentpanel:Add("DPanel")
+			RWepPanel:SetSize(SW(92), SH(179))
+			RWepPanel:SetPos(SW(238), SH(137))
+			RWepPanel:SetPaintBackground(false)
 
-			-- Secondary Weapon Durability
-			local LWepDura = LWepPanel:Add("DPanel")
-			LWepDura:SetSize(SW(58), SH(4))
-			LWepDura:SetPos(SW(16), SH(172))
-			function LWepDura:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "secondary" and item:GetData("equip", false) then
+			-- Primary Weapon Icon
+			local RWepIcon = RWepPanel:Add("ixEquipmentSlot")
+			RWepIcon:SetSize(SW(92), SH(167))
+			RWepIcon:SetPos(SW(0), SH(2))
+			RWepIcon:SetPlaceholder(placeholders.wepprimary)
+			RWepIcon:SetSlotIndex(1)
+			RWepIcon:SetItemFilter(function(item) return item.weaponCategory == "primary" or item.weaponCategory == "secondary" end)
+			RWepIcon:SetIconRotation(-90)
+
+			-- Primary Weapon Durability
+			local RWepDura = RWepPanel:Add("DPanel")
+			RWepDura:SetSize(SW(58), SH(4))
+			RWepDura:SetPos(SW(17), SH(172))
+			function RWepDura:Paint(w, h)
+				if IsValid(RWepIcon.itemIcon) then
+					local item = RWepIcon.itemIcon:GetItemTable()
+					if item then
 						local durability = item:GetData("durability")
 						if durability == nil then return end
 
@@ -1626,7 +1691,57 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						if drawW > 0 then
 							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
 						end
-						return
+					end
+				end
+			end
+
+			-- Secondary Weapon (Left)
+			local LWepPanel = equipmentpanel:Add("DPanel")
+			LWepPanel:SetSize(SW(92), SH(179))
+			LWepPanel:SetPos(SW(14), SH(137))
+			LWepPanel:SetPaintBackground(false)
+			
+			-- Secondary Weapon Icon
+			local LWepIcon = LWepPanel:Add("ixEquipmentSlot")
+			LWepIcon:SetSize(SW(92), SH(167))
+			LWepIcon:SetPos(SW(0), SH(2))
+			LWepIcon:SetPlaceholder(placeholders.wepsecondary)
+			LWepIcon:SetSlotIndex(2)
+			LWepIcon:SetItemFilter(function(item) return item.weaponCategory == "secondary" or item.weaponCategory == "primary" end)
+			LWepIcon:SetIconRotation(90)
+			LWepIcon:SetIconMirrored(true)
+
+			-- Secondary Weapon Durability
+			local LWepDura = LWepPanel:Add("DPanel")
+			LWepDura:SetSize(SW(58), SH(4))
+			LWepDura:SetPos(SW(16), SH(172))
+			function LWepDura:Paint(w, h)
+				if IsValid(LWepIcon.itemIcon) then
+					local item = LWepIcon.itemIcon:GetItemTable()
+					if item then
+						local durability = item:GetData("durability")
+						if durability == nil then return end
+
+						local maxDura = 10000
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 6000 then
+							surface.SetDrawColor(115, 180, 130, 200) -- green
+						elseif durability > 4000 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 2000 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
 					end
 				end
 			end
@@ -1649,8 +1764,9 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			SidearmDura:SetSize(SW(58), SH(4))
 			SidearmDura:SetPos(SW(26), SH(51))
 			function SidearmDura:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "sidearm" and item:GetData("equip", false) then
+				if IsValid(SidearmIcon.itemIcon) then
+					local item = SidearmIcon.itemIcon:GetItemTable()
+					if item then
 						local durability = item:GetData("durability")
 						if durability == nil then return end
 
@@ -1674,56 +1790,6 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 						if drawW > 0 then
 							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
 						end
-						return
-					end
-				end
-			end
-
-			-- Primary Weapon (Right)
-			local RWepPanel = equipmentpanel:Add("DPanel")
-			RWepPanel:SetSize(SW(92), SH(179))
-			RWepPanel:SetPos(SW(238), SH(137))
-			RWepPanel:SetPaintBackground(false)
-
-			-- Primary Weapon Icon
-			local RWepIcon = RWepPanel:Add("ixEquipmentSlot")
-			RWepIcon:SetSize(SW(92), SH(167))
-			RWepIcon:SetPos(SW(0), SH(2))
-			RWepIcon:SetPlaceholder(placeholders.wepprimary)
-			RWepIcon:SetItemFilter(function(item) return item.weaponCategory == "primary" end)
-			RWepIcon:SetIconRotation(-90)
-
-			-- Primary Weapon Durability
-			local RWepDura = RWepPanel:Add("DPanel")
-			RWepDura:SetSize(SW(58), SH(4))
-			RWepDura:SetPos(SW(17), SH(172))
-			function RWepDura:Paint(w, h)
-				for _, item in pairs(items) do
-					if item.weaponCategory == "primary" and item:GetData("equip", false) then
-						local durability = item:GetData("durability")
-						if durability == nil then return end
-
-						local maxDura = 10000
-						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
-
-						if durability > 6000 then
-							surface.SetDrawColor(115, 180, 130, 200) -- green
-						elseif durability > 4000 then
-							surface.SetDrawColor(173, 173, 105, 200) -- yellow
-						elseif durability > 2000 then
-							surface.SetDrawColor(170, 115, 85, 200)  -- orange
-						elseif durability > 0 then
-							surface.SetDrawColor(160, 45, 45, 200)   -- red
-						else
-							surface.SetDrawColor(0, 0, 0, 0)
-						end
-
-						surface.SetMaterial(duraImage)
-						local drawW = math.floor(w * duraPercentage + 0.5)
-						if drawW > 0 then
-							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
-						end
-						return
 					end
 				end
 			end
