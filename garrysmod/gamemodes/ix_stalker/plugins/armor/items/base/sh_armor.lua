@@ -258,6 +258,12 @@ function ITEM:RemoveOutfit(client)
 	local bgroups = {}
 
 	self:SetData("equip", false)
+	for _, v in pairs(character:GetInventory():GetItems()) do
+		if (v.isWeapon and v:GetData("equip")) then
+			v:Unequip(client)
+		end
+	end
+
 	if (character:GetData("oldModel" .. self.outfitCategory)) then
 		character:SetModel(character:GetData("oldModel" .. self.outfitCategory))
 		character:SetData("oldModel" .. self.outfitCategory, nil)
@@ -453,6 +459,12 @@ ITEM.functions.Equip = {
 						return false
 					end
 				end
+			end
+		end
+
+		for _, v in pairs(items) do
+			if (v.isWeapon and v:GetData("equip")) then
+				v:Unequip(client)
 			end
 		end
 
