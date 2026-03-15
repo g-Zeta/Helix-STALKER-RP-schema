@@ -33,7 +33,7 @@ ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",
 	icon = "icon16/stalker/equip.png",
-	OnRun = function(item)
+	OnRun = function(item, data)
 		local client = item.player
 		local char = client:GetCharacter()
 		client.carryWeapons = client.carryWeapons or {}
@@ -52,6 +52,26 @@ ITEM.functions.Equip = { -- sorry, for name order.
 		client.carryWeapons[item.weaponCategory] = item.Name
 
 		item:SetData("equip", true)
+		if (data and data.equipSlot) then
+			if (char) then
+				local inv = char:GetInventory()
+				if (inv) then
+					for _, v in pairs(inv:GetItems()) do
+						if (v.id != item.id and v.isGeiger and v:GetData("equip") and v:GetData("equipSlot") == data.equipSlot) then
+							v.player = client
+							if (v.functions.EquipUn and v.functions.EquipUn.OnRun) then
+								v.functions.EquipUn.OnRun(v)
+							else
+								v:SetData("equip", false)
+								v:SetData("equipSlot", nil)
+							end
+							v.player = nil
+						end
+					end
+				end
+			end
+			item:SetData("equipSlot", data.equipSlot)
+		end
 		item.player:SetNetVar("ixhasgeiger", true)
 		item.player:SetData("ixhasgeiger", true)
 		item:OnEquipped()
@@ -72,6 +92,7 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 	OnRun = function(item)
 		local client = item.player
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasgeiger", false)
 		item.player:SetData("ixhasgeiger", false)
 		
@@ -97,6 +118,7 @@ ITEM:Hook("drop", function(item)
 
     if (item:GetData("equip")) then
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasgeiger", false)
 		item.player:SetData("ixhasgeiger", false)
     end;

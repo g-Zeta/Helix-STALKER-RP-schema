@@ -894,6 +894,7 @@ function PANEL:ReceiveDrop(panels, bDropped, menuIndex, x, y)
 	if (self.itemFilter and !self.itemFilter(item)) then return end
 
 	if (bDropped) then
+		if (IsValid(self.itemIcon)) then return end
 		if (item:GetData("equip")) then return end
 
 		local action = item.functions[self:GetEquipFunction()]

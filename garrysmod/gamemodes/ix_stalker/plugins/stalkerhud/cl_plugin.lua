@@ -1217,51 +1217,53 @@ function PLUGIN:S2HUDPaint()
 		end
 	end
 
-	-- Ammo type selector dots
-	local item = wep.ixItem
-	if not item and char then
-		local inv = char:GetInv()
-		if inv then
-			for _, v in pairs(inv:GetItems()) do
-				if v.class == wep:GetClass() and v:GetData("equip") then
-					item = v
-					break
-				end
-			end
-		end
-	end
-
-	if item then
-		local availableAmmoTypes = {"Normal"}
-		if wep.Attachments then
-			for _, category in pairs(wep.Attachments) do
-				for _, attName in pairs(category.atts) do
-					if ammoOrder[attName] then
-						table.insert(availableAmmoTypes, attName)
+	if IsValid(wep) then
+		-- Ammo type selector dots
+		local item = wep.ixItem
+		if not item and char then
+			local inv = char:GetInv()
+			if inv then
+				for _, v in pairs(inv:GetItems()) do
+					if v.class == wep:GetClass() and v:GetData("equip") then
+						item = v
+						break
 					end
 				end
 			end
 		end
 
-		table.sort(availableAmmoTypes, function(a, b)
-			return (ammoOrder[a] or 99) < (ammoOrder[b] or 99)
-		end)
-
-		local currentAmmo = item:GetData("ammoType", "Normal")
-		local dotSize = 8 * scaleX
-		local dotSpacing = 12 * scaleY
-		local startX = ammoX + ammoW + 5 * scaleX
-		local totalHeight = #availableAmmoTypes * dotSpacing
-		local startY = ammoY + (ammoH - totalHeight) / 2
-
-		surface.SetMaterial(ammoSelector)
-		for i, ammoName in ipairs(availableAmmoTypes) do
-			if ammoName == currentAmmo then
-				surface.SetDrawColor(255, 255, 255, hudAlpha)
-			else
-				surface.SetDrawColor(100, 100, 100, hudAlpha)
+		if item then
+			local availableAmmoTypes = {"Normal"}
+			if wep.Attachments then
+				for _, category in pairs(wep.Attachments) do
+					for _, attName in pairs(category.atts) do
+						if ammoOrder[attName] then
+							table.insert(availableAmmoTypes, attName)
+						end
+					end
+				end
 			end
-			surface.DrawTexturedRect(startX, startY + (i - 1) * dotSpacing, dotSize, dotSize)
+
+			table.sort(availableAmmoTypes, function(a, b)
+				return (ammoOrder[a] or 99) < (ammoOrder[b] or 99)
+			end)
+
+			local currentAmmo = item:GetData("ammoType", "Normal")
+			local dotSize = 8 * scaleX
+			local dotSpacing = 12 * scaleY
+			local startX = ammoX + ammoW + 5 * scaleX
+			local totalHeight = #availableAmmoTypes * dotSpacing
+			local startY = ammoY + (ammoH - totalHeight) / 2
+
+			surface.SetMaterial(ammoSelector)
+			for i, ammoName in ipairs(availableAmmoTypes) do
+				if ammoName == currentAmmo then
+					surface.SetDrawColor(255, 255, 255, hudAlpha)
+				else
+					surface.SetDrawColor(100, 100, 100, hudAlpha)
+				end
+				surface.DrawTexturedRect(startX, startY + (i - 1) * dotSpacing, dotSize, dotSize)
+			end
 		end
 	end
 --// End HUD Code //--
@@ -1299,12 +1301,32 @@ function PLUGIN:ArtifactBeltHUDPaint()
 		local x = 360 * (ScrW()/1920) -- Starting X position
 		local y = 950 * (ScrH()/1080) -- Y position
 		local imageSize = 64 -- Size of the artifact images
-		
-		-- Iterate through the items to find the equipped artifact
+
+		-- Separate equipped artifacts into slotted and unslotted
+		local slotted = {}
+		local unslotted = {}
+
 		for _, item in pairs(items) do
 			if item.isArtefact and item:GetData("equip", false) then
+				local slot = item:GetData("equipSlot")
+				if slot then
+					slotted[slot] = item
+				else
+					table.insert(unslotted, item)
+				end
+			end
+		end
 
-				-- If the item is an artifact and it is equipped
+		-- Sort unslotted items by ID (matches inventory UI behavior)
+		table.sort(unslotted, function(a, b) return a.id < b.id end)
+
+		local totalSlots = 5 -- Maximum artifact slots
+		
+		-- Iterate slots 1-5 to display in order
+		for i = 1, totalSlots do
+			local item = slotted[i] or unslotted[i]
+
+			if item then
 				local artifactImage = item.img -- Get the artifact image
 
 				-- Draw the artifact image on the HUD

@@ -327,11 +327,11 @@ function ITEM:CanTransfer(oldInventory, newInventory)
 	return true
 end
 
-ITEM.functions.Equip = { -- sorry, for name order.
+ITEM.functions.Equip = {
 	name = "Equip",
 	tip = "useTip",
 	icon = "icon16/stalker/equip.png",
-	OnRun = function(item)
+	OnRun = function(item, data)
 		local client = item.player
 		local character = client:GetCharacter()
 		local items = character:GetInventory():GetItems()
@@ -349,6 +349,26 @@ ITEM.functions.Equip = { -- sorry, for name order.
 		character:SetData("pdaavatar", item:GetData("avatar", "stalker/ui/avatars/nodata.png"))
 		character:SetData("pdausername", item:GetData("username", item.player:GetName()))
 		item:SetData("equip", true)
+		if (data and data.equipSlot) then
+			if (character) then
+				local inv = character:GetInventory()
+				if (inv) then
+					for _, v in pairs(inv:GetItems()) do
+						if (v.id != item.id and v.isPDA and v:GetData("equip") and v:GetData("equipSlot") == data.equipSlot) then
+							v.player = client
+							if (v.functions.EquipUn and v.functions.EquipUn.OnRun) then
+								v.functions.EquipUn.OnRun(v)
+							else
+								v:SetData("equip", false)
+								v:SetData("equipSlot", nil)
+							end
+							v.player = nil
+						end
+					end
+				end
+			end
+			item:SetData("equipSlot", data.equipSlot)
+		end
 		character:SetData("pdaequipped", true)
         item:OnEquipped()
 
@@ -371,6 +391,7 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 		local character = client:GetCharacter()
 		local wepslots = character:GetData("wepSlots",{})
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 		character:SetData("pdaequipped", false)
 		character:SetData("pdausername", "NIL")
 		wepslots[item.weaponCategory] = nil

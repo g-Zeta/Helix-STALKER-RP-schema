@@ -30,7 +30,7 @@ ITEM.functions.Equip = { -- sorry, for name order.
 	name = "Equip",
 	tip = "useTip",
 	icon = "icon16/stalker/equip.png",
-	OnRun = function(item)
+	OnRun = function(item, data)
 		local client = item.player
 		local character = client:GetCharacter()
 		local wepslots = character:GetData("wepSlots",{})
@@ -48,6 +48,26 @@ ITEM.functions.Equip = { -- sorry, for name order.
 		wepslots[item.weaponCategory] = item.Name
 		character:SetData("wepSlots",wepslots)
 		item:SetData("equip", true)
+		if (data and data.equipSlot) then
+			if (character) then
+				local inv = character:GetInventory()
+				if (inv) then
+					for _, v in pairs(inv:GetItems()) do
+						if (v.id != item.id and v.isAnomalydetector and v:GetData("equip") and v:GetData("equipSlot") == data.equipSlot) then
+							v.player = client
+							if (v.functions.EquipUn and v.functions.EquipUn.OnRun) then
+								v.functions.EquipUn.OnRun(v)
+							else
+								v:SetData("equip", false)
+								v:SetData("equipSlot", nil)
+							end
+							v.player = nil
+						end
+					end
+				end
+			end
+			item:SetData("equipSlot", data.equipSlot)
+		end
 		item.player:SetData("ixhasanomdetector", true)
 		item.player:SetNetVar("ixhasanomdetector", true)
 		item:OnEquipped()
@@ -68,6 +88,7 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 		local character = client:GetCharacter()
 		local wepslots = character:GetData("wepSlots",{})
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasanomdetector", false)
 		item.player:SetData("ixhasanomdetector", false)
 		wepslots[item.weaponCategory] = nil
@@ -88,6 +109,7 @@ ITEM:Hook("drop", function(item)
 
     if (item:GetData("equip")) then
 		item:SetData("equip", nil)
+		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasanomdetector", false)
 		item.player:SetData("ixhasanomdetector", false)
     end;

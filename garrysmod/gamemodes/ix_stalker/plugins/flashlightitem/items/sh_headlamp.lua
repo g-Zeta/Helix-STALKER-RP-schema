@@ -346,6 +346,7 @@ ITEM:Hook("drop", function(item)
 	if (item:GetData("equip") == true) then
 		local owner = item:GetOwner()
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 
 		if (IsValid(owner)) then
 			owner:RemovePart(item.uniqueID)
@@ -357,8 +358,30 @@ ITEM.functions.Equip = {
 	name = "Equip",
 	tip = "equipTip",
 	icon = "stalkerCoP/ui/icons/misc/equip.png",
-	OnRun = function(item)
+	OnRun = function(item, data)
 		item:SetData("equip", true)
+		if (data and data.equipSlot) then
+			local char = item.player:GetCharacter()
+			if (char) then
+				local inv = char:GetInventory()
+				if (inv) then
+					for _, v in pairs(inv:GetItems()) do
+						if (v.id != item.id and v.isFlashlight and v:GetData("equip") and v:GetData("equipSlot") == data.equipSlot) then
+							v.player = item.player
+							if (v.functions.EquipUn and v.functions.EquipUn.OnRun) then
+								v.functions.EquipUn.OnRun(v)
+							else
+								v:SetData("equip", false)
+								v:SetData("equipSlot", nil)
+							end
+							v.player = nil
+						end
+					end
+				end
+			end
+			item:SetData("equipSlot", data.equipSlot)
+		end
+
 		item.player:AddPart(item.uniqueID, item)
 		item.player:EmitSound("stalker/inventory/inv_slot.mp3")
 		return false
@@ -374,6 +397,7 @@ ITEM.functions.EquipUn = {
 	icon = "stalkerCoP/ui/icons/misc/unequip.png",
 	OnRun = function(item)
 		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 		item.player:RemovePart(item.uniqueID)
 		item.player:EmitSound("stalker/inventory/inv_slot.mp3")
 		return false

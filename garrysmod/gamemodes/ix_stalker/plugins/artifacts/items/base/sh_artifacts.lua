@@ -215,6 +215,7 @@ ITEM:Hook("drop", function(item)
         end
         
         item:SetData("equip", nil);
+        item:SetData("equipSlot", nil)
     end;
 end);
 
@@ -224,7 +225,7 @@ ITEM.functions.Equip =
     tip = "equipTip",
     icon = "icon16/tick.png",
 
-    OnRun = function(item)
+    OnRun = function(item, data)
         local client = item.player
 		local character = client:GetCharacter()
         
@@ -281,6 +282,28 @@ ITEM.functions.Equip =
             character:SetData("Bleeding", newbleed)
 			client:Notify("You are bleeding.")	-- Notify the player
 		end
+
+        if (data and data.equipSlot) then
+            local char = client:GetCharacter()
+            if (char) then
+                local inv = char:GetInventory()
+                if (inv) then
+                    for _, v in pairs(inv:GetItems()) do
+                        if (v.id != item.id and v.isArtefact and v:GetData("equip") and v:GetData("equipSlot") == data.equipSlot) then
+                            v.player = client
+                            if (v.functions.EquipUn and v.functions.EquipUn.OnRun) then
+                                v.functions.EquipUn.OnRun(v)
+                            else
+                                v:SetData("equip", false)
+                                v:SetData("equipSlot", nil)
+                            end
+                            v.player = nil
+                        end
+                    end
+                end
+            end
+            item:SetData("equipSlot", data.equipSlot)
+        end
 
         item:SetData("equip", true)
         item:OnEquipped()
@@ -362,6 +385,7 @@ ITEM.functions.EquipUn =
         end
         
         item:SetData("equip", false)
+        item:SetData("equipSlot", nil)
 		item:OnUnequipped()
         return false
     end;
@@ -513,6 +537,7 @@ ITEM.functions.Sell = {
 			end
 
 			item:SetData("equip", nil);
+			item:SetData("equipSlot", nil)
 		end;
     end,
     OnCanRun = function(item)
