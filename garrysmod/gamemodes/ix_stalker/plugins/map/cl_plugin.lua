@@ -7,6 +7,25 @@ end
 local function SW(x) return math.floor(x * UIScale() + 0.5) end
 local function SH(y) return math.floor(y * UIScale() + 0.5) end
 
+-- This table defines map layers. You can add entries for maps that have multiple vertical layers.
+-- 'name' is a unique identifier for the layer.
+-- 'height' is the Z coordinate for the camera when rendering the map image.
+-- 'z_min' and 'z_max' define the vertical range for a player to be considered on this layer.
+local mapLayers = {
+    -- Replace "map_name_here" with the actual map name, e.g. "rp_pripyat".
+    -- You can add more layers by copying the inner table structure.
+    ["map_name_here"] = {
+        {name = "inferior", height = 7000, z_min = -math.huge, z_max = 8000},
+        {name = "middle", height = 9100, z_min = 8000, z_max = 10000},
+        {name = "superior", height = 11000, z_min = 10000, z_max = math.huge},
+    }, -- <--- Don't forget the comma whenever you add a map
+    ["rp_barricadas_stalker_definitive_edition"] = {
+        {name = "Darkscape", height = 4800, z_min = -math.huge, z_max = 5000},
+        {name = "Garbage", height = 9100, z_min = 5000, z_max = 11000},
+        {name = "Cordon", height = 16300, z_min = 11000, z_max = math.huge},
+    }
+}
+
 CreateClientConVar("cl_point_r", 0, true, false)
 CreateClientConVar("cl_point_g", 174, true, false)
 CreateClientConVar("cl_point_b", 222, true, false)
@@ -32,28 +51,28 @@ net.Receive("SendMAPSize", function()
 	MAP = tbl
 end)
 
-local function RebuildMapImage(w, h)
+local function RebuildMapImage(w, h, height, layerName)
 	RequestMAPSize()
 
 	if not MAP.SizeHeight or not MAP.SizeW or not MAP.SizeE or not MAP.SizeS or not MAP.SizeN then return end
-	
+
 	if not file.IsDir("mapimages", "DATA") then
 		file.CreateDir("mapimages")
 	end
 
-	local oldFiles = file.Find("mapimages/"..game.GetMap()..w.."x"..h.."_*.jpg", "DATA")
+	local oldFiles = file.Find("mapimages/"..game.GetMap()..w.."x"..h.."_"..layerName.."_*.jpg", "DATA")
 	for _, v in ipairs(oldFiles) do
 		file.Delete("mapimages/" .. v)
 	end
 
-	local mapRT = GetRenderTarget("ixStalkerMap_"..w.."_"..h, w, h)
+	local mapRT = GetRenderTarget("ixStalkerMap_"..w.."_"..h.."_"..layerName, w, h)
 	local oldRT = render.GetRenderTarget()
 	render.SetRenderTarget(mapRT)
 	render.Clear(0, 0, 0, 0, true, true)
 
 	local data = {
 		angles = Angle(90, 90, 0),
-		origin = Vector(0, 0, MAP.SizeHeight * 1.0),
+		origin = Vector(0, 0, height),
 		x = 0,
 		y = 0,
 		w = w,
@@ -64,7 +83,7 @@ local function RebuildMapImage(w, h)
 		ortholeft = MAP.SizeW,
 		orthoright = MAP.SizeE,
 		orthotop = MAP.SizeS,
-		orthobottom =  MAP.SizeN 
+		orthobottom =  MAP.SizeN
 	}
 
 	render.ClearStencil()
@@ -101,7 +120,7 @@ local function RebuildMapImage(w, h)
 	render.SetStencilEnable(false)
 	render.SetRenderTarget(oldRT)
 
-	local fileName = "mapimages/"..game.GetMap()..w.."x"..h.."_"..os.time()..".jpg"
+	local fileName = "mapimages/"..game.GetMap()..w.."x"..h.."_"..layerName.."_"..os.time()..".jpg"
 	local image = file.Open(fileName, "wb", "DATA")
 	image:Write(tbl)
 	image:Close()
@@ -147,16 +166,21 @@ function PANEL:Init()
 	RequestMAPSize()
 
 	hook.Add("ixMapShouldReload", self, function()
-		self.mapMaterial = nil
+		self.mapMaterials = nil
 	end)
 
 	local btnSize = 21
 	local btnPad = 3
-	local clusterW = btnSize * 3 + btnPad * 2
+
+	local layers = mapLayers[game.GetMap()]
+    local hasLayers = layers and #layers > 1
+    local columns = hasLayers and 4 or 3
+
+	local clusterW = btnSize * columns + btnPad * (columns - 1)
 	local clusterH = btnSize * 3 + btnPad * 2
 	
 	local startX = self:GetWide() - SW(clusterW) - SW(10)
-	local startY = self:GetTall() - SH(clusterH) - SH(10)
+	local startY = self:GetTall() - SH(clusterH) - SH(10) - SH(20)
 	
 	local mat = Material("stalkerSHoC/ui/pda/navigation_panel.png")
 	
@@ -266,8 +290,19 @@ function PANEL:Init()
 		if (self.showGPS) then
 			self.offsetX = 0
 			self.offsetY = 0
+
+			if (hasLayers) then
+				local ply = LocalPlayer()
+				local playerZ = ply:GetPos().z
+				for i, layer in ipairs(layers) do
+					if (playerZ >= layer.z_min and playerZ < layer.z_max) then
+						self.viewedLayerIndex = i
+						break
+					end
+				end
+			end
 		end
-	end, false, function() return self.showGPS end)
+	end, false, function() return self.showGPS end, nil, "Center on player")
 	
 	-- Right (Row 1, Col 2)
 	AddNavButton(2, 1, 48, 24, function() self.offsetX = (self.offsetX or 0) - 10 end, true, function()
@@ -286,6 +321,38 @@ function PANEL:Init()
 
 	-- Show All (Row 2, Col 2)
 	AddNavButton(2, 2, 48, 48, function() self.zoom = 1 self.offsetX = 0 self.offsetY = 0 end, false, nil, nil, "Show map")
+
+	if (hasLayers) then
+		if (not self.viewedLayerIndex) then
+			local playerZ = client:GetPos().z
+			for i, layer in ipairs(layers) do
+				if (playerZ >= layer.z_min and playerZ < layer.z_max) then
+					self.viewedLayerIndex = i
+					break
+				end
+			end
+			self.viewedLayerIndex = self.viewedLayerIndex or 1
+		end
+
+		-- Layer Up button
+		AddNavButton(3, 0, 24, 0, function() -- Using up arrow icon
+			self.viewedLayerIndex = self.viewedLayerIndex + 1
+			if (self.viewedLayerIndex > #layers) then
+				self.viewedLayerIndex = 1
+			end
+		end, false, nil, nil, "Next Area")
+
+		-- Layer Down button
+		AddNavButton(3, 1, 24, 48, function() -- Using down arrow icon
+			self.viewedLayerIndex = self.viewedLayerIndex - 1
+			if (self.viewedLayerIndex < 1) then
+				self.viewedLayerIndex = #layers
+			end
+		end, false, nil, nil, "Previous Area")
+	end
+
+	self.layerLabel = self:Add("DLabel")
+	self.layerLabel:SetFont("MapFont1")
 
 	-- Refresh Button
 	local refreshBtn = self:Add("DButton")
@@ -327,9 +394,22 @@ function PANEL:Init()
 
 		timer.Simple(0.1, function()
 			if (IsValid(self)) then
-				local mapPath = RebuildMapImage(3840, 2160)
-				if (mapPath) then
-					self.mapMaterial = Material("data/"..mapPath)
+				self.mapMaterials = {}
+				local layers = mapLayers[game.GetMap()]
+
+				if (layers and #layers > 0) then
+					for _, layer in ipairs(layers) do
+						local mapPath = RebuildMapImage(3840, 2160, layer.height, layer.name)
+						if (mapPath) then
+							self.mapMaterials[layer.name] = Material("data/"..mapPath)
+						end
+					end
+				else
+					-- Fallback for maps without defined layers
+					local mapPath = RebuildMapImage(3840, 2160, MAP.SizeHeight, "default")
+					if (mapPath) then
+						self.mapMaterials["default"] = Material("data/"..mapPath)
+					end
 				end
 			end
 		end)
@@ -475,6 +555,7 @@ function PANEL:OnMousePressed(code)
 			local sub, subOption = menu:AddSubMenu("Set Anomaly Type")
 			subOption:SetIcon("icon16/palette.png")
 			local types = {
+				{name = "Default", color = Color(255, 255, 255, 255)},
 				{name = "Chemical", color = Color(150, 150, 0, 255)},
 				{name = "Electrical", color = Color(0, 100, 168, 255)},
 				{name = "Thermal", color = Color(150, 0, 0, 255)},
@@ -501,7 +582,7 @@ function PANEL:OnMousePressed(code)
 				local name = string.gsub(string.match(icon, "flag_(.+).png"), "^%l", string.upper)
 				sub:AddOption(name, function()
 					Derma_StringRequest("Waypoint Name", "Enter a name for this waypoint:", "", function(text)
-						table.insert(waypoints, {x = worldX, y = worldY, icon = icon, name = text})
+						table.insert(waypoints, {x = worldX, y = worldY, icon = icon, name = text, layer = self.viewedLayerIndex})
 						ix.data.Set("mapWaypoints", waypoints)
 					end)
 				end):SetIcon(icon)
@@ -511,7 +592,7 @@ function PANEL:OnMousePressed(code)
 				Derma_StringRequest("Anomaly Field Size", "Enter the radius for this anomaly field:", "200", function(text)
 					local radius = tonumber(text)
 					if (radius) then
-						table.insert(anomalyFields, {x = worldX, y = worldY, radius = radius})
+						table.insert(anomalyFields, {x = worldX, y = worldY, radius = radius, layer = self.viewedLayerIndex})
 						ix.data.Set("mapAnomalyFields", anomalyFields)
 					end
 				end)
@@ -540,38 +621,116 @@ function PANEL:Think()
 		self.mouseX = x
 		self.mouseY = y
 	end
+
+	local layers = mapLayers[game.GetMap()]
+	if (layers and #layers > 1) then
+		local ply = LocalPlayer()
+		local playerZ = ply:GetPos().z
+		local currentLayerIndex
+
+		for i, layer in ipairs(layers) do
+			if (playerZ >= layer.z_min and playerZ < layer.z_max) then
+				currentLayerIndex = i
+				break
+			end
+		end
+
+		if (currentLayerIndex) then
+			if (self.lastPlayerLayerIndex and self.lastPlayerLayerIndex != currentLayerIndex) then
+				self.viewedLayerIndex = currentLayerIndex
+			end
+			self.lastPlayerLayerIndex = currentLayerIndex
+		end
+	end
 end
 
 function PANEL:Paint(w, h)
 	draw.RoundedBox(3, 0, 0, w, h, Color(0, 0, 0, 200))
-	
-	if (not self.mapMaterial) then
-		local files = file.Find("mapimages/"..game.GetMap().."3840x2160_*.jpg", "DATA")
-		local mapPath
 
-		if (#files > 0) then
-			table.sort(files)
-			mapPath = "mapimages/" .. files[#files]
+	if (not self.mapMaterials) then
+		self.mapMaterials = {}
+		local layers = mapLayers[game.GetMap()]
+
+		if (layers and #layers > 0) then
+			for _, layer in ipairs(layers) do
+				local files = file.Find("mapimages/"..game.GetMap().."3840x2160_"..layer.name.."_*.jpg", "DATA")
+				local mapPath
+
+				if (#files > 0) then
+					table.sort(files)
+					mapPath = "mapimages/" .. files[#files]
+				else
+					mapPath = RebuildMapImage(3840, 2160, layer.height, layer.name)
+				end
+
+				if (mapPath) then
+					self.mapMaterials[layer.name] = Material("data/"..mapPath)
+				end
+			end
 		else
-			mapPath = RebuildMapImage(3840, 2160)
-		end
+			-- Fallback for maps without defined layers
+			local files = file.Find("mapimages/"..game.GetMap().."3840x2160_default_*.jpg", "DATA")
+			local mapPath
 
-		if (mapPath) then
-			self.mapMaterial = Material("data/"..mapPath)
+			if (#files > 0) then
+				table.sort(files)
+				mapPath = "mapimages/" .. files[#files]
+			else
+				mapPath = RebuildMapImage(3840, 2160, MAP.SizeHeight, "default")
+			end
+
+			if (mapPath) then
+				self.mapMaterials["default"] = Material("data/"..mapPath)
+			end
 		end
 	end
-	
-	if (self.mapMaterial) then
+
+	local ply = LocalPlayer()
+	local currentLayerName = "default"
+	local currentLayerDisplayName
+    local layers = mapLayers[game.GetMap()]
+    local hasLayers = layers and #layers > 0
+    local viewedLayer
+
+	if (hasLayers) then
+		if (not self.viewedLayerIndex) then
+			local playerZ = ply:GetPos().z
+			for i, layer in ipairs(layers) do
+				if (playerZ >= layer.z_min and playerZ < layer.z_max) then
+					self.viewedLayerIndex = i
+					break
+				end
+			end
+			self.viewedLayerIndex = self.viewedLayerIndex or 1
+		end
+
+		viewedLayer = layers[self.viewedLayerIndex]
+		if (viewedLayer) then
+			currentLayerName = viewedLayer.name
+			currentLayerDisplayName = viewedLayer.name
+		else
+			currentLayerName = layers[1].name
+			viewedLayer = layers[1]
+			currentLayerDisplayName = layers[1].name
+			self.viewedLayerIndex = 1
+		end
+	end
+
+	self.layerLabel:SetText(currentLayerDisplayName and ("Area: " .. currentLayerDisplayName) or "")
+	self.layerLabel:SizeToContents()
+	self.layerLabel:SetPos(self:GetWide() - self.layerLabel:GetWide() - SW(10), self:GetTall() - self.layerLabel:GetTall() - SH(5))
+
+	local currentMapMaterial = self.mapMaterials and self.mapMaterials[currentLayerName]
+
+	if (currentMapMaterial) then
 		surface.SetDrawColor(255, 255, 255, 255)
-		surface.SetMaterial(self.mapMaterial)
-		
+		surface.SetMaterial(currentMapMaterial)
+
 		if not MAP.SizeHeight or not MAP.SizeW or not MAP.SizeE or not MAP.SizeS or not MAP.SizeN then 
 			surface.DrawTexturedRect(0, 0, w, h)
 			RequestMAPSize()
 			return
 		end
-		
-		local ply = LocalPlayer()
 
 		local px, py
 		if (self.showGPS) then
@@ -618,6 +777,8 @@ function PANEL:Paint(w, h)
 		local anomalyIcon = Material("stalkerSHoC/ui/pda/area_icon.png")
 
 		for _, v in ipairs(anomalyFields) do
+			if (hasLayers and (v.layer or 1) ~= self.viewedLayerIndex) then continue end
+
 			local fx, fy = GetMapPos(Vector(v.x, v.y, 0))
 			local sx = mapX + fx * mapW
 			local sy = mapY + mapH * (1 - fy)
@@ -664,24 +825,30 @@ function PANEL:Paint(w, h)
 		end
 
 		if (self.showGPS) then
-			DrawPoint(ply:GetPos(), ply:EyeAngles().y, Color(colorr, colorg, colorb, 255), ply:Nick(), true)
+			if (not hasLayers or (viewedLayer and ply:GetPos().z >= viewedLayer.z_min and ply:GetPos().z < viewedLayer.z_max)) then
+				DrawPoint(ply:GetPos(), ply:EyeAngles().y, Color(colorr, colorg, colorb, 255), ply:Nick(), true)
+			end
 		end
 		
 		if (self.showGPS) and tobool(GetConVarNumber("cl_map_displayfriends")) then
 			local character = ply:GetCharacter()
 			for _, pl in pairs(player.GetAll()) do
 				if pl != ply and pl:GetCharacter() and pl:GetNetVar("gpsActive", true) then
-					local name = pl:Nick()
-					if (character and not character:DoesRecognize(pl:GetCharacter())) then
-						name = "???"
+					if (not hasLayers or (viewedLayer and pl:GetPos().z >= viewedLayer.z_min and pl:GetPos().z < viewedLayer.z_max)) then
+						local name = pl:Nick()
+						if (character and not character:DoesRecognize(pl:GetCharacter())) then
+							name = "???"
+						end
+						DrawPoint(pl:GetPos(), pl:EyeAngles().y, team.GetColor(pl:Team()), name, false)
 					end
-					DrawPoint(pl:GetPos(), pl:EyeAngles().y, team.GetColor(pl:Team()), name, false)
 				end
 			end
 		end
 
 		local waypoints = ix.data.Get("mapWaypoints", {})
 		for _, v in ipairs(waypoints) do
+			if (hasLayers and (v.layer or 1) ~= self.viewedLayerIndex) then continue end
+
 			local fx, fy = GetMapPos(Vector(v.x, v.y, 0))
 			local sx = mapX + fx * mapW
 			local sy = mapY + mapH * (1 - fy)
@@ -742,8 +909,25 @@ end
 vgui.Register("ixMapPanel", PANEL, "DPanel")
 
 hook.Add("CreateMenuButtons", "ixMap", function(tabs)
-	tabs["Map"] = function(container)
-		container:Add("ixMapPanel")
+	local client = LocalPlayer()
+	local character = client:GetCharacter()
+	local inventory = character and character:GetInventory()
+
+	if (character and inventory) then
+		local pdaItem
+
+		for _, item in pairs(inventory:GetItems()) do
+			if (item.isPDA and item:GetData("equip", false)) then
+				pdaItem = item
+				break
+			end
+		end
+
+		if (pdaItem) then
+			tabs["Map"] = function(container)
+				container:Add("ixMapPanel")
+			end
+		end
 	end
 end)
 
