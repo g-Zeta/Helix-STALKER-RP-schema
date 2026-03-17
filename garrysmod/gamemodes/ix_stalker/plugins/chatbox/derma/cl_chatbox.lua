@@ -136,6 +136,7 @@ function PANEL:Init()
 	-- holds all tab buttons
 	self.buttons = self:Add("Panel")
 	self.buttons:Dock(TOP)
+	self.buttons:SetTall(37)
 	self.buttons:DockPadding(1, 1, 0, 0)
 	self.buttons.OnMousePressed = ix.util.Bind(ix.gui.chat, ix.gui.chat.OnMousePressed) -- we want mouse events to fall through
 	self.buttons.OnMouseReleased = ix.util.Bind(ix.gui.chat, ix.gui.chat.OnMouseReleased)
@@ -258,7 +259,7 @@ AccessorFunc(PANEL, "id", "ID", FORCE_STRING)
 AccessorFunc(PANEL, "button", "Button") -- button panel that this panel corresponds to
 
 function PANEL:Init()
-	self:DockMargin(4, 2, 4, 4) -- smaller top margin to help blend tab button/history panel transition
+	self:DockMargin(24, 6, 12, 14) -- smaller top margin to help blend tab button/history panel transition
 	self:SetPaintedManually(true)
 
 	local bar = self:GetVBar()
@@ -382,7 +383,7 @@ function PANEL:SetFont(font)
 	surface.SetFont(font)
 	local _, height = surface.GetTextSize("W@")
 
-	self:SetTall(height + 8)
+	self:SetTall(32)
 end
 
 function PANEL:AllowInput(newText)
@@ -844,7 +845,8 @@ function PANEL:Init()
 	local entryPanel = self:Add("Panel")
 	entryPanel:SetZPos(1)
 	entryPanel:Dock(BOTTOM)
-	entryPanel:DockMargin(4, 0, 4, 4)
+	entryPanel:SetTall(32)
+	entryPanel:DockMargin(12, 0, 12, 10)
 
 	self.entry = entryPanel:Add("ixChatboxEntry")
 	self.entry:Dock(FILL)
@@ -866,7 +868,7 @@ function PANEL:Init()
 
 	self.autocomplete = self.tabs:Add("ixChatboxAutocomplete")
 	self.autocomplete:Dock(FILL)
-	self.autocomplete:DockMargin(4, 3, 4, 4) -- top margin is 3 to account for tab 1px border
+	self.autocomplete:DockMargin(12, 0, 12, 12) -- top margin is 3 to account for tab 1px border
 	self.autocomplete:SetZPos(3)
 
 	self.alpha = 0
