@@ -7,7 +7,7 @@ ix.config.Add("PsyHealthRecoverTime", 10, "How many seconds it takes to restore 
 	data = {min = 1, max = 36},
 	category = "Psy"
 })
-
+/*
 ix.config.Add("MaxHallucinations", 3, "The maximum number of hallucinations a player can have at once.", nil, {
 	data = {min = 1, max = 10},
 	category = "Psy"
@@ -50,7 +50,7 @@ ix.config.Add("HallucinationWeapon", "none", "The weapon class the hallucination
 ix.config.Add("HallucinationNPCs", "npc_metropolice,npc_combine_s", "The NPC classes that can spawn as hallucinations, separated by commas.", nil, {
 	category = "Psy"
 })
-
+*/
 ix.char.RegisterVar("PsyHP", {
 	field = "PsyHP",
 	fieldType = ix.type.number,
@@ -274,6 +274,7 @@ if SERVER then
 			ply:TickPsyHealth(1)
 		end
 
+		--[[
 		local psyHealth = ply:GetPsyHealth() or 100 -- Default to 100 if nil
 
 		if (psyHealth < 85) then
@@ -322,6 +323,7 @@ if SERVER then
 			end
 			ply.ixHallucinations = {}
 		end
+		--]]
 	end
 
 	function playerMeta:UpdatePsyHealthState(client)

@@ -2,6 +2,11 @@ PLUGIN.name = "Artifacts"
 PLUGIN.author = "Lt. Taylor & Zeta"
 PLUGIN.desc = "Adds a relatively simple artifact system"
 
+ix.config.Add("PsyDamageThreshold", 80, "The PsyHealth threshold at which players start taking damage.", nil, {
+	data = {min = 1, max = 99},
+	category = "Psy"
+})
+
 if SERVER then
 	function PLUGIN:CharacterLoaded(character)
 		if character then
@@ -83,12 +88,12 @@ if SERVER then
 				end
 			end
 
-			-- Psi damage
-			if psyhealth <= 40 and (v:IsValid() and v:Alive()) then
+			-- Psy damage
+			if psyhealth <= ix.config.Get("PsyDamageThreshold", 40) and (v:IsValid() and v:Alive()) then
 				if (v.nextPsyDamage or 0) < CurTime() then
 					-- Damage frequency increases with psi accumulation
 					local psiAccumulation = 100 - psyhealth
-					local delay = 10 / psiAccumulation
+					local delay = 20 / psiAccumulation
 					v.nextPsyDamage = CurTime() + delay
 
 					v:SetHealth(math.Clamp(v:Health() - 1, 0, maxhealth))
