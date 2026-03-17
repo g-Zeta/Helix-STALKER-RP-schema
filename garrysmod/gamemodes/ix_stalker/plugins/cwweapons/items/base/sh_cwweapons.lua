@@ -289,6 +289,9 @@ function ITEM:GetDescription()
 		return self.description
 	else
 		local client = self:GetOwner()
+		if not IsValid(client) then
+			return str
+		end
 		local weapon = client:GetActiveWeapon()
 		local SWEP = weapons.Get(self.class)
 		local atts = SWEP.Attachments
