@@ -14,12 +14,18 @@ local customBobbingSpeed = 1.4
 ix.option.Add("ViewBobbing", ix.type.bool, true, {
     category = "View"
 })
+ix.option.Add("ViewBreathing", ix.type.bool, true, {
+    category = "View"
+})
 
 ix.lang.AddTable("english", {
 	viewbobbing = "View Bobbing",
 
-	optViewBobbing = "Enable View Bobbing",
-	optdViewBobbing = "Whether to enable view bobbing."
+	optViewBobbing = "View Bobbing",
+	optdViewBobbing = "Whether to enable view bobbing.",
+
+	optViewBreathing = "Breathing Effect",
+	optdViewBreathing = "Enables the breathing effect when standing still."
 })
 
 hook.Add("CalcView", "ViewBobbing", function(ply, origin, angles, fov)
@@ -40,26 +46,53 @@ hook.Add("CalcView", "ViewBobbing", function(ply, origin, angles, fov)
         local rollDirection = ply:GetVelocity():Dot(angles:Right()) > 0 and 1 or -1
         rollOffset = math.cos(CurTime() * BobbingSpeed * customBobbingSpeed) * BobbingAmount * rollDirection
     else
-        -- Breathing effect
-        local currentBreathingSpeed = breathingSpeed
-        local currentBreathingAmount = breathingAmount
-        local lp = LocalPlayer()
-        local stamina = lp:GetLocalVar("stm", 100)
+		if ix.option.Get("ViewBreathing", true) then
+			-- Breathing effect
+			local wep = ply:GetActiveWeapon()
+            local wepClass = IsValid(wep) and wep:GetClass() or ""
+			local isAiming = false
+			if (IsValid(wep)) then
+				-- CW 2.0 uses a state system for aiming
+				if (wep.CW20Weapon) then
+					isAiming = wep.dt and wep.dt.State == (CW_AIMING or 2)
+				-- Fallback for default weapons
+				elseif (wep.GetIronsights) then
+					isAiming = wep:GetIronsights()
+				end
+			end
 
-        if (stamina < 30) then
-            currentBreathingSpeed = 4
-            currentBreathingAmount = 0.8
-        elseif (stamina <= 60) then
-            currentBreathingSpeed = 2.8
-            currentBreathingAmount = 0.6
-        end
+			if wepClass == "weapon_physgun" or wepClass == "gmod_tool" or isAiming then
+				pitchOffset = Lerp(0.1, pitchOffset, 0)
+				yawOffset = Lerp(0.1, yawOffset, 0)
+				rollAngle = Lerp(0.1, rollAngle, 0)
+				rollOffset = Lerp(0.1, rollOffset, 0)
+			else
+				local currentBreathingSpeed = breathingSpeed
+				local currentBreathingAmount = breathingAmount
+				local lp = LocalPlayer()
+				local stamina = lp:GetLocalVar("stm", 100)
 
-        local breathCycle = math.sin(CurTime() * currentBreathingSpeed)
-        local breathCycleYaw = math.cos(CurTime() * currentBreathingSpeed * 0.5)
-        pitchOffset = Lerp(0.1, pitchOffset, breathCycle * currentBreathingAmount)
-        yawOffset = Lerp(0.1, yawOffset, breathCycleYaw * currentBreathingAmount * 0.5)
-        rollAngle = Lerp(0.1, rollAngle, breathCycle * currentBreathingAmount * 0.2)
-        rollOffset = Lerp(0.1, rollOffset, 0)
+				if (stamina < 30) then
+					currentBreathingSpeed = 4
+					currentBreathingAmount = 0.8
+				elseif (stamina <= 60) then
+					currentBreathingSpeed = 2.8
+					currentBreathingAmount = 0.6
+				end
+
+				local breathCycle = math.sin(CurTime() * currentBreathingSpeed)
+				local breathCycleYaw = math.cos(CurTime() * currentBreathingSpeed * 0.5)
+				pitchOffset = Lerp(0.1, pitchOffset, breathCycle * currentBreathingAmount)
+				yawOffset = Lerp(0.1, yawOffset, breathCycleYaw * currentBreathingAmount * 0.5)
+				rollAngle = Lerp(0.1, rollAngle, breathCycle * currentBreathingAmount * 0.2)
+				rollOffset = Lerp(0.1, rollOffset, 0)
+			end
+		else
+			pitchOffset = Lerp(0.1, pitchOffset, 0)
+			yawOffset = Lerp(0.1, yawOffset, 0)
+			rollAngle = Lerp(0.1, rollAngle, 0)
+			rollOffset = Lerp(0.1, rollOffset, 0)
+		end
     end
 
     if walkSpeed < 90 then
@@ -89,13 +122,63 @@ hook.Add("CalcView", "ViewBobbing", function(ply, origin, angles, fov)
     if ply.VBSpringAngle then
         angles:Add(ply.VBSpringAngle)
     end
-
-    return {
-        origin = origin,
-        angles = angles,
-        fov = fov
-    }
 end)
+
+local matsounds = {
+    [MAT_METAL] = "metal",
+    [MAT_GRASS] = "grass",
+    [MAT_DIRT] = "dirt",
+    [MAT_SNOW] = "snow",
+    [MAT_SAND] = "sand",
+    [MAT_TILE] = "tile",
+    [MAT_CONCRETE] = "concrete",
+    [MAT_WOOD] = "wood",
+    [MAT_FLESH] = "flesh",
+    [MAT_GLASS] = "glass",
+    [MAT_PLASTIC] = "plastic",
+    [MAT_GRATE] = "metalgrate",
+    [MAT_SLOSH] = "water",
+    [MAT_VENT] = "duct",
+    [MAT_FOLIAGE] = "foliage"
+}
+
+if (SERVER) then
+    util.AddNetworkString("VB_PlayLandingSound")
+
+    hook.Add("OnPlayerHitGround", "VB_LandingSound", function(client, inWater, onFloater, speed)
+        if (inWater or speed < 80) then return end
+
+        local trace = {
+            start = client:GetPos(),
+            endpos = client:GetPos() - Vector(0, 0, 10),
+            filter = client
+        }
+        trace.mins, trace.maxs = client:GetHull()
+
+        local traceResult = util.TraceHull(trace)
+        local materialName = matsounds[traceResult.MatType] or "stone"
+        local maxVariants = 1
+
+        for i = 1, 10 do
+            if (file.Exists(string.format("sound/player/footsteps/LandingSounds/%s_land%d.ogg", materialName, i), "GAME")) then
+                maxVariants = i
+            else
+                break
+            end
+        end
+
+        local soundPath = string.format("player/footsteps/LandingSounds/%s_land%d.ogg", materialName, math.random(1, maxVariants))
+        local baseVolume = math.min(1 * (math.abs(-speed + 100) / 85), 1)
+        local isHardLand = speed > 250
+
+        net.Start("VB_PlayLandingSound")
+            net.WriteEntity(client)
+            net.WriteString(soundPath)
+            net.WriteFloat(baseVolume)
+            net.WriteBool(isHardLand)
+        net.Broadcast()
+    end)
+end
 
 if CLIENT then
     local vb_landingsound = CreateClientConVar("vb_landingsound", 1, true, false, "Play landing sounds?", 0, 1)
@@ -112,56 +195,7 @@ if CLIENT then
         stumbletargetspeed = speed or 400
     end
 
-    local matsounds = {
-    [MAT_METAL] = "metal",
-    [MAT_GRASS] = "grass",
-    [MAT_DIRT] = "dirt",
-    [MAT_SNOW] = "snow",
-    [MAT_SAND] = "sand",
-    [MAT_TILE] = "tile",
-    [MAT_CONCRETE] = "concrete",
-    [MAT_WOOD] = "wood",
-    [MAT_FLESH] = "flesh",
-    [MAT_GLASS] = "glass",
-    [MAT_PLASTIC] = "plastic",
-    [MAT_GRATE] = "metalgrate",
-    [MAT_SLOSH] = "water",
-    [MAT_VENT] = "duct",
-    [MAT_FOLIAGE] = "foliage"
-    }
-
     local lastvel = 0
-    local hulltr, hulltr_out
-
-    local function LandingSound(ply, hard)
-        if !vb_landingsound:GetBool() then return end
-        if !hulltr then
-            hulltr = {}
-            hulltr_out = {}
-            hulltr.filter = ply
-            hulltr.output = hulltr_out
-        end
-        
-        hulltr.mins, hulltr.maxs = ply:GetHull()
-        hulltr.start = ply:GetPos()
-        hulltr.endpos = hulltr.start - Vector(0,0,8)
-        util.TraceHull(hulltr)
-        
-        local materialName = matsounds[hulltr_out.MatType] or "stone"
-        local maxVariants = 1
-        for i = 1, 10 do
-            if file.Exists(string.format("sound/player/footsteps/LandingSounds/%s_land%d.ogg", materialName, i), "GAME") then
-                maxVariants = i
-            else
-                break
-            end
-        end
-        
-        ply:EmitSound(string.format("player/footsteps/LandingSounds/%s_land%d.ogg", materialName, math.random(1, maxVariants)), 75, 100, math.min(1 * (math.abs(lastvel+100)/85), 1))
-        if hard then
-            ply:EmitSound(string.format("player/footsteps/LandingSounds/hardland%d.wav", math.random(1,5)), 40)
-        end
-    end
 
     local DAMPING = 5
     local SPRING_CONSTANT = 80
@@ -256,14 +290,36 @@ if CLIENT then
         if ply:OnGround() and ply:WaterLevel() < 2 and !onground and ply:GetMoveType() == MOVETYPE_WALK then
             onground = true
             if lastvel < -250 then
-                LandingSound(ply, true)
                 ply:VBSpring(Angle(5,0,-5))
                 timer.Simple(0.05, function() if IsValid(ply) then ply:VBSpring(Angle(-2.5)) end end)
             elseif lastvel < -80 then
-                LandingSound(ply)
                 ply:VBSpring(Angle(1,0,-0.5))
                 timer.Simple(0.05, function() if IsValid(ply) then ply:VBSpring(Angle(-0.25)) end end)
             end
+        end
+    end)
+
+    net.Receive("VB_PlayLandingSound", function()
+        local ply = net.ReadEntity()
+        local soundPath = net.ReadString()
+        local baseVolume = net.ReadFloat()
+        local isHardLand = net.ReadBool()
+
+        if (not IsValid(ply) or not vb_landingsound:GetBool()) then
+            return
+        end
+
+        local volume = baseVolume * ix.config.Get("footstepVolumeMultiplier", 1)
+
+        if (ix.config.Get("allowPersonalFootstepVolume", true)) then
+            volume = volume * ix.option.Get("footstepVolume", 1)
+        end
+
+        ply:EmitSound(soundPath, 75, 100, volume)
+
+        if (isHardLand) then
+            local hardLandSound = string.format("player/footsteps/LandingSounds/hardland%d.wav", math.random(1, 5))
+            ply:EmitSound(hardLandSound, 75, 100, volume)
         end
     end)
 end

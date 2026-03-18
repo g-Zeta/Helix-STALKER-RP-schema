@@ -15,7 +15,7 @@ ix.config.Add("silentWalking", false, "Whether alt-walking is perfectly silent."
 	category = "Footsteps"
 })
 
-ix.config.Add("allowPersonalFootstepVolume", true, "Whether people can change the volume of their own footsteps.", nil, {
+ix.config.Add("allowPersonalFootstepVolume", true, "Whether players can change the volume of footsteps.", nil, {
 	category = "Footsteps"
 })
 
@@ -28,8 +28,8 @@ ix.option.Add("footstepVolume", ix.type.number, 1, {
 
 ix.lang.AddTable("english", {
 	footsteps = "Footsteps",
-	optFootstepVolume = "Own footstep volume",
-	optdFootstepVolume = "Changes the volume of your own footsteps, does not work if disabled by the server."
+	optFootstepVolume = "Footsteps volume",
+	optdFootstepVolume = "Changes the volume of footsteps heard by the player. This feature does not work if disabled by the server."
 })
 
 function PLUGIN:PlayerFootstep(client)
