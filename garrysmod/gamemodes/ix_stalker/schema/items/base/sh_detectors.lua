@@ -62,8 +62,8 @@ ITEM.functions.Value = {
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
+		local sellprice = math.Round(item.price * 0.75)
 
-		sellprice = math.Round(sellprice)
 		client:Notify( "Item is sellable for "..(sellprice).." rubles." )
 		return false
 	end,
