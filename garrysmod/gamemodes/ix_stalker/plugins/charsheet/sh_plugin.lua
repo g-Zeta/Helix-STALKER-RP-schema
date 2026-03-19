@@ -7,6 +7,8 @@ DESCRIPTIONLIMIT = 2000
 -- A default color to use when no character/faction is available.
 local defaultColor = Color(127, 111, 63)
 
+local placeholderTextColor = Color(200, 200, 200, 200)
+
 -- Override the default Helix color config to make it dynamic.
 -- We set it to hidden so it doesn't appear in the F1 menu.
 ix.config.Add("color", defaultColor, "The main color theme for the framework.", nil, {
@@ -78,6 +80,7 @@ ix.char.RegisterVar("dob", {
         panel:SetFont("ixMenuButtonFont")
         panel:SetTall(panel:GetTall())
         panel:SetPlaceholderText("MM/DD/YYYY")
+        panel:SetPlaceholderColor(placeholderTextColor)
         panel.AllowInput = function(_, character)
             -- Disallow newline
             if (character == "\n" or character == "\r") then
@@ -184,6 +187,7 @@ ix.char.RegisterVar("nationality", {
 		panel:SetFont("ixMenuButtonFont")
 		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
         panel:SetPlaceholderText("Ukranian/Russian/Belorussian/Polish/Romanian/Other")
+        panel:SetPlaceholderColor(placeholderTextColor)
 		panel.AllowInput = function(_, character)
 			if (character == "\n" or character == "\r") then
 				return true
@@ -228,6 +232,7 @@ ix.char.RegisterVar("race", {
 		panel:SetFont("ixMenuButtonFont")
 		panel:SetTall(panel:GetTall() * 1 + 6) -- add another line
         panel:SetPlaceholderText("Slavic/European/Caucasian/Hispanic/Other")
+        panel:SetPlaceholderColor(placeholderTextColor)
 		panel.AllowInput = function(_, character)
 			if (character == "\n" or character == "\r") then
 				return true
