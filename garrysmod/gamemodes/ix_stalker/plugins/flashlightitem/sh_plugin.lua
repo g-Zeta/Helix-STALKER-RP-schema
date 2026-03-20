@@ -9,8 +9,13 @@ function PLUGIN:PlayerSwitchFlashlight(client, bEnabled)
 
 	if (inventory) then
 		for _, item in pairs(inventory:GetItems()) do
-			if (item.uniqueID == "headlamp" and item:GetData("equip")) then
-				return true
+			if (item.isFlashlight and item:GetData("equip")) then
+				if (bEnabled and item:GetData("durability", 0) <= 0) then
+					client:Notify("Your headlamp has no power.")
+					return false
+				end
+
+				return true -- Allow turning off without a battery.
 			end
 		end
 	end

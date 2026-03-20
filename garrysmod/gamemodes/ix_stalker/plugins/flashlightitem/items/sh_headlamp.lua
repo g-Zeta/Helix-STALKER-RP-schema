@@ -1,6 +1,6 @@
 ITEM.name = "Headlamp"
 ITEM.model = "models/jerry/items/headtorch.mdl"
-ITEM.description = "A standard flashlight that can be mounted on the head or a helmet."
+ITEM.description = "A standard flashlight that can be mounted on the head or a helmet. Requires a 9V battery to operate."
 
 ITEM.width = 1
 ITEM.height = 1
@@ -342,15 +342,23 @@ ITEM.pacData = {
 },
 }
 
+function ITEM:GetDescription()
+	local str = self.description
+	str = str .. "\n\nPower: " .. math.floor(self:GetData("durability", 0)) .. "%"
+
+	return str
+end
+
 ITEM:Hook("drop", function(item)
 	if (item:GetData("equip") == true) then
-		local owner = item:GetOwner()
-		item:SetData("equip", false)
-		item:SetData("equipSlot", nil)
+		local owner = item.player or item:GetOwner()
 
 		if (IsValid(owner)) then
+			owner:Flashlight(false)
 			owner:RemovePart(item.uniqueID)
 		end
+		item:SetData("equip", false)
+		item:SetData("equipSlot", nil)
 	end
 end)
 
@@ -396,16 +404,38 @@ ITEM.functions.EquipUn = {
 	tip = "equipTip",
 	icon = "stalkerCoP/ui/icons/misc/unequip.png",
 	OnRun = function(item)
+		item.player:Flashlight(false)
 		item:SetData("equip", false)
 		item:SetData("equipSlot", nil)
 		item.player:RemovePart(item.uniqueID)
 		item.player:EmitSound("stalker/inventory/inv_slot.mp3")
+
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetData("equip") == true
+		return !IsValid(item.entity) and IsValid(item.player) and item:GetData("equip") == true
 	end
 }
+
+function ITEM:OnInstanced()
+	if !self:GetData("durability") then
+		self:SetData("durability", 0)
+	end
+end
+
+function ITEM:OnRemoved()
+	if (self:GetData("equip") == true) then
+		local inventory = ix.item.inventories[self.invID]
+		local owner = inventory and inventory:GetOwner()
+
+		if (IsValid(owner) and owner:IsPlayer()) then
+			owner:Flashlight(false)
+			owner:RemovePart(self.uniqueID)
+			self:SetData("equip", false)
+			self:SetData("equipSlot", nil)
+		end
+	end
+end
 
 ITEM.functions.Sell = {
 	name = "Sell",
@@ -415,7 +445,7 @@ ITEM.functions.Sell = {
 		local client = item.player
 		local sellprice = item.price/2
 		sellprice = math.Round(sellprice)
-		client:Notify( "Sold for "..(sellprice).." rubles." )
+		client:Notify( "Sold for ".. ix.currency.Get(sellprice) .. "." )
 		client:GetCharacter():GiveMoney(sellprice)
 	end,
 	OnCanRun = function(item)
@@ -431,10 +461,44 @@ ITEM.functions.Value = {
 		local client = item.player
 		local sellprice = item.price/2
 		sellprice = math.Round(sellprice)
-		client:Notify( "Item is sellable for "..(sellprice).." rubles." )
+		client:Notify( "Item is sellable for ".. ix.currency.Get(sellprice) .. "." )
 		return false
 	end,
 	OnCanRun = function(item)
 		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+	end
+}
+
+ITEM.functions.RemoveBattery = {
+	name = "Remove Battery",
+	tip = "Remove the battery from this device.",
+	icon = "icon16/delete.png",
+	sound = "cw/holster4.wav",
+	OnRun = function(item)
+		local client = item.player
+		local charge = item:GetData("durability", 0)
+
+		if (charge <= 0) then
+			client:Notify("This device has no battery to remove.")
+			return false
+		end
+
+		local inventory = client:GetCharacter():GetInventory()
+		
+		if (inventory:Add("9vbattery", 1, {power = charge})) then
+			item:SetData("durability", 0)
+			client:Notify("You removed the battery.")
+
+			if (item:GetData("equip")) then
+				client:Flashlight(false)
+			end
+		else
+			client:Notify("You do not have enough inventory space.")
+		end
+		
+		return false
+	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity) and item:GetData("durability", 0) > 0
 	end
 }

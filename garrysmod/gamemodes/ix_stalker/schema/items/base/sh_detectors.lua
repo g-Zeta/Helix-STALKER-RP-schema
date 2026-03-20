@@ -12,25 +12,10 @@ ITEM.isArtifactdetector = true
 ITEM.isWeapon = true
 ITEM.noAmmo = true
 ITEM.weaponCategory = "artifactdetector"
-ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
+ITEM.equipIcon = Material("stalkerCoP/ui/icons/misc/equip.png")
 
 
--- Inventory drawing
 if (CLIENT) then
---[[
-	function ITEM:PaintOver(item, w, h)
-		//Equipsquare
-		if (item:GetData("equip")) then
-			surface.SetDrawColor(110, 255, 110, 255)
-			--surface.DrawRect(w - 14, h - 14, 8, 8)
-		else
-			surface.SetDrawColor(255, 110, 110, 255)
-		end
-
-		surface.SetMaterial(item.equipIcon)
-		surface.DrawTexturedRect(w-23,h-23,19,19)
-	end
-]]
 	function ITEM:PopulateTooltip(tooltip)
 		if (self:GetData("equip")) then
 			local name = tooltip:GetRow("name")
@@ -41,14 +26,14 @@ end
 
 ITEM.functions.Sell = {
 	name = "Sell",
-	icon = "icon16/stalker/sell.png",
+	icon = "stalkerCoP/ui/icons/misc/sell.png",
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
 		local sellprice = item.price*0.75
 
 		sellprice = math.Round(sellprice)
-		client:Notify( "Sold for "..(sellprice).." rubles." )
+		client:Notify( "Sold for ".. ix.currency.Get(sellprice) .. "." )
 		client:GetCharacter():GiveMoney(sellprice)
 	end,
 	OnCanRun = function(item)
@@ -64,7 +49,7 @@ ITEM.functions.Value = {
 		local client = item.player
 		local sellprice = math.Round(item.price * 0.75)
 
-		client:Notify( "Item is sellable for "..(sellprice).." rubles." )
+		client:Notify( "Item is sellable for ".. ix.currency.Get(sellprice) .. "." )
 		return false
 	end,
 	OnCanRun = function(item)
@@ -72,56 +57,39 @@ ITEM.functions.Value = {
 	end
 }
 
-ITEM.functions.SetDurability = {
-	name = "Set Durability",
-	tip = "Dura",
-	icon = "icon16/wrench.png",
-	
-	OnCanRun = function(item)
-		local char = item.player:GetChar()
-		if char:HasFlags("N") then
-			return true
-		else
+ITEM.functions.RemoveBattery = {
+	name = "Remove Battery",
+	tip = "Remove the battery from this device.",
+	icon = "icon16/delete.png",
+	sound = "cw/holster4.wav",
+	OnRun = function(item)
+		local client = item.player
+		local charge = item:GetData("durability", 0)
+
+		if (charge <= 0) then
+			client:Notify("This device has no battery to remove.")
 			return false
 		end
-	end,
-	
-	OnRun = function(item)
-		netstream.Start(item.player, "armordurabilityAdjust", item:GetData("durability",10000), item.id)
+
+		local inventory = client:GetCharacter():GetInventory()
+		
+		if (inventory:Add("9vbattery", 1, {power = charge})) then
+			item:SetData("durability", 0)
+			client:Notify("You removed the battery.")
+		else
+			client:Notify("You do not have enough inventory space.")
+		end
+
+		if (item:GetData("equip")) then
+			item:Unequip(client, true)
+		end		
+
 		return false
 	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity) and item:GetData("durability", 0) > 0
+	end
 }
-
-function ITEM:GetDescription()
-	local quant = self:GetData("quantity", 1)
-	local str = self.description
-
-	if self.longdesc and !IsValid(self.entity) then
-		str = str.."\n\n"..(self.longdesc or "").."\n \nDurability: "..(math.floor(self:GetData("durability", 10000))/100).."%"
-	end
-
-	local customData = self:GetData("custom", {})
-	if(customData.desc) then
-		str = customData.desc
-	end
-	
-	if (customData.longdesc) and !IsValid(self.entity) then
-		str = str.."\n"..(customData.longdesc or "").."\n \nDurability: "..(math.floor(self:GetData("durability", 10000))/100).."%"
-	end
-
-    return (str)
-end
-
-function ITEM:GetName()
-	local name = self.name
-	
-	local customData = self:GetData("custom", {})
-	if(customData.name) then
-		name = customData.name
-	end
-	
-	return name
-end
 
 -- On item is dropped, Remove a weapon from the player and keep the ammo in the item.
 ITEM:Hook("drop", function(item)
@@ -175,7 +143,7 @@ end)
 ITEM.functions.EquipUn = { -- sorry, for name order.
 	name = "Unequip",
 	tip = "equipTip",
-	icon = "icon16/stalker/unequip.png",
+	icon = "stalkerCoP/ui/icons/misc/unequip.png",
 	OnRun = function(item)
 		item:Unequip(item.player, true)
 		return false
@@ -191,8 +159,13 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 ITEM.functions.Equip = {
 	name = "Equip",
 	tip = "equipTip",
-	icon = "icon16/stalker/equip.png",
+	icon = "stalkerCoP/ui/icons/misc/equip.png",
 	OnRun = function(item)
+		if (item:GetData("durability", 0) <= 0) then
+			item.player:Notify("This device has no power.")
+			return false
+		end
+
 		item:Equip(item.player)
 		return false
 	end,
@@ -267,12 +240,37 @@ end
 
 function ITEM:OnInstanced(invID, x, y)
 	if !self:GetData("durability") then
-		self:SetData("durability", 10000)
+		self:SetData("durability", 0)
 	end
 
 	if !self:GetData("ammo") then
 		self:SetData("ammo", 0)
 	end
+end
+
+function ITEM:GetDescription()
+	local str = self.description
+
+	if self.longdesc and !IsValid(self.entity) then
+		str = str.."\n\n"..(self.longdesc or "")
+	end
+
+	local customData = self:GetData("custom", {})
+	if(customData.desc) then
+		str = customData.desc
+	end
+	
+	if (customData.longdesc) and !IsValid(self.entity) then
+		str = str.."\n"..(customData.longdesc or "")
+	end
+
+	str = str .. "\n\nPower: " .. math.floor(self:GetData("durability", 0)) .. "%"
+
+    return (str)
+end
+
+function ITEM:GetName()
+	return self.name
 end
 
 function ITEM:Unequip(client, bPlaySound, bRemoveItem)

@@ -1795,7 +1795,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 				end
 			end
 
-			-- Night Vision (Left)
+			-- Night Vision Goggles
 			local NVPanel = equipmentpanel:Add("DPanel")
 			NVPanel:SetSize(SW(92), SH(58))
 			NVPanel:SetPos(SW(14), SH(327))
@@ -1806,6 +1806,40 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			NVIcon:Dock(TOP)
 			NVIcon:SetPlaceholder(placeholders.nvg)
 			NVIcon:SetItemFilter(function(item) return item.isNVG end)
+
+			local NVGDura = NVPanel:Add("DPanel")
+			NVGDura:SetSize(SW(58), SH(4))
+			NVGDura:SetPos(SW(17), SH(51))
+			function NVGDura:Paint(w, h)
+				for _, item in pairs(items) do
+					if item.isNVG and item:GetData("equip", false) then
+						local durability = item:GetData("durability", 100)
+						if durability == nil then return end
+
+						local maxDura = 100
+						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
+
+						if durability > 60 then
+							surface.SetDrawColor(115, 150, 180, 200) -- blue
+						elseif durability > 40 then
+							surface.SetDrawColor(173, 173, 105, 200) -- yellow
+						elseif durability > 20 then
+							surface.SetDrawColor(170, 115, 85, 200)  -- orange
+						elseif durability > 0 then
+							surface.SetDrawColor(160, 45, 45, 200)   -- red
+						else
+							surface.SetDrawColor(0, 0, 0, 0)
+						end
+
+						surface.SetMaterial(duraImage)
+						local drawW = math.floor(w * duraPercentage + 0.5)
+						if drawW > 0 then
+							surface.DrawTexturedRectUV(0, 0, drawW, h, 0, 0, duraPercentage, 1)
+						end
+						return
+					end
+				end
+			end
 
 			-- Artifact Detector (Right)
 			local ArtDetPanel = equipmentpanel:Add("DPanel")
@@ -1825,17 +1859,17 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			function ArtDetDura:Paint(w, h)
 				for _, item in pairs(items) do
 					if item.isArtifactdetector and item:GetData("equip", false) then
-						local durability = item:GetData("durability", 10000)
+						local durability = item:GetData("durability", 100)
 						if durability == nil then return end
 
-						local maxDura = 10000
+						local maxDura = 100
 						local duraPercentage = math.Clamp(durability / maxDura, 0, 1)
 
-						if durability > 6000 then
+						if durability > 60 then
 							surface.SetDrawColor(115, 150, 180, 200) -- blue
-						elseif durability > 4000 then
+						elseif durability > 40 then
 							surface.SetDrawColor(173, 173, 105, 200) -- yellow
-						elseif durability > 2000 then
+						elseif durability > 20 then
 							surface.SetDrawColor(170, 115, 85, 200)  -- orange
 						elseif durability > 0 then
 							surface.SetDrawColor(160, 45, 45, 200)   -- red
