@@ -8,8 +8,6 @@ ITEM.goggleType = "nvg_pnv10t"
 ITEM.price = 15000
 ITEM.flag = "2"
 
-ITEM.drainFactor = 1
-
 ITEM.weight = 0.35
 
 ITEM.img = Material("stalker2/ui/devices/nvg_gen1.png")
