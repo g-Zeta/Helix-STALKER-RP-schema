@@ -17,6 +17,16 @@ ix.config.Add("artdetectorDrainRate", 3, "Seconds between artifact detector batt
 	category = "Electronics Settings"
 })
 
+ix.config.Add("anomDetectorDrainRate", 3, "Seconds between anomaly detector battery drain ticks.", nil, {
+	data = {min = 1, max = 36, decimals = 0},
+	category = "Electronics Settings"
+})
+
+ix.config.Add("geigerDrainRate", 3, "Seconds between geiger counter battery drain ticks.", nil, {
+	data = {min = 1, max = 36, decimals = 0},
+	category = "Electronics Settings"
+})
+
 if (SERVER) then
     local playerTimers = {}
 
@@ -26,7 +36,7 @@ if (SERVER) then
 
         local steamID = ply:SteamID64()
         if (!playerTimers[steamID]) then
-            playerTimers[steamID] = {nvg = 0, flashlight = 0, detector = 0}
+            playerTimers[steamID] = {nvg = 0, flashlight = 0, artdetector = 0, anomdetector = 0, geiger = 0}
         end
 
         local curTime = CurTime()
@@ -35,11 +45,15 @@ if (SERVER) then
         local nvgRate = ix.config.Get("nvgDrainRate", 3)
         local flashlightRate = ix.config.Get("flashlightDrainRate", 3)
         local artdetectorRate = ix.config.Get("artdetectorDrainRate", 3)
+        local anomDetectorRate = ix.config.Get("anomDetectorDrainRate", 3)
+        local geigerRate = ix.config.Get("geigerDrainRate", 3)
 
         local bProcessNVG = ply:GetNWBool("nvg_on", false) and (timers.nvg <= curTime)
         local bProcessFlashlight = ply:FlashlightIsOn() and (timers.flashlight <= curTime)
+        local bProcessAnom = ply:GetNetVar("ixhasanomdetector", false) and (timers.anomdetector <= curTime)
+        local bProcessGeiger = ply:GetNetVar("ixhasgeiger", false) and (timers.geiger <= curTime)
 
-        if (bProcessNVG or bProcessFlashlight) then
+        if (bProcessNVG or bProcessFlashlight or bProcessAnom or bProcessGeiger) then
             local inventory = char:GetInventory()
             if (inventory) then
                 local items = inventory:GetItems()
@@ -88,6 +102,50 @@ if (SERVER) then
                         end
                     end
                     if (timers.flashlight <= curTime) then timers.flashlight = curTime + 1 end
+                end
+
+                -- Anomaly Detector Drain
+                if (bProcessAnom) then
+                    for _, item in pairs(items) do
+                        if (item.isAnomalydetector and item:GetData("equip")) then
+                            local currentPower = item:GetData("durability", 0)
+                            if (currentPower > 0) then
+                                item:SetData("durability", math.max(0, currentPower - 1))
+
+                                if (item:GetData("durability") <= 0) then
+                                    ply:Notify("Your anomaly detector's battery has run out.")
+                                    if (item.functions.EquipUn and item.functions.EquipUn.OnRun) then
+                                        item.functions.EquipUn.OnRun(item)
+                                    end
+                                end
+                            end
+                            timers.anomdetector = curTime + anomDetectorRate
+                            break
+                        end
+                    end
+                    if (timers.anomdetector <= curTime) then timers.anomdetector = curTime + 1 end
+                end
+
+                -- Geiger Counter Drain
+                if (bProcessGeiger) then
+                    for _, item in pairs(items) do
+                        if (item.isGeiger and item:GetData("equip")) then
+                            local currentPower = item:GetData("durability", 0)
+                            if (currentPower > 0) then
+                                item:SetData("durability", math.max(0, currentPower - 1))
+
+                                if (item:GetData("durability") <= 0) then
+                                    ply:Notify("Your geiger counter's battery has run out.")
+                                    if (item.functions.EquipUn and item.functions.EquipUn.OnRun) then
+                                        item.functions.EquipUn.OnRun(item)
+                                    end
+                                end
+                            end
+                            timers.geiger = curTime + geigerRate
+                            break
+                        end
+                    end
+                    if (timers.geiger <= curTime) then timers.geiger = curTime + 1 end
                 end
             end
         end

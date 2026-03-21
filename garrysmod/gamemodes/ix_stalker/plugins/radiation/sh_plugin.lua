@@ -24,14 +24,23 @@ function playerMeta:setRadiation(amount)
 end
 
 function playerMeta:hasGeiger()
-	local char = self:GetChar()
-	local geigercounter = self:GetNetVar("ixhasgeiger")
-
-	if !geigercounter then
+	local char = self:GetCharacter()
+	if not char then
 		return false
-	else
-		return true
 	end
+
+	local inventory = char:GetInventory()
+	if not inventory then
+		return false
+	end
+
+	for _, item in pairs(inventory:GetItems(true)) do
+		if item.isGeiger and item:GetData("equip") and item:GetData("durability", 0) > 0 then
+			return true
+		end
+	end
+
+	return false
 end
 
 function PLUGIN:PostPlayerLoadout(client)

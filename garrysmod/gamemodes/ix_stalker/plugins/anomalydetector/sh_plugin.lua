@@ -7,14 +7,23 @@ local playerMeta = FindMetaTable("Player")
 local entityMeta = FindMetaTable("Entity")
 
 function playerMeta:hasAnomdetector()
-	local char = self:GetChar()
-	local anomdetector = self:GetNetVar("ixhasanomdetector")
-
-	if !anomdetector then
+	local char = self:GetCharacter()
+	if not char then
 		return false
-	else
-		return true
 	end
+
+	local inventory = char:GetInventory()
+	if not inventory then
+		return false
+	end
+
+	for _, item in pairs(inventory:GetItems(true)) do
+		if item.isAnomalydetector and item:GetData("equip") and item:GetData("durability", 0) > 0 then
+			return true
+		end
+	end
+
+	return false
 end
 
 function PLUGIN:PostPlayerLoadout(client)
@@ -36,8 +45,8 @@ function PLUGIN:Think()
 
 		if IsValid(v) then
 			if v:hasAnomdetector() then
-				anoms = {}
-				dist = 1000
+				local anoms = {}
+				local dist = 1000
 				for j,b in pairs(ents.FindInSphere(v:GetPos(), 425)) do
 					if string.sub(b:GetClass(),1,4) == "anom" or string.sub(b:GetClass(),1,6) == "kometa" then
 						table.insert(anoms, b)

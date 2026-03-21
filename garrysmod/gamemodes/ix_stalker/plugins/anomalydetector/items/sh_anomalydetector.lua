@@ -5,35 +5,28 @@ ITEM.height = 1
 ITEM.category = "Electronics"
 ITEM.price = 1600
 ITEM.weight = 0.5
-ITEM.description = "A device that beeps when anomalies are close."
 ITEM.isAnomalydetector = true
 ITEM.flag = "1"
-ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 ITEM.weaponCategory = "Anomaly Detector"
-ITEM.img = Material("spawnicons/models/flaymi/anomaly/dynamics/devices/dev_decoder.png")
+ITEM.img = Material("stalker2/ui/devices/decoder.png")
 
---[[
-if (CLIENT) then
-	function ITEM:PaintOver(item, w, h)
-		if (item:GetData("equip")) then
-			surface.SetDrawColor(110, 255, 110, 255)
-		else
-			surface.SetDrawColor(255, 110, 110, 255)
-		end
-
-		surface.SetMaterial(item.equipIcon)
-		surface.DrawTexturedRect(w-23,h-23,19,19)
-	end
+function ITEM:GetDescription()
+	return "A device that beeps when anomalies are close.\n\nPower: " .. math.floor(self:GetData("durability", 0)) .. "%"
 end
-]]
-ITEM.functions.Equip = { -- sorry, for name order.
+
+ITEM.functions.Equip = {
 	name = "Equip",
 	tip = "useTip",
-	icon = "icon16/stalker/equip.png",
+	icon = "stalkerCoP/ui/icons/misc/equip.png",
 	OnRun = function(item, data)
 		local client = item.player
 		local character = client:GetCharacter()
 		local wepslots = character:GetData("wepSlots",{})
+
+		if (item:GetData("durability", 0) <= 0) then
+			client:Notify("This device has no power.")
+			return false
+		end
 
 		if item:GetData("equip") then
 			client:NotifyLocalized("You are already equipping this PDA.")
@@ -79,10 +72,10 @@ ITEM.functions.Equip = { -- sorry, for name order.
 	end
 }
 
-ITEM.functions.EquipUn = { -- sorry, for name order.
+ITEM.functions.EquipUn = {
 	name = "Unequip",
 	tip = "equipTip",
-	icon = "icon16/stalker/unequip.png",
+	icon = "stalkerCoP/ui/icons/misc/unequip.png",
 	OnRun = function(item)
 		local client = item.player
 		local character = client:GetCharacter()
@@ -117,11 +110,11 @@ end);
 
 ITEM.functions.Sell = {
 	name = "Sell",
-	icon = "icon16/stalker/sell.png",
+	icon = "stalkerCoP/ui/icons/misc/sell.png",
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
-		client:Notify( "Sold for "..(item.price).." rubles." )
+		client:Notify("Sold for ".. ix.currency.Get(sellprice) .. "." )
 		client:GetCharacter():GiveMoney(item.price)
 		
 	end,
@@ -136,13 +129,69 @@ ITEM.functions.Value = {
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
-		client:Notify( "Item is sellable for "..(item.price).." rubles." )
+		client:Notify("Item is sellable for " .. ix.currency.Get(sellprice) .. "." )
 		return false
 	end,
 	OnCanRun = function(item)
 		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip")
 	end
 }
+
+ITEM.functions.RemoveBattery = {
+	name = "Remove Battery",
+	tip = "Remove the battery from this device.",
+	icon = "icon16/delete.png",
+	sound = "cw/holster4.wav",
+	OnRun = function(item)
+		local client = item.player
+		local charge = item:GetData("durability", 0)
+
+		if (charge <= 0) then
+			client:Notify("This device has no battery to remove.")
+			return false
+		end
+
+		local inventory = client:GetCharacter():GetInventory()
+		
+		if (inventory:Add("9vbattery", 1, {power = charge})) then
+			item:SetData("durability", 0)
+			client:Notify("You removed the battery.")
+
+			if (item:GetData("equip")) then
+				if (item.functions.EquipUn and item.functions.EquipUn.OnRun) then
+					item.functions.EquipUn.OnRun(item)
+				end
+			end
+		else
+			client:Notify("You do not have enough inventory space.")
+		end
+		
+		return false
+	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity) and item:GetData("durability", 0) > 0
+	end
+}
+
+function ITEM:OnInstanced()
+	if !self:GetData("durability") then
+		self:SetData("durability", 0)
+	end
+end
+
+function ITEM:OnRemoved()
+	if (self:GetData("equip") == true) then
+		local inventory = ix.item.inventories[self.invID]
+		local owner = inventory and inventory:GetOwner()
+
+		if (IsValid(owner) and owner:IsPlayer()) then
+			owner:SetNetVar("ixhasanomdetector", false)
+			owner:SetData("ixhasanomdetector", false)
+			self:SetData("equip", false)
+			self:SetData("equipSlot", nil)
+		end
+	end
+end
 
 function ITEM:OnLoadout()
 	if self:GetData("equip") then

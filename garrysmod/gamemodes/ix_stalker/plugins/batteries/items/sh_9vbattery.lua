@@ -24,7 +24,7 @@ ITEM.functions.Use = {
             local items = inventory:GetItems()
 
             for _, v in pairs(items) do
-                if (v.isNVG or v.isArtifactdetector or v.isFlashlight) then
+                if (v.isNVG or v.isArtifactdetector or v.isFlashlight or v.isAnomalydetector or v.isGeiger) then
                     local currentDura = v:GetData("durability", 0)
 
                     if (currentDura < 100) then
@@ -48,7 +48,7 @@ ITEM.functions.Use = {
         
         local target = ix.item.instances[data[1]]
 
-        if (target and (target.isNVG or target.isArtifactdetector or target.isFlashlight) and target:GetOwner() == client) then
+        if (target and (target.isNVG or target.isArtifactdetector or target.isFlashlight or target.isAnomalydetector or target.isGeiger) and target:GetOwner() == client) then
             local oldCharge = target:GetData("durability", 0)
             local batteryPower = item:GetData("power", 100)
 
