@@ -39,7 +39,7 @@ ITEM.category = "Artifacts"
 ITEM.width = 1
 ITEM.height = 1
 
-ITEM.flag = "A"
+ITEM.noBusiness = true
 
 ITEM.isArtefact = true
 
@@ -169,8 +169,10 @@ function ITEM:OnLoadout()
 end
  
 ITEM:Hook("drop", function(item)
-    local client = item.player;
-    local character = client:GetChar();
+    local client = item.player
+    if not IsValid(client) then return end
+    local character = client:GetChar()
+    if not character then return end
 
     if (item:GetData("equip")) then
         
@@ -227,8 +229,10 @@ ITEM.functions.Equip =
 
     OnRun = function(item, data)
         local client = item.player
+        if not IsValid(client) then return false end
 		local character = client:GetCharacter()
-        
+        if not character then return false end
+
         if item.buff == "heal" then
             local curheal = character:GetData("ArtiHealAmt") or 0
 			curheal = math.Clamp(curheal,0,1000)
@@ -342,26 +346,28 @@ ITEM.functions.EquipUn =
 
     OnRun = function(item)
         local client = item.player
+        if not IsValid(client) then return false end
 		local character = client:GetCharacter()
-        
+        if not character then return false end
+
         if item.buff == "heal" then
            local curheal = character:GetData("ArtiHealAmt") or 0
             local newheal = (curheal - item.buffval)
             character:SetData("ArtiHealAmt", newheal)
         end
-        
+
         if item.buff == "woundheal" then
             local curwheal = character:GetData("WoundHeal") or 0
             local newwheal = (curwheal - item.buffval)
             character:SetData("WoundHeal", newwheal)
         end
-        
+
         if item.buff == "antirad" then
             local curantirad = character:GetData("AntiRads") or 0
             local newantirad = (curantirad - item.buffval)
             character:SetData("AntiRads", newantirad)
         end
-        
+
         if item.buff == "endbuff" then
             client:RemoveBuff("buff_staminarestore")
         end
@@ -383,13 +389,13 @@ ITEM.functions.EquipUn =
             local newrads = (currads - item.debuffval) or 0
             character:SetData("Rads", newrads)
         end
-        
+
         item:SetData("equip", false)
         item:SetData("equipSlot", nil)
 		item:OnUnequipped()
         return false
     end;
-    
+
     OnCanRun = function(item)
         return (!IsValid(item.entity) and item:GetData("equip") == true)
     end;
@@ -418,7 +424,8 @@ ITEM.functions.Custom = {
     
     OnCanRun = function(item)
         local client = item.player
-        return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+        local char = client:GetCharacter()
+        return char and char:HasFlags("N") and !IsValid(item.entity)
     end
 }
 
@@ -427,11 +434,14 @@ ITEM.functions.Clone = {
     tip = "Clone this item",
     icon = "icon16/wrench.png",
     OnRun = function(item)
-        local client = item.player  
-    
+        local client = item.player
+        if not IsValid(client) then return false end
+        local character = client:GetCharacter()
+        if not character then return false end
+
         client:requestQuery("Are you sure you want to clone this item?", "Clone", function(text)
             if text then
-                local inventory = client:GetCharacter():GetInventory()
+                local inventory = character:GetInventory()
                 
                 if(!inventory:Add(item.uniqueID, 1, item.data)) then
                     client:Notify("Inventory is full")
@@ -442,7 +452,8 @@ ITEM.functions.Clone = {
     end,
     OnCanRun = function(item)
         local client = item.player
-        return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+        local char = client:GetCharacter()
+        return char and char:HasFlags("N") and !IsValid(item.entity)
     end
 }
 
@@ -451,7 +462,7 @@ if (CLIENT) then
 	PrecacheParticleSystem("vortigaunt_charge_token_d")
 	
     function ITEM:DrawEntity(entity, item)
-        if LocalPlayer():GetPos():Distance(entity:GetPos()) > 150 then
+        if LocalPlayer():GetPos():Distance(entity:GetPos()) > 80 then
             entity:SetMaterial("models/shadertest/predator.vmt")
             entity:DrawShadow(false)
 			entity:StopAndDestroyParticles()
@@ -459,23 +470,11 @@ if (CLIENT) then
             entity:SetMaterial(null)
             entity:DrawShadow(true)
 			local visualeffect = CreateParticleSystem(entity,"vortigaunt_charge_token_d",1)
-			timer.Simple(3, function() if entity:IsValid() then entity:StopAndDestroyParticles() end end)
+			timer.Simple(2, function() if entity:IsValid() then entity:StopAndDestroyParticles() end end)
         end
 
         entity:DrawModel()
     end
---[[
-    function ITEM:PaintOver(item, w, h)
-        if (item:GetData("equip")) then
-            surface.SetDrawColor(110, 255, 110, 255)
-        else
-            surface.SetDrawColor(255, 110, 110, 255)
-        end
-
-        surface.SetMaterial(item.equipIcon)
-        surface.DrawTexturedRect(w-23,h-23,19,19)
-    end
-]]
 end
 
 ITEM.functions.Sell = {
@@ -483,8 +482,10 @@ ITEM.functions.Sell = {
     sound = "physics/metal/chain_impact_soft2.wav",
     OnRun = function(item)
         local client = item.player
+        if not IsValid(client) then return false end
 		local character = client:GetCharacter()
-		
+		if not character then return false end
+
         client:Notify( "Sold for "..(item.price/1.25).." rubles." )
         character:GiveMoney(item.price/1.25)
 		
@@ -541,7 +542,11 @@ ITEM.functions.Sell = {
 		end;
     end,
     OnCanRun = function(item)
-        return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+        if IsValid(item.entity) then return false end
+        local owner = item:GetOwner()
+        if not IsValid(owner) then return false end
+        local char = owner:GetCharacter()
+        return char and char:HasFlags("1")
     end
 }
 
@@ -550,18 +555,165 @@ ITEM.functions.Value = {
     sound = "physics/metal/chain_impact_soft2.wav",
     OnRun = function(item)
         local client = item.player
+        if not IsValid(client) then return false end
         client:Notify( "Item is sellable for "..(item.price/1.25).." rubles." )
         return false
     end,
     OnCanRun = function(item)
-        return !IsValid(item.entity) and item:GetOwner():GetChar():HasFlags("1")
+        if IsValid(item.entity) then return false end
+        local owner = item:GetOwner()
+        if not IsValid(owner) then return false end
+        local char = owner:GetCharacter()
+        return char and char:HasFlags("1")
     end
 }
 
 function ITEM:OnEquipped()
-    self.player:EmitSound("stalker/interface/inv_lead_open.ogg")
+    if IsValid(self.player) then
+        self.player:EmitSound("stalker/interface/inv_lead_open.ogg")
+    end
 end
 
 function ITEM:OnUnequipped()
-    self.player:EmitSound("stalker/interface/inv_lead_close.ogg")
+    if IsValid(self.player) then
+        self.player:EmitSound("stalker/interface/inv_lead_close.ogg")
+    end
+end
+
+if (SERVER) then
+	hook.Add("OnPhysgunFreeze", "ixArtifactFreeze", function(weapon, phys, ent, ply)
+		if (ent:GetClass() == "ix_item") then
+			local item = ent:GetItemTable()
+
+			if (item and item.isArtefact and !ply:IsAdmin()) then
+				return false
+			end
+		end
+	end)
+
+	function ITEM:OnEntityCreated(entity)
+		local function ArtifactMove()
+			if (!IsValid(entity)) then
+				return
+			end
+
+			local phys = entity:GetPhysicsObject()
+
+			if (IsValid(phys) and !phys:IsMoveable()) then
+				timer.Simple(math.random(5, 10), ArtifactMove)
+				return
+			end
+
+			local pos = entity:GetPos()
+			local anomalies = ents.FindInSphere(pos, 400)
+			local targets = {}
+
+			for _, v in ipairs(anomalies) do
+				if (v != entity and string.find(v:GetClass(), "anom_")) then
+					table.insert(targets, v)
+				end
+			end
+
+			if (#targets > 0 and IsValid(phys)) then
+				-- Flee from players
+				local players = ents.FindInSphere(pos, 250)
+				local threat
+
+				for _, v in ipairs(players) do
+					if (v:IsPlayer() and v:Alive() and v:GetMoveType() != MOVETYPE_NOCLIP) then
+						threat = v
+						break
+					end
+				end
+
+				if (IsValid(threat)) then
+					local bestPos
+					local maxDist = 0
+
+					for i = 1, 10 do
+						local target = targets[math.random(#targets)]
+						local ang = math.Rand(0, math.pi * 2)
+						local dist = math.Rand(50, 250)
+						local testPos = target:GetPos() + Vector(math.cos(ang) * dist, math.sin(ang) * dist, 0)
+						local distToThreat = testPos:DistToSqr(threat:GetPos())
+
+						if (distToThreat > maxDist) then
+							maxDist = distToThreat
+							bestPos = testPos
+						end
+					end
+
+					if (bestPos) then
+						local trace = util.TraceLine({start = bestPos + Vector(0, 0, 100), endpos = bestPos - Vector(0, 0, 500), filter = {entity, threat}})
+						local destPos = trace.Hit and trace.HitPos or bestPos
+						local gravity = 600
+						local jumpHeight = math.Rand(50, 100)
+						local verticalVel = math.sqrt(2 * gravity * jumpHeight)
+						local flightTime = 2 * verticalVel / gravity
+						local diff = destPos - pos
+						diff.z = 0
+						local horizontalVel = diff / flightTime
+						local vec = horizontalVel + Vector(0, 0, verticalVel) + VectorRand() * 10
+
+						phys:EnableGravity(true)
+						phys:Wake()
+						phys:SetVelocity(vec)
+						phys:AddAngleVelocity(VectorRand() * 200)
+						entity:EmitSound("stalker2/artifacts/artifact_jump"..math.random(1, 3)..".wav")
+						timer.Simple(1.0, ArtifactMove)
+						return
+					end
+				end
+
+				-- Randomly rest on ground
+				if (math.random() < 0.35) then
+					phys:EnableGravity(true)
+					phys:Wake()
+					timer.Simple(math.Rand(1, 2), ArtifactMove)
+					return
+				end
+
+				phys:EnableGravity(true)
+				phys:Wake()
+
+				local target = targets[math.random(#targets)]
+				
+				local ang = math.Rand(0, math.pi * 2)
+				local dist = math.Rand(50, 250)
+				local offset = Vector(math.cos(ang) * dist, math.sin(ang) * dist, 0)
+				local targetPos = target:GetPos() + offset
+
+				local trace = util.TraceLine({
+					start = targetPos + Vector(0, 0, 100),
+					endpos = targetPos - Vector(0, 0, 500),
+					filter = {entity, target}
+				})
+
+				local destPos = trace.Hit and trace.HitPos or targetPos
+				local gravity = 300
+				local jumpHeight = math.Rand(60, 110)
+				local verticalVel = math.sqrt(2 * gravity * jumpHeight)
+				
+				local flightTime = 2 * verticalVel / gravity
+				
+				local diff = destPos - pos
+				diff.z = 0
+				local horizontalVel = diff / flightTime
+				local vec = horizontalVel + Vector(0, 0, verticalVel) + VectorRand() * 10
+				
+				phys:SetVelocity(vec)
+				phys:AddAngleVelocity(VectorRand() * 100)
+				
+				timer.Simple(flightTime + 0.1, ArtifactMove)
+			else
+				if (IsValid(phys) and !phys:IsGravityEnabled()) then
+					phys:EnableGravity(true)
+					phys:Wake()
+				end
+				timer.Simple(math.random(2, 5), ArtifactMove)
+			end
+		end
+
+		timer.Simple(math.random(2, 5), ArtifactMove)
+	end
 end

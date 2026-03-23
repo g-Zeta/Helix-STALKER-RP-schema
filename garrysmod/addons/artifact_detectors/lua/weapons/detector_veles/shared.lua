@@ -92,9 +92,9 @@ SWEP.ViewModelBoneMods = {
 }
 
 SWEP.VElements = {
-	["Veles"] = { type = "Model", model = "models/kali/miscstuff/stalker/detector_veles.mdl", bone = "lwrist", rel = "", pos = Vector(3.635, 1.2, -0.801), angle = Angle(-43.248, 1.169, 111.039), size = Vector(0.699, 0.699, 0.699), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 1, bodygroup = {} },
+	["Veles"] = { type = "Model", model = "models/kali/miscstuff/stalker/detector_veles.mdl", bone = "lwrist", rel = "", pos = Vector(3.635, 1.2, -0.801), angle = Angle(-43.248, 1.169, 111.039), size = Vector(0.699, 0.699, 0.699), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 1, bodygroup = {[1] = 1} },
 	["element_name"] = { type = "Model", model = "models/kali/miscstuff/stalker/bolt.mdl", bone = "Base", rel = "", pos = Vector(0, 0, 0), angle = Angle(12.857, -29.222, 180), size = Vector(0.755, 0.755, 0.755), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
-	["screen"] = { type = "Quad", bone = "Base", rel = "Veles", pos = Vector(1.5, 0.1, .710), angle = Angle(0, -90, 0), size = 0.040, draw_func = nil}
+	["screen"] = { type = "Quad", bone = "Base", rel = "Veles", pos = Vector(1.5, 0.1, .760), angle = Angle(0, -90, 0), size = 0.040, draw_func = nil}
 }
 
 
@@ -233,37 +233,8 @@ end
 
 function SWEP:Think()
 	if CLIENT then
-			self.VElements["screen"].draw_func = function( weapon )
-			
-				local function DrawPointOnThatShit(material, x, y, ang, size )
-					surface.SetMaterial(Material(material))
-					surface.DrawTexturedRectRotated(x, y, size, size, ang )
-				end
-			
-				local plypos = self.Owner:GetPos()
-					for k, v in pairs( ents.GetAll() ) do//pairs(shits) do
-						
-						if ( v:IsValid() ) then
-						
-						local tstdeg = ( (v:GetPos() - self.Owner:GetPos()):Angle().yaw - self.Owner:EyeAngles().yaw ) - 90
-						local dest = self.Owner:GetPos():Distance(v:GetPos())-- plypos.x - v:GetPos().x, plypos.y - v:GetPos().y
-						local x, y = PointOnCircle( tstdeg, dest/30, -2, 21 )
-						
-						if dest < 700 then
-							if v:GetClass() == "ix_item" then
-								if anomalies[string.lower(v:GetModel())] then
-									--print(v:GetClass())
-									surface.SetDrawColor( 0, 255, 0, 255 )
-									DrawPointOnThatShit("icon16/control_play.png", x, y, v:GetAngles().yaw, 2 )
-									--draw.SimpleText(".", "QuadFont", 0, 0, Color(0,255,0,255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-								end
-							end
-						end
-							
-						end
-						
-					end
-		end
+		self.ArtifactDetectionTimes = self.ArtifactDetectionTimes or {}
+		self.LastArtifactBeepTimes = self.LastArtifactBeepTimes or {}
 		local anoms = {}
 		for k,v in pairs(ents.GetAll()) do
 			if v:GetClass() == "ix_item" then
@@ -272,17 +243,60 @@ function SWEP:Think()
 				end
 			end
 		end
-		local dist = 501
-		local ent = nil
-		for k,v in pairs(anoms) do
-			if v:GetPos():Distance(self.Owner:GetPos()) < dist then
-				dist = v:GetPos():Distance(self.Owner:GetPos())
-				ent = v
+
+		self.VElements["screen"].draw_func = function( weapon )
+		
+			local function DrawPointOnThatShit(material, x, y, ang, size )
+				surface.SetMaterial(Material(material))
+				surface.DrawTexturedRectRotated(x, y, size, size, ang )
 			end
-		end
-		if dist < 500 and self.LastBeep + dist/500 - CurTime() <= 0 then
-			self.LastBeep = CurTime()
-			self.Owner:EmitSound(Sound("stalkerdetectors/echo.wav"), 100, 100)//math.Clamp(300-dist/2,50,300))
+		
+			-- Scanner effect
+			local cx, cy = -3, 3
+			local scanRad = 25
+			
+			local scanAng = -(CurTime() * 150) % 360
+			
+			surface.SetTexture(0)
+			for i = 0, 180, 2 do
+				if math.sin(math.rad(scanAng + i)) <= 0 then
+					local alpha = (1 - (i / 180)) * 25
+					surface.SetDrawColor(0, 255, 0, alpha)
+					local x1, y1 = PointOnCircle(scanAng + i, scanRad, cx, cy)
+					local x2, y2 = PointOnCircle(scanAng + i + 2, scanRad, cx, cy)
+					surface.DrawPoly({{ x = cx, y = cy }, { x = x1, y = y1 }, { x = x2, y = y2 }})
+				end
+			end
+
+			local plypos = self.Owner:GetPos()
+			for k, v in pairs( anoms ) do
+				if ( v:IsValid() ) then
+					local ang = (v:GetPos() - plypos):Angle()
+					local diff = math.AngleDifference(ang.yaw, self.Owner:EyeAngles().yaw)
+					local dest = plypos:Distance(v:GetPos())
+
+					if math.abs(diff) < 90 and dest < 700 then
+						local adiff = math.AngleDifference(diff - 90, scanAng)
+						if adiff > 0 and adiff < 15 then
+							self.ArtifactDetectionTimes[v:EntIndex()] = CurTime()
+
+							if (self.LastArtifactBeepTimes[v:EntIndex()] or 0) < CurTime() - 1 then
+								self.Owner:EmitSound(Sound("stalker2/detectors/detector_veles.wav"), 100, 100)
+								self.LastArtifactBeepTimes[v:EntIndex()] = CurTime()
+							end
+						end
+
+						local lastSeen = self.ArtifactDetectionTimes[v:EntIndex()] or 0
+						local x, y = PointOnCircle( diff - 90, dest/30, -3, 3 )
+						
+						if CurTime() - lastSeen < 1.5 then
+							local alpha = 255 * (1 - (CurTime() - lastSeen) / 1.5)
+							surface.SetDrawColor( 255, 0, 0, alpha )
+							DrawPointOnThatShit("sprites/glow04_noz", x, y, v:GetAngles().yaw, 6 )
+						end
+					end
+				end
+			end
 		end
 	end
 end

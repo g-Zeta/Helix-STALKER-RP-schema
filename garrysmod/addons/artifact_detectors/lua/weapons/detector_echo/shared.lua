@@ -183,7 +183,7 @@ function SWEP:Think()
 				end
 			end
 		end
-		local dist = 181
+		local dist = 851
 		local ent = nil
 		for k,v in pairs(anoms) do
 			local pos = v:GetPos()
@@ -192,21 +192,22 @@ function SWEP:Think()
 			local sos = dek:GetNormalized()
 			local dot = sos:Dot(aimvec)
 			local clampdot = (1-math.Clamp(dot, 0, 0.5))
-			if v:GetPos():Distance(self.Owner:GetPos())*clampdot < dist then
-				dist = v:GetPos():Distance(self.Owner:GetPos())*clampdot
+			local tdist = v:GetPos():Distance(self.Owner:GetPos())
+			if tdist < 850 and tdist*clampdot < dist then
+				dist = tdist*clampdot
 				ent = v
 			end
 		end
-		if dist < 180 then
-			if self.LastBeep + dist/180 - CurTime() <= 0 then
-				self.LastBeep = CurTime()
+		if dist < 850 then
+			if self.LastBeep + dist/450 - CurTime() <= 0 then
+				self.LastBeep = CurTime() + 0.1
 				self.VElements["echo"].skin = 2
 				timer.Simple(0.1, function()
 					if IsValid(self) and IsValid(self.Weapon) then
 						self.VElements["echo"].skin = 1
 					end
 				end)
-				self.Owner:EmitSound(Sound("stalkerdetectors/echo.wav"), 100, 100)//math.Clamp(250-dist/2,50,250))
+				self.Owner:EmitSound(Sound("stalker2/detectors/detector_echo.wav"), 100, 100)//math.Clamp(250-dist/2,50,250))
 			end
 		end
 	end

@@ -236,7 +236,7 @@ if CLIENT then
 				surface.SetDrawColor(255, 255, 255, 255)
 				pos:Rotate(Angle(0, -1*ang.Yaw, 0));
 				if (math.abs(pos.z)<2000) then
-					surface.DrawTexturedRectRotated( 131, 118, 150, 150, ((pos:Angle().y % 15) / 15 < 0.5 and pos:Angle().y - (pos:Angle().y % 15) or (pos:Angle().y % 15) / 15 >= 0.5 and pos:Angle().y - (pos:Angle().y % 15)  + 15) + 30  )//�������. �� ������� ������� ������� ���� �� 15(� ��������� 24 �������. 360/24 = 15) � ���� ������� ������ �������� 15, �� �� ���� �������� �������, � ���� ������� ������ �������� 15, �� �� ���� �������� ������� � ���������� 15. ��� ����� ������. ����� ������� �� �������� ����, ������� 15. ������� 'Black Pheonix'� �� �����.
+					surface.DrawTexturedRectRotated( 131, 118, 150, 150, ((pos:Angle().y % 15) / 15 < 0.5 and pos:Angle().y - (pos:Angle().y % 15) or (pos:Angle().y % 15) / 15 >= 0.5 and pos:Angle().y - (pos:Angle().y % 15)  + 15) + 15  )//�������. �� ������� ������� ������� ���� �� 15(� ��������� 24 �������. 360/24 = 15) � ���� ������� ������ �������� 15, �� �� ���� �������� �������, � ���� ������� ������ �������� 15, �� �� ���� �������� ������� � ���������� 15. ��� ����� ������. ����� ������� �� �������� ����, ������� 15. ������� 'Black Pheonix'� �� �����.
 				end
 			end
 
@@ -258,7 +258,7 @@ function SWEP:Think()
 				end
 			end
 		end
-		local dist = 401
+		local dist = 501
 		local ent = nil
 		for k,v in pairs(anoms) do
 			if v:GetPos():Distance(self.Owner:GetPos()) < dist then
@@ -266,9 +266,9 @@ function SWEP:Think()
 				ent = v
 			end
 		end
-		if dist < 350 and self.LastBeep + dist/350 - CurTime() <= 0 then
-			self.LastBeep = CurTime()
-			self.Owner:EmitSound(Sound("stalkerdetectors/echo.wav"), 100, 100)//math.Clamp(250-dist/2,50,250))
+		if dist < 500 and self.LastBeep + dist/500 - CurTime() <= 0 then
+			self.LastBeep = CurTime() + 0.15
+			self.Owner:EmitSound(Sound("stalker2/detectors/detector_bear.wav"), 100, 100)//math.Clamp(250-dist/2,50,250))
 		end
 	end
 end

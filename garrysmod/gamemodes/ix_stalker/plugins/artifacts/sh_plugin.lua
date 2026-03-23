@@ -32,6 +32,7 @@ if SERVER then
 			local character = v:GetCharacter()
 			
 			if not character then continue end
+			if v:HasGodMode() then continue end
 
 			local maxhealth = v:GetMaxHealth() or 100
 			local artiheal = character:GetData("ArtiHealAmt", 0)	-- Healing
@@ -164,9 +165,12 @@ if SERVER then
 end 
 
 hook.Add("PlayerDeath","ArtiWipe", function(client)	-- Reset on death
+	if not IsValid(client) then return end
 	local character = client:GetChar()
 	if not character then return end
-	for k,v in pairs(character:GetInv():GetItems()) do
+	local inv = character:GetInventory()
+	if not inv then return end
+	for k,v in pairs(inv:GetItems()) do
 		if v.isArtefact then
 			v:SetData("equip",nil)
 		end
