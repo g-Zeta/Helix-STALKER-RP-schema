@@ -1,15 +1,32 @@
 
 -- Here is where all of your shared hooks should go.
 
+hook.Add("CAMI.PlayerHasAccess", "ixBotCAMIBypass", function(client, privilege, callback)
+	if IsValid(client) and client:IsBot() then
+		callback(true, "Bot bypass")
+		return true
+	end
+end)
+
 -- Disable entity driving.
 function Schema:CanDrive(client, entity)
 	return false
 end
 
 function Schema:CanPlayerUseBusiness(client, uniqueID)
-	if !client:GetCharacter():HasFlags("1") and !client:GetCharacter():HasFlags("6") and !client:GetCharacter():HasFlags("5") and !client:GetCharacter():HasFlags("7") then
-    	return false
-    end
+	local character = client:GetCharacter()
+	if not character then return false end
+
+	local itemTable = ix.item.list[uniqueID]
+	if itemTable and itemTable.noBusiness then
+		if character:GetFaction() ~= FACTION_STAFF and not client:IsAdmin() then
+			return false
+		end
+	end
+
+	if not character:HasFlags("1") and not character:HasFlags("6") and not character:HasFlags("5") and not character:HasFlags("7") then
+		return false
+	end
 end
 
 function Schema:PlayerNoClip(client)
@@ -20,11 +37,6 @@ function Schema:PlayerNoClip(client)
 	end
 end
 
-function Schema:ShouldShowPlayerOnScoreboard(client)
-	if client:GetCharacter():GetFaction() == FACTION_ADMINS then
-		return false
-	end
-end
 
 function Schema:CanTransferItem(itemObject, curInv, inventory)
 	if (SERVER) then
@@ -314,12 +326,14 @@ ix.config.Add("characterCreationBudget", 50000, "Budget for character creation l
 	category = "Main menu"
 })
 
-ix.config.Add("inventoryWidth", 8, "How many slots in a row there is in a default inventory.", nil, {
-	data = {min = 1, max = 8},
-	category = "characters"
-})
+hook.Add("InitializedConfig", "ixStalkerInventoryConfig", function()
+	ix.config.Add("inventoryWidth", 8, "How many slots in a row there is in a default inventory.", nil, {
+		data = {min = 1, max = 8},
+		category = "characters"
+	})
 
-ix.config.Add("inventoryHeight", 20, "How many slots in a column there is in a default inventory.", nil, {
-	data = {min = 1, max = 20},
-	category = "characters"
-})
+	ix.config.Add("inventoryHeight", 20, "How many slots in a column there is in a default inventory.", nil, {
+		data = {min = 1, max = 20},
+		category = "characters"
+	})
+end)

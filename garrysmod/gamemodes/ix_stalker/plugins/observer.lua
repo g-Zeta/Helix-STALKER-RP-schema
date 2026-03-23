@@ -203,17 +203,21 @@ if (CLIENT) then
 	end
 
 	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+		if bDrawingDepth or bDrawingSkybox then return end
 		local client = LocalPlayer()
 
 		if (ix.option.Get("observerESP", true) and client:GetMoveType() == MOVETYPE_NOCLIP and
 			!client:InVehicle() and CAMI.PlayerHasAccess(client, "Helix - Observer", nil)) then
 			
 			if (ix.option.Get("observerESP - Radiation", true)) then
+				local displayRange = ix.option.Get("radiationDisplayRange", 2048)
 				for _, v in ipairs(ents.GetAll()) do
 					if (string.match(v:GetClass(), "rad_")) then
 						local range = v:GetNWFloat("Range", 256)
-						render.SetColorMaterial()
-						render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 255), true)
+						if client:GetPos():Distance(v:GetPos()) <= displayRange + range then
+							render.SetColorMaterial()
+							render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 255), true)
+						end
 					end
 				end
 			end

@@ -1,6 +1,12 @@
 
 local buttonPadding = ScreenScale(14) * 0.5
 local animationTime = 0.5
+local matGradients = {
+	["d"] = Material("vgui/gradient-d"),
+	["u"] = Material("vgui/gradient-u"),
+	["l"] = Material("vgui/gradient-l"),
+	["r"] = Material("vgui/gradient-r"),
+}
 
 -- base menu button
 DEFINE_BASECLASS("DButton")
@@ -48,10 +54,9 @@ function PANEL:SizeToContents()
 end
 
 function PANEL:PaintBackground(width, height)
-	-- Use a configurable gradient
-	local materialName = "vgui/gradient-" .. (self:GetGradientDirection() or "d")
+	local direction = self:GetGradientDirection() or "d"
 	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
-	surface.SetMaterial(Material(materialName))
+	surface.SetMaterial(matGradients[direction] or matGradients["d"])
 	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
 	surface.DrawTexturedRect(0, 0, width, height)
 end
@@ -169,8 +174,7 @@ function PANEL:PaintBackground(width, height)
 	-- Use the animated alpha for hover effect, but be more visible when selected.
 	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
 
-	-- Draw a gradient background.
-	surface.SetMaterial(Material("vgui/gradient-l"))
+	surface.SetMaterial(matGradients["l"])
 	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
 	surface.DrawTexturedRect(0, 0, width, height)
 end
@@ -327,8 +331,7 @@ end
 function PANEL:PaintBackground(width, height)
 	local alpha = self.selected and 50 or (self.currentBackgroundAlpha or 0)
 
-	-- Draw a gradient background.
-	surface.SetMaterial(Material("vgui/gradient-d"))
+	surface.SetMaterial(matGradients["d"])
 	surface.SetDrawColor(ColorAlpha(self.backgroundColor, alpha))
 	surface.DrawTexturedRect(0, 0, width, height)
 

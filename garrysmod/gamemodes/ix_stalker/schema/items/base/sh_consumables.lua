@@ -95,7 +95,8 @@ ITEM.functions.Custom = {
 	
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 
@@ -157,7 +158,8 @@ ITEM.functions.Clone = {
 	end,
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 

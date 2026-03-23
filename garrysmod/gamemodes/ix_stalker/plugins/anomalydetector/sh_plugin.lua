@@ -7,66 +7,99 @@ local playerMeta = FindMetaTable("Player")
 local entityMeta = FindMetaTable("Entity")
 
 function playerMeta:hasAnomdetector()
-	local char = self:GetCharacter()
-	if not char then
-		return false
-	end
-
-	local inventory = char:GetInventory()
-	if not inventory then
-		return false
-	end
-
-	for _, item in pairs(inventory:GetItems(true)) do
-		if item.isAnomalydetector and item:GetData("equip") and item:GetData("durability", 0) > 0 then
-			return true
-		end
-	end
-
-	return false
+	return self:GetNetVar("ixhasanomdetector", false)
 end
 
-function PLUGIN:PostPlayerLoadout(client)
-	if client:GetData("ixhasanomdetector", false) then
-		client:SetNetVar("ixhasanomdetector", true)
-	end
-end
+function PLUGIN:StartDetectorTimer(client)
+	if (!IsValid(client)) then return end
 
-local thinktime = 0
+	local timerID = "ixAnom_" .. client:SteamID64()
 
-function PLUGIN:Think()
-	if thinktime > CurTime() then return end
-	thinktime = CurTime()
-	
-	for k,v in pairs(player.GetAll()) do
-		if v.LastBeep == nil then 
-			v.LastBeep = 0 
+	timer.Create(timerID, 0.5, 0, function()
+		if (!IsValid(client) or !client:Alive()) then
+			timer.Remove(timerID)
+			return
 		end
 
-		if IsValid(v) then
-			if v:hasAnomdetector() then
-				local anoms = {}
-				local dist = 1000
-				for j,b in pairs(ents.FindInSphere(v:GetPos(), 425)) do
-					if string.sub(b:GetClass(),1,4) == "anom" or string.sub(b:GetClass(),1,6) == "kometa" then
-						table.insert(anoms, b)
-					end
-				end
+		local pos = client:GetPos()
+		local closestDist = 1000
 
-				for j,b in pairs(anoms) do
-					if v:GetPos():Distance(b:GetPos()) < dist then
-						dist = v:GetPos():Distance(b:GetPos())
-					end
-				end
-
-				if dist < 900 then
-					if v.LastBeep + dist/800 - CurTime() <= 0 then
-						v.LastBeep = CurTime()
-						local randomsound = "stalkerdetectors/anom_prox.wav"
-						v:EmitSound(randomsound)
-					end
+		for _, ent in pairs(ents.FindInSphere(pos, 425)) do
+			local class = ent:GetClass()
+			if (string.sub(class, 1, 4) == "anom" or string.sub(class, 1, 6) == "kometa") then
+				local dist = pos:Distance(ent:GetPos())
+				if (dist < closestDist) then
+					closestDist = dist
 				end
 			end
 		end
+
+		if (closestDist < 900) then
+			client:EmitSound("stalkerdetectors/anom_prox.wav")
+			timer.Adjust(timerID, closestDist / 800, 0)
+		else
+			timer.Adjust(timerID, 0.5, 0)
+		end
+	end)
+end
+
+function PLUGIN:StopDetectorTimer(client)
+	if (!IsValid(client)) then return end
+
+	timer.Remove("ixAnom_" .. client:SteamID64())
+end
+
+function PLUGIN:PostPlayerLoadout(client)
+	self:StopDetectorTimer(client)
+	client:SetNetVar("ixhasanomdetector", false)
+	client:SetData("ixhasanomdetector", false)
+
+	timer.Simple(0, function()
+		if (!IsValid(client)) then return end
+
+		local character = client:GetCharacter()
+		if (!character) then return end
+
+		local inventory = character:GetInventory()
+		if (!inventory) then return end
+
+		local hasEquipped = false
+		for _, item in pairs(inventory:GetItems()) do
+			if (item.isAnomalydetector and item:GetData("equip")) then
+				hasEquipped = true
+				break
+			end
+		end
+
+		client:SetNetVar("ixhasanomdetector", hasEquipped)
+		client:SetData("ixhasanomdetector", hasEquipped)
+
+		if (hasEquipped) then
+			self:StartDetectorTimer(client)
+		end
+	end)
+end
+
+function PLUGIN:PlayerDeath(client)
+	self:StopDetectorTimer(client)
+	client:SetNetVar("ixhasanomdetector", false)
+	client:SetData("ixhasanomdetector", false)
+end
+
+function PLUGIN:CharacterLoaded(character)
+	local client = character:GetPlayer()
+	if (!IsValid(client)) then return end
+
+	self:StopDetectorTimer(client)
+
+	if (client.SetNetVar) then
+		client:SetNetVar("ixhasanomdetector", false)
 	end
+	if (client.SetData) then
+		client:SetData("ixhasanomdetector", false)
+	end
+end
+
+function PLUGIN:PlayerDisconnected(client)
+	self:StopDetectorTimer(client)
 end

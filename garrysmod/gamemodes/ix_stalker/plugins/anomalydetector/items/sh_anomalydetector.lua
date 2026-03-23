@@ -29,10 +29,20 @@ ITEM.functions.Equip = {
 		end
 
 		if item:GetData("equip") then
-			client:NotifyLocalized("You are already equipping this PDA.")
+			client:Notify("You already have this detector equipped.")
 			return false
 		end
-					
+
+		local inventory = character:GetInventory()
+		if (inventory) then
+			for _, v in pairs(inventory:GetItems()) do
+				if (v.id != item.id and v.isAnomalydetector and v:GetData("equip")) then
+					client:Notify("You already have an anomaly detector equipped.")
+					return false
+				end
+			end
+		end
+
 		if wepslots[item.weaponCategory] then
 			client:NotifyLocalized("weaponSlotFilled", item.weaponCategory)
 			return false
@@ -63,6 +73,7 @@ ITEM.functions.Equip = {
 		end
 		item.player:SetData("ixhasanomdetector", true)
 		item.player:SetNetVar("ixhasanomdetector", true)
+		ix.plugin.list["anomalydetector"]:StartDetectorTimer(client)
 		item:OnEquipped()
 		return false
 	end,
@@ -84,6 +95,7 @@ ITEM.functions.EquipUn = {
 		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasanomdetector", false)
 		item.player:SetData("ixhasanomdetector", false)
+		ix.plugin.list["anomalydetector"]:StopDetectorTimer(client)
 		wepslots[item.weaponCategory] = nil
 		character:SetData("wepSlots",wepslots)
 		item:OnUnequipped()
@@ -105,6 +117,7 @@ ITEM:Hook("drop", function(item)
 		item:SetData("equipSlot", nil)
 		item.player:SetNetVar("ixhasanomdetector", false)
 		item.player:SetData("ixhasanomdetector", false)
+		ix.plugin.list["anomalydetector"]:StopDetectorTimer(client)
     end;
 end);
 
@@ -114,9 +127,10 @@ ITEM.functions.Sell = {
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
-		client:Notify("Sold for ".. ix.currency.Get(sellprice) .. "." )
-		client:GetCharacter():GiveMoney(item.price)
-		
+		local sellprice = math.Round(item.price / 1.32)
+		client:Notify("Sold for " .. ix.currency.Get(sellprice) .. ".")
+		client:GetCharacter():GiveMoney(sellprice)
+
 	end,
 	OnCanRun = function(item)
 		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip")
@@ -129,7 +143,8 @@ ITEM.functions.Value = {
 	sound = "physics/metal/chain_impact_soft2.wav",
 	OnRun = function(item)
 		local client = item.player
-		client:Notify("Item is sellable for " .. ix.currency.Get(sellprice) .. "." )
+		local sellprice = math.Round(item.price / 1.32)
+		client:Notify("Item is sellable for " .. ix.currency.Get(sellprice) .. ".")
 		return false
 	end,
 	OnCanRun = function(item)
@@ -152,8 +167,10 @@ ITEM.functions.RemoveBattery = {
 		end
 
 		local inventory = client:GetCharacter():GetInventory()
-		
-		if (inventory:Add("9vbattery", 1, {power = charge})) then
+		local x, y = inventory:FindEmptySlot(1, 1)
+
+		if (x and y) then
+			inventory:Add("9vbattery", 1, {power = charge})
 			item:SetData("durability", 0)
 			client:Notify("You removed the battery.")
 
@@ -187,6 +204,7 @@ function ITEM:OnRemoved()
 		if (IsValid(owner) and owner:IsPlayer()) then
 			owner:SetNetVar("ixhasanomdetector", false)
 			owner:SetData("ixhasanomdetector", false)
+			ix.plugin.list["anomalydetector"]:StopDetectorTimer(owner)
 			self:SetData("equip", false)
 			self:SetData("equipSlot", nil)
 		end

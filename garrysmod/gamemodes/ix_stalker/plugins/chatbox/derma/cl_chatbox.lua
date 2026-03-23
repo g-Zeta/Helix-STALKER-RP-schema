@@ -259,7 +259,7 @@ AccessorFunc(PANEL, "id", "ID", FORCE_STRING)
 AccessorFunc(PANEL, "button", "Button") -- button panel that this panel corresponds to
 
 function PANEL:Init()
-	self:DockMargin(24, 6, 12, 14) -- smaller top margin to help blend tab button/history panel transition
+	self:DockMargin(24, 6, 12, 14)
 	self:SetPaintedManually(true)
 
 	local bar = self:GetVBar()
@@ -276,11 +276,11 @@ function PANEL:SetVisible(bState)
 end
 
 DEFINE_BASECLASS("DScrollPanel")
-function PANEL:PerformLayout(width, height)
+function PANEL:PerformLayoutInternal()
 	local bar = self:GetVBar()
-	local bScroll = !ix.gui.chat:GetActive() or bar.Scroll == bar.CanvasSize -- only scroll when we're not at the bottom/inactive
+	local bScroll = !ix.gui.chat:GetActive() or bar.Scroll >= bar.CanvasSize - 1
 
-	BaseClass.PerformLayout(self, width, height)
+	BaseClass.PerformLayoutInternal(self)
 
 	if (bScroll) then
 		self:ScrollToBottom()
@@ -343,6 +343,14 @@ function PANEL:AddLine(elements, bShouldScroll)
 					return "<font=ixChatFontItalics>" .. value:sub(2, -2) .. "</font>"
 				end
 			end)
+		end
+	end
+
+	if (bShouldScroll) then
+		local bar = self:GetVBar()
+
+		if (!ix.gui.chat:GetActive() or bar.Scroll >= bar.CanvasSize - 5) then
+			self.ixScrollUntil = CurTime() + 0.3
 		end
 	end
 
@@ -868,7 +876,7 @@ function PANEL:Init()
 
 	self.autocomplete = self.tabs:Add("ixChatboxAutocomplete")
 	self.autocomplete:Dock(FILL)
-	self.autocomplete:DockMargin(12, 0, 12, 12) -- top margin is 3 to account for tab 1px border
+	self.autocomplete:DockMargin(12, 0, 12, 12)
 	self.autocomplete:SetZPos(3)
 
 	self.alpha = 0

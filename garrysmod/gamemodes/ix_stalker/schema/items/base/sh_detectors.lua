@@ -72,17 +72,19 @@ ITEM.functions.RemoveBattery = {
 		end
 
 		local inventory = client:GetCharacter():GetInventory()
-		
-		if (inventory:Add("9vbattery", 1, {power = charge})) then
+		local x, y = inventory:FindEmptySlot(1, 1)
+
+		if (x and y) then
+			inventory:Add("9vbattery", 1, {power = charge})
 			item:SetData("durability", 0)
 			client:Notify("You removed the battery.")
+
+			if (item:GetData("equip")) then
+				item:Unequip(client, true)
+			end
 		else
 			client:Notify("You do not have enough inventory space.")
 		end
-
-		if (item:GetData("equip")) then
-			item:Unequip(client, true)
-		end		
 
 		return false
 	end,

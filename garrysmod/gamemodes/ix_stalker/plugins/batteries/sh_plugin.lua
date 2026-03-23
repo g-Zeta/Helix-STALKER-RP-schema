@@ -114,6 +114,7 @@ if (SERVER) then
 
                                 if (item:GetData("durability") <= 0) then
                                     ply:Notify("Your anomaly detector's battery has run out.")
+                                    item.player = ply
                                     if (item.functions.EquipUn and item.functions.EquipUn.OnRun) then
                                         item.functions.EquipUn.OnRun(item)
                                     end
@@ -136,6 +137,7 @@ if (SERVER) then
 
                                 if (item:GetData("durability") <= 0) then
                                     ply:Notify("Your geiger counter's battery has run out.")
+                                    item.player = ply
                                     if (item.functions.EquipUn and item.functions.EquipUn.OnRun) then
                                         item.functions.EquipUn.OnRun(item)
                                     end
@@ -172,15 +174,22 @@ if (SERVER) then
         end
     end
 
-	netstream.Hook("powerdurabilityAdjust", function(client, amount, id)
+	util.AddNetworkString("ixPowerDurabilityAdjust")
+
+	net.Receive("ixPowerDurabilityAdjust", function(len, client)
+		local amount = net.ReadUInt(7)
+		local id = net.ReadUInt(32)
+
+		if (!client:GetCharacter() or !client:GetCharacter():HasFlags("N")) then return end
+
 		local item = ix.item.instances[id]
 		if (!item) then return end
 
-        local ent = item:GetEntity()
-        if (IsValid(ent) or item:GetOwner() == client) then
-            (ent or client):EmitSound("buttons/combine_button1.wav", 50, 170)
-			amount = math.Clamp(math.floor(amount), 0, 100)
-			
+		local ent = item:GetEntity()
+		if (IsValid(ent) or item:GetOwner() == client) then
+			(ent or client):EmitSound("buttons/combine_button1.wav", 50, 170)
+			amount = math.Clamp(amount, 0, 100)
+
 			if (item.isBattery) then
 				item:SetData("power", amount)
 			else
@@ -213,14 +222,19 @@ if (CLIENT) then
 		self.submit:SetText("Confirm")
 		self.submit.DoClick = function()
 		    local dura = self.slider:GetValue()
-			netstream.Start("powerdurabilityAdjust", dura, self.itemID)
+			net.Start("ixPowerDurabilityAdjust")
+				net.WriteUInt(dura, 7)
+				net.WriteUInt(self.itemID, 32)
+			net.SendToServer()
 			self:Close()
 		end
 	end
 
 	vgui.Register("PowerDurabilityAdjust", PANEL, "DFrame")
 
-	netstream.Hook("powerdurabilityAdjust", function(amount, id)
+	net.Receive("ixPowerDurabilityAdjust", function()
+		local amount = net.ReadUInt(7)
+		local id = net.ReadUInt(32)
 		local panel = vgui.Create("PowerDurabilityAdjust")
 		panel.slider:SetValue(amount)
 		panel.itemID = id

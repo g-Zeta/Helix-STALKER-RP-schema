@@ -1,0 +1,21 @@
+| Alias       | Entity Classes                                         |
+|-------------|--------------------------------------------------------|
+| burner      | anom_jarka, anom_par (both variants)                    |
+| burner1     | anom_jarka                                             |
+| burner2     | anom_par                                               |
+| electro     | anom_electra_anomaly, anom_electra_anomaly_type2 (both) |
+| electro1    | anom_electra_anomaly                                   |
+| electro2    | anom_electra_anomaly_type2                             |
+| bubble      | anom_maysorubka_anomaly, anom_maysorubka_anomaly_type2 (both) |
+| bubble1     | anom_maysorubka_anomaly                                |
+| bubble2     | anom_maysorubka_anomaly_type2                          |
+| whirligig   | anom_voronka_anomaly                                   |
+| fruitpunch  | anom_gazirovka_anomaly, anom_kisel_anomaly (both)      |
+| fruitpunch1 | anom_gazirovka_anomaly                                 |
+| fruitpunch2 | anom_kisel_anomaly                                     |
+| karusel     | anom_tramplin_anomaly                                  |
+
+Usage: /anomaddspawner <radius> "<types>"
+Example: /anomaddspawner 256 "burner electro bubble"
+Example: /anomaddspawner 256 "burner1 electro2"
+Multiple types can be combined in one string.

@@ -38,7 +38,7 @@ end
 
 function ENT:Think()
 	local range = self:GetNWInt("Range", 256)
-	local radiationamount = 12
+	local radiationamount = ix.config.Get("radDamageHeavy", 4)
 	if (self.delayTime or 0) < CurTime() then
 		for k, v in pairs(ents.FindInSphere(self.Entity:GetPos(), range + 256)) do
 			if v:IsPlayer() and v:GetCharacter() then
@@ -55,9 +55,9 @@ function ENT:Think()
 				
 				local distance = v:GetPos():Distance(self:GetPos())
 				if distance <= range then
-					local delay = 0.2
+					local delay = 0.6
 					if (distance <= (range / 2)) then
-						delay = 0
+						delay = 0.2
 					end
 					self.delayTime = CurTime() + delay
 					local TEMP_TargetDamage = DamageInfo()
@@ -76,7 +76,7 @@ function ENT:Think()
 						v:EmitSound(randomsound)
 					end
 				elseif distance <= range + 256 then
-					self.delayTime = CurTime() + 0.75
+					self.delayTime = CurTime() + 2
 					if v:hasGeiger() then
 						local randomsound = table.Random(geigerLight)
 						v:EmitSound(randomsound)

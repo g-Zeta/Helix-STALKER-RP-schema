@@ -1,7 +1,37 @@
 local PLUGIN = PLUGIN
 PLUGIN.name = "Radiation"
-PLUGIN.author = "Lt. Taylor & Zeta"
+PLUGIN.author = "Lt. Taylor & Zeta, refactor by Ghost."
 PLUGIN.desc = "Radiation System"
+
+ix.config.Add("radDamageLight", 0.5, "Damage per tick for light radiation zones.", nil, {
+	category = "Radiation",
+	type = ix.type.number,
+	data = {min = 0, max = 20, decimals = 2}
+})
+
+ix.config.Add("radDamageModerate", 1, "Damage per tick for moderate radiation zones.", nil, {
+	category = "Radiation",
+	type = ix.type.number,
+	data = {min = 0, max = 20, decimals = 2}
+})
+
+ix.config.Add("radDamageHeavy", 2.5, "Damage per tick for heavy radiation zones.", nil, {
+	category = "Radiation",
+	type = ix.type.number,
+	data = {min = 0, max = 20, decimals = 2}
+})
+
+ix.config.Add("radNaturalDecay", 0.25, "Radiation removed per second naturally when outside radiation zones. Set to 0 to disable.", nil, {
+	category = "Radiation",
+	type = ix.type.number,
+	data = {min = 0, max = 5, decimals = 2}
+})
+
+ix.config.Add("radDecayScaling", 33, "Decay scaling divisor. Lower = faster decay at high radiation. Only applies above 25 rads. Set to 0 to disable scaling.", nil, {
+	category = "Radiation",
+	type = ix.type.number,
+	data = {min = 0, max = 100, decimals = 0}
+})
 
 local playerMeta = FindMetaTable("Player")
 local entityMeta = FindMetaTable("Entity")
@@ -24,29 +54,7 @@ function playerMeta:setRadiation(amount)
 end
 
 function playerMeta:hasGeiger()
-	local char = self:GetCharacter()
-	if not char then
-		return false
-	end
-
-	local inventory = char:GetInventory()
-	if not inventory then
-		return false
-	end
-
-	for _, item in pairs(inventory:GetItems(true)) do
-		if item.isGeiger and item:GetData("equip") and item:GetData("durability", 0) > 0 then
-			return true
-		end
-	end
-
-	return false
-end
-
-function PLUGIN:PostPlayerLoadout(client)
-	if client:GetData("ixhasgeiger", false) then
-		client:SetNetVar("ixhasgeiger", true)
-	end
+	return self:GetNetVar("ixhasgeiger", false)
 end
 
 function playerMeta:getRadProtection()
@@ -107,15 +115,15 @@ function PLUGIN:EntityTakeDamage(entity, dmgInfo)
             local class = inflictor:GetClass()
 
             if (string.find(class, "rad_light")) then
-                if (hasGasmask and totalRadResist >= 0.3) then
+                if (hasGasmask and totalRadResist >= 0.4) then
                     bApplyRadiation = false
                 end
             elseif (string.find(class, "rad_moderate")) then
-                if (hasGasmask and totalRadResist >= 0.6) then
+                if (hasGasmask and totalRadResist >= 0.7) then
                     bApplyRadiation = false
                 end
             elseif (string.find(class, "rad_heavy")) then
-                if (hasGasmask and totalRadResist >= 1.0) then
+                if (hasGasmask and totalRadResist >= 2.0) then
                     bApplyRadiation = false
                 end
             end
@@ -203,22 +211,82 @@ if (CLIENT) then
     end
 else
 	local PLUGIN = PLUGIN
-	
+	local nextDecayTick = 0
+
+	function PLUGIN:Think()
+		if nextDecayTick > CurTime() then return end
+		nextDecayTick = CurTime() + 1
+
+		local decayRate = ix.config.Get("radNaturalDecay", 0.25)
+		if decayRate <= 0 then return end
+
+		for _, v in ipairs(player.GetAll()) do
+			if not v:Alive() or not v:GetCharacter() then continue end
+
+			local rads = v:getRadiation()
+			if rads <= 0 then continue end
+
+			local inZone = false
+			for _, ent in ipairs(ents.FindInSphere(v:GetPos(), 4096)) do
+				if string.sub(ent:GetClass(), 1, 4) == "rad_" then
+					local range = ent:GetNWInt("Range", 256)
+					if v:GetPos():Distance(ent:GetPos()) <= range then
+						inZone = true
+						break
+					end
+				end
+			end
+
+			if not inZone then
+				local scaleDivisor = ix.config.Get("radDecayScaling", 33)
+				local scale = (scaleDivisor > 0 and rads > 25) and (1 + (rads / scaleDivisor)) or 1
+				v:addRadiation(-decayRate * scale)
+			end
+		end
+	end
+
 	function PLUGIN:CharacterPreSave(character)
 		local savedRads = math.Clamp(character.player:getRadiation(), 0, 100)
 		character:SetData("radiation", savedRads)
 	end
 
 	function PLUGIN:PostPlayerLoadout(client)
-		if (client:GetCharacter():GetData("radiation")) then
-			client:SetNetVar("AccumRads", client:GetCharacter():GetData("radiation"))
+		local character = client:GetCharacter()
+		if (!character) then return end
+
+		if (character:GetData("radiation")) then
+			client:SetNetVar("AccumRads", character:GetData("radiation"))
 		else
 			client:SetNetVar("AccumRads", 0)
+		end
+
+		local inventory = character:GetInventory()
+		if (inventory) then
+			local hasGeiger = false
+			for _, item in pairs(inventory:GetItems()) do
+				if (item.isGeiger and item:GetData("equip")) then
+					hasGeiger = true
+					break
+				end
+			end
+
+			client:SetNetVar("ixhasgeiger", hasGeiger)
+			client:SetData("ixhasgeiger", hasGeiger)
 		end
 	end
 
 	function PLUGIN:PlayerDeath(client)
 		client.resetRads = true
+		client:SetNetVar("ixhasgeiger", false)
+		client:SetData("ixhasgeiger", false)
+	end
+
+	function PLUGIN:CharacterLoaded(character)
+		local client = character:GetPlayer()
+		if (!IsValid(client)) then return end
+
+		client:SetNetVar("ixhasgeiger", false)
+		client:SetData("ixhasgeiger", false)
 	end
 
 	function PLUGIN:PlayerSpawn(client)
@@ -232,13 +300,11 @@ end
 ix.command.Add("charsetradiation", {
 	adminOnly = true,
 	arguments = {
-		ix.type.string,
+		ix.type.player,
 		ix.type.number,
 	},
 	OnRun = function(self, client, target, radiation)
-		local target = ix.util.FindPlayer(target)
 		local radiation = tonumber(radiation)
-
 		target:setRadiation(radiation)
 
 		if client == target then

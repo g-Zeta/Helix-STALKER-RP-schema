@@ -111,3 +111,21 @@ PLUGIN.radiationdefs[19] = {
 	entityname = "rad_h_g",
 	interval = 10,
 }
+
+PLUGIN.radiationdefs[20] = {
+	name = "Light",
+	entityname = "rad_light",
+	interval = 10,
+}
+
+PLUGIN.radiationdefs[21] = {
+	name = "Moderate",
+	entityname = "rad_moderate",
+	interval = 10,
+}
+
+PLUGIN.radiationdefs[22] = {
+	name = "Heavy",
+	entityname = "rad_heavy",
+	interval = 10,
+}

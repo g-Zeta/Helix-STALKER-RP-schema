@@ -1,5 +1,7 @@
 local animationTime = 1
 local matrixZScale = Vector(1, 1, 0.0001)
+local matPhoneRed = Material("stalkerSHoC/ui/pda/phone_icon_red.png", "smooth")
+local matPhoneGreen = Material("stalkerSHoC/ui/pda/phone_icon_green.png", "smooth")
 
 local BASE_W, BASE_H = 1920, 1080
 local function UIScale()
@@ -66,7 +68,7 @@ function PANEL:Init()
 
 	exitPDA.Paint = function(this, w, h)
 		if exitPDA:IsHovered() then
-			surface.SetMaterial(Material("stalkerSHoC/ui/pda/phone_icon_red.png", "smooth"))
+			surface.SetMaterial(matPhoneRed)
 			surface.SetDrawColor(255, 255, 255)
 			surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, 1.000, 1.000)
 		end
@@ -94,7 +96,7 @@ function PANEL:Init()
 
     gotoCharMenu.Paint = function(this, w, h)
         if gotoCharMenu:IsHovered() then
-            surface.SetMaterial(Material("stalkerSHoC/ui/pda/phone_icon_green.png", "smooth"))
+            surface.SetMaterial(matPhoneGreen)
             surface.SetDrawColor(255, 255, 255)
             surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, 1.000, 1.000)
         end
@@ -429,6 +431,8 @@ function PANEL:Think()
 	if (self.bClosing) then
 		return
 	end
+
+	self.buttons:MoveToFront()
 
 	local bTabDown = input.IsKeyDown(KEY_TAB)
 

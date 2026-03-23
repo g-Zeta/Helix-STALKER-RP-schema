@@ -1,6 +1,6 @@
 local PLUGIN = PLUGIN
 PLUGIN.name = "Anomaly Controller"
-PLUGIN.author = "some faggot"
+PLUGIN.author = "Unknown, refactor by Ghost."
 PLUGIN.desc = "Allows for randomly spawning anomaly entities"
 
 PLUGIN.anomalydefs = PLUGIN.anomalydefs or {}
@@ -9,9 +9,33 @@ PLUGIN.anomalypoints = PLUGIN.anomalypoints or {} -- ANOMALYPOINTS STRUCTURE tab
 PLUGIN.spawnrate = 900
 PLUGIN.spawnchance = 1
 
+CAMI.RegisterPrivilege({
+	Name = "Helix - Manage Anomalies",
+	MinAccess = "admin"
+})
+
 ix.util.Include("sh_anomalydefs.lua")
 
+function PLUGIN:InitPostEntity()
+	for i = 1, #self.anomalydefs do
+		local class = scripted_ents.GetStored(self.anomalydefs[i].entityname)
+		if class and class.t then
+			class.t.bNoPersist = true
+		end
+	end
+
+	local extraAnomalies = {"kometa", "kometa_electra", "kometa_kisel", "teleport", "space_anomaly", "anom_passive"}
+	for _, name in ipairs(extraAnomalies) do
+		local class = scripted_ents.GetStored(name)
+		if class and class.t then
+			class.t.bNoPersist = true
+		end
+	end
+end
+
 if SERVER then
+	util.AddNetworkString("ixAnomalyCleanSounds")
+
 	local spawntime = 1
 
 	function PLUGIN:Think()
@@ -34,7 +58,7 @@ if SERVER then
 							continue
 						end
 					end
-					
+
 					local rand = math.random(101)
 					local rarityselector = 0
 					local anomalyselector = 0
@@ -46,7 +70,7 @@ if SERVER then
 					elseif rand <= 100 then
 						rarityselector = 2
 					else return end
-					
+
 					for k,v in RandomPairs(ents.FindInSphere(j[1], 400)) do
 						if (string.sub(v:GetClass(), 1, 5) == "anom_") then
 							for i=1,#self.anomalydefs do
@@ -78,6 +102,9 @@ if SERVER then
 
 
 	function PLUGIN:cleanAnomalies()
+		net.Start("ixAnomalyCleanSounds")
+		net.Broadcast()
+
 		for k, v in pairs( ents.GetAll() ) do
 			if (string.sub(v:GetClass(), 1, 5) == "anom_") then
 				v:Remove()
@@ -85,49 +112,64 @@ if SERVER then
 		end
 	end
 
+	function PLUGIN:cleanAnomaliesInSphere(pos, range)
+		local count = 0
+
+		net.Start("ixAnomalyCleanSounds")
+		net.Broadcast()
+
+		for k, v in pairs(ents.FindInSphere(pos, range)) do
+			if (string.sub(v:GetClass(), 1, 5) == "anom_") then
+				v:Remove()
+				count = count + 1
+			end
+		end
+
+		return count
+	end
+
+	function PLUGIN:spawnAnomaliesAtPoint(v)
+		local count = 0
+		local selectedAnoms = {}
+		for i=1, #self.anomalydefs do
+			if string.sub(v[3],i,i) == "1" then
+				table.insert( selectedAnoms, self.anomalydefs[i])
+			end
+		end
+
+		local entity = table.Random(selectedAnoms)
+		if entity then
+			for i = 1, math.ceil(v[2]/entity.interval) do
+				local position = v[1] + Vector( math.Rand(-v[2],v[2]), math.Rand(-v[2],v[2]), math.Rand(10,20) )
+				local data = {}
+				data.start = position
+				data.endpos = position
+				data.mins = Vector(-16, -16, 0)
+				data.maxs = Vector(16, 16, 71)
+				local trace = util.TraceHull(data)
+
+				if trace.Entity:IsValid() then
+					continue
+				end
+
+				local spawnedent = ents.Create(entity.entityname)
+				if spawnedent then
+					spawnedent:SetPos(position)
+					spawnedent:Spawn()
+					count = count + 1
+				end
+			end
+		end
+		return count
+	end
+
 	function PLUGIN:spawnAnomalies()
 		if CurTime() > 5 then
 			spawntime = 1
 		end
-			
+
 		for k, v in pairs(self.anomalypoints) do
-			local selectedAnoms = {}
-			for i=1, #self.anomalydefs do
-				if string.sub(v[3],i,i) == "1" then
-					table.insert( selectedAnoms, self.anomalydefs[i])
-				end
-			end
-
-			local entity = table.Random(selectedAnoms)
-			if entity then
-				for i = 1, math.ceil(v[2]/entity.interval) do
-					local position = v[1] + Vector( math.Rand(-v[2],v[2]), math.Rand(-v[2],v[2]), math.Rand(10,20) )
-					local data = {}
-					data.start = position
-					data.endpos = position
-					data.mins = Vector(-16, -16, 0)
-					data.maxs = Vector(16, 16, 71)
-					local trace = util.TraceHull(data)
-
-					if trace.Entity:IsValid() then
-						continue
-					end
-					
-					local spawnedent = ents.Create(entity.entityname)
-					if spawnedent then
-						spawnedent:SetPos(position)
-						spawnedent:Spawn()
-					end
-				end
-			end
-			
-			--Passive damage component
-			--local spawnedent = ents.Create("anom_passive")
-			--spawnedent:SetPos(v[1] + Vector(0,0,32))
-			--spawnedent:setNetVar("range", v[2])
-			--spawnedent:Spawn()
-			--Passive damage component end
-			
+			self:spawnAnomaliesAtPoint(v)
 		end
 	end
 
@@ -136,32 +178,124 @@ if SERVER then
 
 		self:cleanAnomalies()
 		self:spawnAnomalies()
+		SetNetVar("anomalySpawnPoints", self.anomalypoints)
 	end
 
 	function PLUGIN:SaveData()
 		self:SetData(self.anomalypoints)
+		SetNetVar("anomalySpawnPoints", self.anomalypoints)
 	end
-	
 else
+	local anomalySounds = {
+		"electra_idle", "buzz_idle", "myasorubka_idle",
+		"tramplin_idle", "voronka_idle", "teleport_idle",
+		"par_idle", "kometa_idle"
+	}
 
-	netstream.Hook("ix_DisplaySpawnPoints", function(data)
-	 	for k, v in pairs(data) do
-	 		local emitter = ParticleEmitter( v[1] )
-	 		local smoke = emitter:Add( "sprites/glow04_noz", v[1] )
-	 		smoke:SetVelocity( Vector( 0, 0, 1 ) )
-	 		smoke:SetDieTime(30)
-			smoke:SetStartAlpha(255)
-	 		smoke:SetEndAlpha(255)
-	 		smoke:SetStartSize(64)
-	 		smoke:SetEndSize(64)
-	 		smoke:SetColor(255,186,50)
-	 		smoke:SetAirResistance(300)
-	 	end
+	net.Receive("ixAnomalyCleanSounds", function()
+		for _, ent in pairs(ents.GetAll()) do
+			local class = ent:GetClass()
+			if (string.sub(class, 1, 4) == "anom" or string.sub(class, 1, 6) == "kometa" or class == "teleport") then
+				for _, snd in pairs(anomalySounds) do
+					ent:StopSound(snd)
+				end
+			end
+		end
 	end)
+
+	CreateConVar("ix_anomalydisplay", "0", FCVAR_ARCHIVE)
+
+	ix.option.Add("anomalySpawnerDisplayRange", ix.type.number, 2048, {
+		category = "observer", min = 512, max = 32768,
+		hidden = function()
+			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Manage Anomalies", nil)
+		end
+	})
+
+	local function IsInRange(center, radius)
+		return LocalPlayer():GetPos():Distance(center) <= ix.option.Get("anomalySpawnerDisplayRange", 2048) + (radius or 0)
+	end
+
+	local function DecodeAnomBitmask(bitmask, anomalydefs)
+		local names = {}
+		local nameMap = {
+			[1] = "Burner 1", [2] = "Burner 2",
+			[3] = "Electro 1", [4] = "Electro 2",
+			[5] = "Bubble 1", [6] = "Bubble 2",
+			[7] = "Whirligig",
+			[8] = "Fruitpunch 1", [9] = "Fruitpunch 2",
+			[10] = "Karusel"
+		}
+		for i = 1, #bitmask do
+			if string.sub(bitmask, i, i) == "1" then
+				local name = nameMap[i] or ("Unknown #" .. i)
+				table.insert(names, name)
+			end
+		end
+		return table.concat(names, ", ")
+	end
+
+	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+		if bDrawingSkybox then return end
+		local cvar = GetConVar("ix_anomalydisplay")
+		if not cvar or not cvar:GetBool() then return end
+		if not LocalPlayer():IsAdmin() or LocalPlayer():GetMoveType() ~= MOVETYPE_NOCLIP then return end
+
+		local points = GetNetVar("anomalySpawnPoints", {})
+
+		for idx, point in pairs(points) do
+			local center = point[1]
+			local radius = point[2]
+			local bitmask = point[3]
+			if not center or not radius then continue end
+			if not IsInRange(center, radius) then continue end
+
+			local mins = Vector(-radius, -radius, 0)
+			local maxs = Vector(radius, radius, radius)
+
+			render.DrawWireframeBox(center, Angle(), mins, maxs, Color(255, 186, 50), false)
+			render.DrawLine(center, center + Vector(0, 0, radius), Color(0, 255, 0), false)
+
+			if bitmask then
+				local labelPos = center + Vector(0, 0, radius + 16)
+				local ang = (labelPos - LocalPlayer():EyePos()):Angle()
+				ang:RotateAroundAxis(ang:Up(), -90)
+				ang:RotateAroundAxis(ang:Forward(), 90)
+
+				local scale = math.Clamp(radius / 256, 0.3, 1.5)
+				cam.Start3D2D(labelPos, ang, scale)
+					local title = "#" .. idx
+					local types = DecodeAnomBitmask(bitmask, self.anomalydefs)
+					local info = "R: " .. radius
+
+					draw.SimpleText(title, "DermaLarge", 0, 0, Color(255, 186, 50), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(types, "DermaLarge", 0, 4, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+					draw.SimpleText(info, "DermaDefault", 0, 30, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				cam.End3D2D()
+			end
+		end
+	end
 end
 
-ix.command.Add("anomalyadd", {
-	superAdminOnly = true,
+local anomalyAliases = {
+	burner =      {1, 2},
+	burner1 =     {1},
+	burner2 =     {2},
+	electro =     {3, 4},
+	electro1 =    {3},
+	electro2 =    {4},
+	bubble =      {5, 6},
+	bubble1 =     {5},
+	bubble2 =     {6},
+	whirligig =   {7},
+	fruitpunch =  {8, 9},
+	fruitpunch1 = {8},
+	fruitpunch2 = {9},
+	karusel =     {10},
+}
+
+ix.command.Add("anomaddspawner", {
+	privilege = "Manage Anomalies",
 	arguments = {
 		ix.type.number,
 		ix.type.string
@@ -171,59 +305,38 @@ ix.command.Add("anomalyadd", {
 		local hitpos = trace.HitPos + trace.HitNormal*5
 		local radius = radius or 128
 		local anomalies = string.lower(anomalies) or "bubble"
-		local anomdef
-		if (!radius or !isnumber(radius) or radius < 0) then
+		if (!radius or !isnumber(radius) or radius < 0 or radius > 2048) then
 			return "@invalidArg", 2
 		end
-		
-		if string.match(anomalies,"burner",1) then 		-- 1100000000
-			anomdef = "11"
-		else
-			anomdef = "00"
+
+		local bits = {}
+		for i = 1, #PLUGIN.anomalydefs do
+			bits[i] = "0"
 		end
-		
-		if string.match(anomalies,"electro",1) then 	-- 0011000000
-			anomdef = anomdef.."11"
-		else
-			anomdef = anomdef.."00"
+
+		for word in string.gmatch(anomalies, "%S+") do
+			local indices = anomalyAliases[word]
+			if indices then
+				for _, idx in ipairs(indices) do
+					bits[idx] = "1"
+				end
+			end
 		end
-		
-		if string.match(anomalies,"bubble",1) then 		-- 0000110000
-			anomdef = anomdef.."11"
-		else
-			anomdef = anomdef.."00"
-		end
-		
-		if string.match(anomalies,"whirligig",1) then 	-- 0000001000
-			anomdef = anomdef.."1"
-		else
-			anomdef = anomdef.."0"
-		end
-		
-		if string.match(anomalies,"fruitpunch",1) then 	-- 0000000110
-			anomdef = anomdef.."11"
-		else
-			anomdef = anomdef.."00"
-		end
-		
-		if string.match(anomalies,"karusel",1) then	 	-- 0000000001
-			anomdef = anomdef.."1"
-		else
-			anomdef = anomdef.."0"
-		end
-		
+
+		local anomdef = table.concat(bits)
+
 		if string.match(anomdef,"1",1) then
-			client:Notify( "Anomaly point successfully added" )
+			client:Notify( "Anomaly spawner successfully added." )
 			table.insert( PLUGIN.anomalypoints, { hitpos, radius, anomdef } )
 		else
-			client:Notify("Anomaly point failed to be added.")
+			client:Notify("Anomaly spawner failed to be added.")
 		end
 		PLUGIN:SaveData()
 	end
 })
 
-ix.command.Add("anomalyremove", {
-	superAdminOnly = true,
+ix.command.Add("anomremovespawner", {
+	privilege = "Manage Anomalies",
 	arguments = {
 		ix.type.number
 	},
@@ -235,6 +348,7 @@ ix.command.Add("anomalyremove", {
 		for k, v in pairs( PLUGIN.anomalypoints ) do
 			local distance = v[1]:Distance( hitpos )
 			if distance <= tonumber(range) then
+				PLUGIN:cleanAnomaliesInSphere(v[1], v[2])
 				PLUGIN.anomalypoints[k] = nil
 				mt = mt + 1
 			end
@@ -248,36 +362,58 @@ ix.command.Add("anomalyremove", {
 	end
 })
 
-ix.command.Add("anomalydisplay", {
-	adminOnly = true,
-	OnRun = function(self, client, arguments)
-		if SERVER then
-			netstream.Start(client, "ix_DisplaySpawnPoints", PLUGIN.anomalypoints)
-			client:Notify( "Displayed All Points for 30 secs." )
+ix.command.Add("anomforcespawn", {
+	privilege = "Manage Anomalies",
+	arguments = {
+		bit.bor(ix.type.number, ix.type.optional)
+	},
+	OnRun = function(self, client, range)
+		local trace = client:GetEyeTraceNoCursor()
+		local hitpos = trace.HitPos + trace.HitNormal*5
+		local range = tonumber(range) or 0
+		local spawnerCount = 0
+		local entityCount = 0
+
+		for k, v in pairs(PLUGIN.anomalypoints) do
+			if range > 0 and v[1]:Distance(hitpos) > range then
+				continue
+			end
+
+			PLUGIN:cleanAnomaliesInSphere(v[1], v[2])
+			entityCount = entityCount + PLUGIN:spawnAnomaliesAtPoint(v)
+			spawnerCount = spawnerCount + 1
+		end
+
+		if spawnerCount > 0 then
+			client:Notify("Spawned " .. entityCount .. " anomalies from " .. spawnerCount .. " spawners.")
+		else
+			client:Notify("No spawners found within range.")
 		end
 	end
 })
 
-ix.command.Add("anomalyentremove", {
-	adminOnly = true,
+ix.command.Add("anomclean", {
+	privilege = "Manage Anomalies",
 	arguments = {
-		ix.type.number
-	},	
+		bit.bor(ix.type.number, ix.type.optional)
+	},
 	OnRun = function(self, client, range)
-		local trace = client:GetEyeTraceNoCursor()
-		local hitpos = trace.HitPos + trace.HitNormal*5
-		local range = range or 128
-		local mt = 0
-		for k, v in pairs( ents.FindInSphere(hitpos, range) ) do
-			if (string.sub(v:GetClass(), 1, 5) == "anom_") then
-				v:Remove()
-				mt = mt + 1
+		local range = tonumber(range) or 0
+
+		if range > 0 then
+			local trace = client:GetEyeTraceNoCursor()
+			local hitpos = trace.HitPos + trace.HitNormal*5
+			local count = PLUGIN:cleanAnomaliesInSphere(hitpos, range)
+
+			if count > 0 then
+				client:Notify("Removed " .. count .. " anomalies within " .. range .. " units.")
+			else
+				client:Notify("No anomalies found within range.")
 			end
-		end
-		if mt > 0 then
-			client:Notify( "Removed " .. mt .. " anomalies.")
 		else
-			client:Notify( "No anomalies found at location.")
+			PLUGIN:cleanAnomalies()
+			client:Notify("All anomalies have been removed.")
 		end
 	end
 })
+

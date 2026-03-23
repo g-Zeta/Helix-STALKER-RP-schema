@@ -107,6 +107,18 @@ if (CLIENT) then
 		self:CreateChat()
 	end
 
+	function PLUGIN:Think()
+		if (!IsValid(ix.gui.chat)) then
+			return
+		end
+
+		for _, tab in pairs(ix.gui.chat.tabs:GetTabs()) do
+			if (tab.ixScrollUntil and CurTime() <= tab.ixScrollUntil) then
+				tab:ScrollToBottom()
+			end
+		end
+	end
+
 	function PLUGIN:ChatText(index, name, text, messageType)
 		if (messageType == "none" and IsValid(self.panel)) then
 			self.panel:AddMessage(text)

@@ -182,7 +182,9 @@ function PANEL:Update()
 	local localCharacter = LocalPlayer():GetCharacter()
 	local character = IsValid(self.player) and self.player:GetCharacter()
 
-	if (localCharacter and character) then
+	if (not ix.config.Get("scoreboardRecognition")) then
+		bRecognize = true
+	elseif (localCharacter and character) then
 		bRecognize = hook.Run("IsCharacterRecognized", localCharacter, character:GetID())
 			or hook.Run("IsPlayerRecognized", self.player)
 	end
@@ -206,15 +208,18 @@ function PANEL:Update()
 		self.icon:SetTooltip(nil)
 	end
 	
+	local avatarPath = "stalker/ui/avatars/nodata.png"
+	if (bRecognize) then
+		avatarPath = client:GetCharacter():GetData("pdaavatar") or avatarPath
+	end
+
+	if (self.icon.cachedAvatarPath != avatarPath) then
+		self.icon.cachedAvatarPath = avatarPath
+		self.icon.cachedAvatarMat = Material(avatarPath)
+	end
+
 	self.icon.Paint = function(this, w, h)
-		local client = self.player
-		local path = "stalker/ui/avatars/nodata.png"
-
-		if (bRecognize) then
-			path = client:GetCharacter():GetData("pdaavatar") or path
-		end
-
-		surface.SetMaterial(Material(path))
+		surface.SetMaterial(this.cachedAvatarMat)
 		surface.SetDrawColor(255, 255, 255)
 		surface.DrawTexturedRect(0, 0, w, h)
 	end

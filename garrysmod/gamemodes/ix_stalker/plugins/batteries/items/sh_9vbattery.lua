@@ -27,13 +27,11 @@ ITEM.functions.Use = {
                 if (v.isNVG or v.isArtifactdetector or v.isFlashlight or v.isAnomalydetector or v.isGeiger) then
                     local currentDura = v:GetData("durability", 0)
 
-                    if (currentDura < 100) then
                     table.insert(options, {
                         name = v:GetName() .. " (" .. math.floor(currentDura) .. "%%)",
                         data = {v:GetID()},
                         sound = "cw/holster1.wav"
                     })
-                    end
                 end
             end
         end
@@ -49,22 +47,15 @@ ITEM.functions.Use = {
         local target = ix.item.instances[data[1]]
 
         if (target and (target.isNVG or target.isArtifactdetector or target.isFlashlight or target.isAnomalydetector or target.isGeiger) and target:GetOwner() == client) then
-            local oldCharge = target:GetData("durability", 0)
-            local batteryPower = item:GetData("power", 100)
-
-            target:SetData("durability", batteryPower)
-            client:Notify("You replaced the battery in " .. target:GetName() .. ".")
-            
-            if (oldCharge > 0) then
-                local inventory = char:GetInventory()
-
-                if (!inventory:Add("9vbattery", 1, {power = oldCharge})) then
-                    ix.item.Spawn("9vbattery", client:GetShootPos(), function(newItem)
-                        newItem:SetData("power", oldCharge)
-                    end)
-                end
+            if (target:GetData("durability", 0) > 0) then
+                client:Notify("This device already has a battery. Remove it first.")
+                return false
             end
-            
+
+            local batteryPower = item:GetData("power", 100)
+            target:SetData("durability", batteryPower)
+            client:Notify("You inserted a battery into " .. target:GetName() .. ".")
+
             return true -- Consume the item
         else
             client:Notify("You have no valid device to insert this battery into, or invalid selection.")
@@ -82,7 +73,7 @@ ITEM.functions.SetDurability = {
 	icon = "icon16/wrench.png",
 	
 	OnCanRun = function(item)
-		local char = item.player:GetChar()
+		local char = item.player:GetCharacter()
 		if char:HasFlags("N") then
 			return true
 		else
@@ -91,7 +82,10 @@ ITEM.functions.SetDurability = {
 	end,
 	
 	OnRun = function(item)
-		netstream.Start(item.player, "powerdurabilityAdjust", item:GetData("power", 100), item.id)
+		net.Start("ixPowerDurabilityAdjust")
+			net.WriteUInt(item:GetData("power", 100), 7)
+			net.WriteUInt(item.id, 32)
+		net.Send(item.player)
 		return false
 	end,
 }

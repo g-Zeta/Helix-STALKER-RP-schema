@@ -1,5 +1,6 @@
 
 local animationTime = 0.75
+local matNotice = Material("stalker/ui/notice.png")
 
 -- notice manager
 -- this manages positions/animations for notice panels
@@ -213,21 +214,18 @@ function PANEL:OnMouseLeave()
 end
 
 function PANEL:Paint(width, height)
-	-- Handle the slide-out animation by clipping the rendering.
-	if (self.outAnimation < 1) then
+	local bScissor = self.outAnimation < 1
+
+	if (bScissor) then
 		local x, y = self:LocalToScreen(0, 0)
 		render.SetScissorRect(x, y, x + self:GetWide(), y + (self:GetTall() * self.outAnimation), true)
 	end
 
-	-- Set the material for the background.
-	surface.SetMaterial(Material("stalker/ui/notice.png"))
+	surface.SetMaterial(matNotice)
 
-	-- Determine the color tint for the background.
-	-- If there's an error, it will flash red and fade to white.
 	if (self.errorAnimation > 0) then
 		local color = derma.GetColor("Error", self)
 
-		-- Lerp (linear interpolate) between white and the error color.
 		surface.SetDrawColor(
 			Lerp(self.errorAnimation, 255, color.r),
 			Lerp(self.errorAnimation, 255, color.g),
@@ -238,17 +236,13 @@ function PANEL:Paint(width, height)
 		surface.SetDrawColor(255, 255, 255, 255)
 	end
 
-	-- Draw the textured background.
 	surface.DrawTexturedRect(0, 0, width, height)
 
-	-- Draw the progress bar at the bottom.
 	surface.SetDrawColor(self.bError and derma.GetColor("Error", self) or ix.config.Get("color"))
 	surface.DrawRect(0, height - 2, width * self.duration, 2)
 end
 
-function PANEL:PostPaint(width, height)
-	-- The scissor rect is enabled in Paint() for the slide-in animation.
-	-- It MUST be disabled here in PostPaint() to prevent it from corrupting other VGUI elements.
+function PANEL:PaintOver(width, height)
 	if (self.outAnimation < 1) then
 		render.SetScissorRect(0, 0, 0, 0, false)
 	end

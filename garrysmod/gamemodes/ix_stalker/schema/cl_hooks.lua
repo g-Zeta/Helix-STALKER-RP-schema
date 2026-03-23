@@ -17,6 +17,24 @@ netstream.Hook("qurReq", function(time, title, subTitle)
 	end)
 end)
 
+function Schema:ShouldShowPlayerOnScoreboard(client)
+	local faction = ix.faction.indices[client:Team()]
+	if (not faction or not faction.visibleTo) then return end
+
+	local localFaction = ix.faction.indices[LocalPlayer():Team()]
+	if (not localFaction) then return false end
+
+	if (localFaction.uniqueID == faction.uniqueID) then return end
+	if (localFaction.uniqueID == "staff") then return end
+	if (LocalPlayer():IsSuperAdmin()) then return end
+
+	for _, id in ipairs(faction.visibleTo) do
+		if (localFaction.uniqueID == id) then return end
+	end
+
+	return false
+end
+
 function Schema:BuildBusinessMenu(panel)
 	local bHasItems = false
 
