@@ -33,6 +33,10 @@ hook.Add("CalcView", "ViewBobbing", function(ply, origin, angles, fov)
         return
     end
 
+    if (ply:GetLocalVar("bIsHoldingObject", false) and input.IsMouseDown(MOUSE_RIGHT)) then
+        return
+    end
+
     local walkSpeed = ply:GetVelocity():Length()
     local bobbingOffset = math.sin(CurTime() * BobbingSpeed * customBobbingSpeed) * BobbingAmount
     local verticalBobbingOffset = math.sin(CurTime() * BobbingSpeed * 2 * customBobbingSpeed) * verticalBobbingAmount
