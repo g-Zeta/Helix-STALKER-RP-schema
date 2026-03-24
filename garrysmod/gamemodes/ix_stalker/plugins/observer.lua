@@ -45,13 +45,6 @@ if (CLIENT) then
 		end
 	})
 
-	ix.option.Add("observerESP - Radiation", ix.type.bool, true, {
-		category = "observer",
-		hidden = function()
-			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
-		end
-	})
-
 	ix.option.Add("observerESP - Psi", ix.type.bool, true, {
 		category = "observer",
 		hidden = function()
@@ -61,6 +54,13 @@ if (CLIENT) then
 
 	ix.option.Add("observerESP - Anomalies", ix.type.bool, true, {
 		category = "observer",
+		hidden = function()
+			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
+		end
+	})
+
+	ix.option.Add("observerESPRange", ix.type.number, 2048, {
+		category = "observer", min = 256, max = 32768,
 		hidden = function()
 			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Observer", nil)
 		end
@@ -76,6 +76,7 @@ if (CLIENT) then
 		if (ix.option.Get("observerESP", true) and client:GetMoveType() == MOVETYPE_NOCLIP and
 			!client:InVehicle() and CAMI.PlayerHasAccess(client, "Helix - Observer", nil)) then
 			local scrW, scrH = ScrW(), ScrH()
+			local espRange = ix.option.Get("observerESPRange", 4096)
 
 			for _, v in ipairs(player.GetAll()) do
 				if (v == client or !v:GetCharacter() or client:GetAimVector():Dot((v:GetPos() - client:GetPos()):GetNormal()) < 0.65) then
@@ -91,6 +92,7 @@ if (CLIENT) then
 
 				local teamColor = team.GetColor(v:Team())
 				local distance = client:GetPos():Distance(v:GetPos())
+				if distance > espRange then continue end
 				local factor = 1 - math.Clamp(distance / dimDistance, 0, 1)
 				local size = math.max(10, 32 * factor)
 				local alpha = math.max(255 * factor, 80)
@@ -139,6 +141,7 @@ if (CLIENT) then
 				x, y = math.Clamp(screenPosition.x, marginX, scrW - marginX), math.Clamp(screenPosition.y, marginY, scrH - marginY)
 
 				distance = client:GetPos():Distance(v:GetPos())
+				if distance > espRange then continue end
 				factor = 1 - math.Clamp(distance / dimDistance, 0, 1)
 				size = math.max(10, 32 * factor)
 				alpha = math.max(255 * factor, 80)
@@ -167,14 +170,6 @@ if (CLIENT) then
 					end				
 				end
 
-				if (ix.option.Get("observerESP - Radiation", true) and string.match(v:GetClass(),"rad_")) then
-					surface.SetDrawColor(0, 255, 0, alpha)
-					surface.DrawRect(x - size/2, y - size/2, size, size)    
-					if IsValid(v) then
-						-- Draw the entity's class name
-						ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
-					end
-				end
 
 				if (ix.option.Get("observerESP - Psi", true) and string.match(v:GetClass(),"psi_")) then
 					surface.SetDrawColor(0, 255, 255, alpha)
@@ -202,25 +197,12 @@ if (CLIENT) then
 		end
 	end
 
-	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
-		if bDrawingDepth or bDrawingSkybox then return end
+	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox, bDraw3DSkybox)
+		if bDrawingDepth or bDrawingSkybox or bDraw3DSkybox then return end
 		local client = LocalPlayer()
 
 		if (ix.option.Get("observerESP", true) and client:GetMoveType() == MOVETYPE_NOCLIP and
 			!client:InVehicle() and CAMI.PlayerHasAccess(client, "Helix - Observer", nil)) then
-			
-			if (ix.option.Get("observerESP - Radiation", true)) then
-				local displayRange = ix.option.Get("radiationDisplayRange", 2048)
-				for _, v in ipairs(ents.GetAll()) do
-					if (string.match(v:GetClass(), "rad_")) then
-						local range = v:GetNWFloat("Range", 256)
-						if client:GetPos():Distance(v:GetPos()) <= displayRange + range then
-							render.SetColorMaterial()
-							render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 255), true)
-						end
-					end
-				end
-			end
 
 			if (ix.option.Get("observerESP - Psi", true)) then
 				for _, v in ipairs(ents.GetAll()) do

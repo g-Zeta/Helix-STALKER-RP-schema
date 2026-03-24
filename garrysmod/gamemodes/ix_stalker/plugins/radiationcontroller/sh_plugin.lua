@@ -107,7 +107,7 @@ if SERVER then
 else
 	CreateConVar("ix_radiationdisplay", "0", FCVAR_ARCHIVE)
 
-	ix.option.Add("radiationDisplayRange", ix.type.number, 2048, {
+	ix.option.Add("radiationDisplayRange", ix.type.number, 4096, {
 		category = "observer", min = 512, max = 32768,
 		hidden = function()
 			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Manage Radiation", nil)
@@ -115,7 +115,7 @@ else
 	})
 
 	local function IsInRange(center, radius)
-		return LocalPlayer():GetPos():Distance(center) <= ix.option.Get("radiationDisplayRange", 2048) + (radius or 0)
+		return LocalPlayer():GetPos():Distance(center) <= ix.option.Get("radiationDisplayRange", 4096) + (radius or 0)
 	end
 
 	local function DecodeRadBitmask(bitmask, radiationdefs)
@@ -143,11 +143,56 @@ else
 		return Color(255, 186, 50)
 	end
 
-	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
-		if bDrawingDepth or bDrawingSkybox then return end
+	function PLUGIN:HUDPaint()
 		local cvar = GetConVar("ix_radiationdisplay")
 		if not cvar or not cvar:GetBool() then return end
 		if not LocalPlayer():IsAdmin() or LocalPlayer():GetMoveType() ~= MOVETYPE_NOCLIP then return end
+
+		local client = LocalPlayer()
+		local displayRange = ix.option.Get("radiationDisplayRange", 4096)
+		local scrW, scrH = ScrW(), ScrH()
+		local marginX, marginY = scrH * 0.1, scrH * 0.1
+
+		for _, v in ipairs(ents.GetAll()) do
+			if string.sub(v:GetClass(), 1, 4) == "rad_" then
+				local distance = client:GetPos():Distance(v:GetPos())
+				local range = v:GetNWFloat("Range", 256)
+				if distance > displayRange + range then continue end
+
+				local screenPos = v:GetPos():ToScreen()
+				local x = math.Clamp(screenPos.x, marginX, scrW - marginX)
+				local y = math.Clamp(screenPos.y, marginY, scrH - marginY)
+				local factor = 1 - math.Clamp(distance / displayRange, 0, 1)
+				local size = math.max(10, 32 * factor)
+				local alpha = math.max(255 * factor, 80)
+
+				surface.SetDrawColor(0, 255, 0, alpha)
+				surface.DrawRect(x - size / 2, y - size / 2, size, size)
+
+				if IsValid(v) then
+					ix.util.DrawText(v:GetClass(), x, y - size, ColorAlpha(Color(0, 255, 0), alpha, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, nil, alpha))
+				end
+			end
+		end
+	end
+
+	function PLUGIN:PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox, bDraw3DSkybox)
+		if bDrawingDepth or bDrawingSkybox or bDraw3DSkybox then return end
+		local cvar = GetConVar("ix_radiationdisplay")
+		if not cvar or not cvar:GetBool() then return end
+		if not LocalPlayer():IsAdmin() or LocalPlayer():GetMoveType() ~= MOVETYPE_NOCLIP then return end
+
+		local displayRange = ix.option.Get("radiationDisplayRange", 4096)
+
+		for _, v in ipairs(ents.GetAll()) do
+			if string.sub(v:GetClass(), 1, 4) == "rad_" then
+				local range = v:GetNWFloat("Range", 256)
+				if LocalPlayer():GetPos():Distance(v:GetPos()) <= displayRange + range then
+					render.SetColorMaterial()
+					render.DrawWireframeSphere(v:GetPos(), range, 30, 30, Color(0, 255, 0, 255), true)
+				end
+			end
+		end
 
 		local points = GetNetVar("radiationSpawnPoints", {})
 
