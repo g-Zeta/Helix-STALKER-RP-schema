@@ -68,6 +68,17 @@ if (CLIENT) then
 end
 
 if (SERVER) then
+	timer.Create("ixOutOfWorldItemCleanup", 300, 0, function()
+		for _, e in pairs(ents.GetAll()) do
+			if e:GetClass() == "ix_item" and not util.IsInWorld(e:GetPos()) then
+				local itemTable = e:GetItemTable()
+				if itemTable and itemTable.isArtefact then
+					e:Remove()
+				end
+			end
+		end
+	end)
+
 	hook.Add("CAMI.PlayerHasAccess", "ixBotCAMIOverride", function(actorPly)
 		if (not IsValid(actorPly)) then return end
 		if (actorPly:IsBot()) then return true end

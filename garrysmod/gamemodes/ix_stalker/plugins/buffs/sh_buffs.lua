@@ -44,6 +44,30 @@ PLUGIN.buffs[ "buff_staminarestore" ] = {
 	end,
 }
 
+PLUGIN.buffs[ "buff_weight" ] = {
+	name = "Weight buff",
+	desc = "You're increasing your carry weight.",
+	onbuffed = function(player, parameter)
+		local character = player:GetCharacter()
+		if (character) then
+			local amount = parameter.amount or 0
+			local current = character:GetData("WeightBuff", 0)
+
+			character:SetData("WeightBuff", current + amount)
+			if (ix.weight) then ix.weight.Update(character) end
+		end
+	end,
+	ondebuffed = function(player, parameter)
+		local character = player:GetCharacter()
+		if (character) then
+			local amount = parameter.amount or 0
+			local current = character:GetData("WeightBuff", 0)
+
+			character:SetData("WeightBuff", current - amount)
+			if (ix.weight) then ix.weight.Update(character) end
+		end
+	end
+}
 PLUGIN.buffs[ "buff_radiationremoval" ] = {
 	name = "Antirad",
 	desc = "You're becoming less radioactive.",

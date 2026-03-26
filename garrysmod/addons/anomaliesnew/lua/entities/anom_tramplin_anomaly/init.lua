@@ -49,12 +49,21 @@ function ENT:SpawnFunction( ply, tr, ClassName, activator )
 end
 
 function ENT:Think()
-		for k,v in pairs(ents.FindInSphere(self:GetPos()+Vector(0,0,300),300)) do
-			if v == self then return end
-			if v:IsPlayer() then
-				v:SetVelocity( (self:GetPos()+Vector(0,0,300) - v:GetPos()) * 1.5)
-			end
+	if #player.GetAll() == 0 then self:NextThink(CurTime() + 1) return true end
+
+	local found = false
+	for k,v in pairs(ents.FindInSphere(self:GetPos()+Vector(0,0,300),300)) do
+		if v == self then break end
+		if v:IsPlayer() then
+			v:SetVelocity( (self:GetPos()+Vector(0,0,300) - v:GetPos()) * 1.5)
+			found = true
 		end
+	end
+
+	if not found then
+		self:NextThink(CurTime() + 0.5)
+		return true
+	end
 end
 
 function ENT:StartTouch( ply )

@@ -33,17 +33,22 @@ function ENT:Initialize()
 end
 
 function ENT:Think()
-		for k,v in pairs(ents.FindInSphere(self:GetPos(),100)) do
-			if v:IsPlayer() then
-				v:SetVelocity( (self:GetPos() - v:GetPos()) * 4 )
-			else
-				local phys = v:GetPhysicsObject()
-				if IsValid(phys) then
-					phys:ApplyForceCenter( (self:GetPos() - v:GetPos()) * phys:GetMass() )
-				end
+	if #player.GetAll() == 0 then self:NextThink(CurTime() + 1) return true end
+
+	for k,v in pairs(ents.FindInSphere(self:GetPos(),100)) do
+		if v:IsPlayer() then
+			v:SetVelocity( (self:GetPos() - v:GetPos()) * 4 )
+		else
+			local phys = v:GetPhysicsObject()
+			if IsValid(phys) then
+				phys:ApplyForceCenter( (self:GetPos() - v:GetPos()) * phys:GetMass() )
 			end
 		end
 	end
+
+	self:NextThink(CurTime() + 0.1)
+	return true
+end
 
 function ENT:StartTouch(ent)
 	if not self.Active then return end

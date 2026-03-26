@@ -1,14 +1,14 @@
 PLUGIN.anomalydefs[1] = {
 	name = "Burner",
 	entityname = "anom_jarka",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
 		"droplet",
 		"jellyfish",
 	},
 	rareArtifacts = {
-		"signet",
-		"sandstone",
+		"flame",
+		"mica",
 	},
 	veryRareArtifacts = {
 		"crystal",
@@ -19,28 +19,28 @@ PLUGIN.anomalydefs[1] = {
 PLUGIN.anomalydefs[2] = {
 	name = "Burner 2",
 	entityname = "anom_par",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
 		"droplet",
 		"jellyfish",
 	},
 	rareArtifacts = {
-		"signet",
-		"sandstone",
+		"flame",
+		"mica",
 	},
 	veryRareArtifacts = {
 		"crystal",
-		"lobstereyes",
+		"eye",
 	},
 }
 
 PLUGIN.anomalydefs[3] = {
 	name = "Electro",
 	entityname = "anom_electra_anomaly",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
-		"lamplight",
-		"ball",
+		"firefly",
+		"snowflake",
 	},
 	rareArtifacts = {
 		"battery",
@@ -54,10 +54,10 @@ PLUGIN.anomalydefs[3] = {
 PLUGIN.anomalydefs[4] = {
 	name = "Electro 2",
 	entityname = "anom_electra_anomaly_type2",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
-		"lamplight",
-		"ball",
+		"firefly",
+		"snowflake",
 	},
 	rareArtifacts = {
 		"battery",
@@ -71,16 +71,16 @@ PLUGIN.anomalydefs[4] = {
 PLUGIN.anomalydefs[5] = {
 	name = "Bubble",
 	entityname = "anom_maysorubka_anomaly",
-	interval = 128,	
+	interval = 384,	
 	commonArtifacts = {
 		"jellyfish",
-		"cell",
+		"shell",
 	},
 	rareArtifacts = {
 		"stoneflower",
-		"dreamcatcher",
-		"bat_a",
-		"fountain",
+		"gravi",
+		"spring",
+		"urchin",
 	},
 	veryRareArtifacts = {
 		"nightstar",
@@ -91,16 +91,16 @@ PLUGIN.anomalydefs[5] = {
 PLUGIN.anomalydefs[6] = {
 	name = "Bubble 2",
 	entityname = "anom_maysorubka_anomaly_type2",
-	interval = 128,	
+	interval = 384,	
 	commonArtifacts = {
 		"jellyfish",
-		"cell",
+		"shell",
 	},
 	rareArtifacts = {
 		"stoneflower",
-		"dreamcatcher",
-		"bat_a",
-		"fountain",
+		"gravi",
+		"spring",
+		"urchin",
 	},
 	veryRareArtifacts = {
 		"nightstar",
@@ -111,15 +111,15 @@ PLUGIN.anomalydefs[6] = {
 PLUGIN.anomalydefs[7] = {
 	name = "Whirlgig",
 	entityname = "anom_voronka_anomaly",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
 		"jellyfish",
-		"cell",
+		"shell",
 	},
 	rareArtifacts = {
 		"stoneblood",
-		"dreamcatcher",
-		"fountain",
+		"gravi",
+		"urchin",
 	},
 	veryRareArtifacts = {
 		"stoneflower",
@@ -129,34 +129,34 @@ PLUGIN.anomalydefs[7] = {
 PLUGIN.anomalydefs[8] = {
 	name = "Fruitpunch",
 	entityname = "anom_gazirovka_anomaly",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
 		"slime",
 	},
 	rareArtifacts = {
 		"stoneblood",
-		"cocoon",
+		"meatchunk",
 	},
 	veryRareArtifacts = {
 		"slug",
-		"bracelet",
+		"soul",
 	},
 }
 
 PLUGIN.anomalydefs[9] = {
 	name = "Fruitpunch 2",
 	entityname = "anom_kisel_anomaly",
-	interval = 128,
+	interval = 384,
 	commonArtifacts = {
 		"slime",
 	},
 	rareArtifacts = {
 		"stoneblood",
-		"cocoon",
+		"meatchunk",
 	},
 	veryRareArtifacts = {
 		"slug",
-		"bracelet",
+		"soul",
 	},
 }
 
@@ -166,13 +166,13 @@ PLUGIN.anomalydefs[10] = {
 	interval = 512,
 	commonArtifacts = {
 		"jellyfish",
-		"cell",
-		"dreamcatcher",
+		"shell",
+		"gravi",
 	},
 	rareArtifacts = {
 		"stoneblood",
 		"stoneflower",
-		"fountain",
+		"urchin",
 	},
 	veryRareArtifacts = {
 		"nightstar",

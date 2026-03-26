@@ -5,6 +5,7 @@ PLUGIN.desc = "Allows for randomly spawning anomaly entities"
 
 PLUGIN.anomalydefs = PLUGIN.anomalydefs or {}
 PLUGIN.anomalypoints = PLUGIN.anomalypoints or {} -- ANOMALYPOINTS STRUCTURE table.insert( PLUGIN.eventpoints, { position, radius, anoms } )
+PLUGIN.artifactCounts = PLUGIN.artifactCounts or {}
 
 PLUGIN.spawnrate = 900
 PLUGIN.spawnchance = 1
@@ -40,10 +41,15 @@ if SERVER then
 
 	function PLUGIN:Think()
 		if spawntime > CurTime() then return end
-		spawntime = CurTime() + self.spawnrate - #player.GetAll()*5
+		spawntime = CurTime() + self.spawnrate - #player.GetAll() * 5
 
 		for i, j in RandomPairs(self.anomalypoints) do
 			if j then
+				self.artifactCounts[i] = self.artifactCounts[i] or 0
+					if self.artifactCounts[i] >= 2 then
+						continue
+					end
+
 				if math.random(100) <= self.spawnchance then
 					local data = {}
 					data.start = j[1]
@@ -59,7 +65,7 @@ if SERVER then
 						end
 					end
 
-					local rand = math.random(101)
+					local rand = math.random(100)
 					local rarityselector = 0
 					local anomalyselector = 0
 
@@ -67,22 +73,29 @@ if SERVER then
 						rarityselector = 0
 					elseif rand <= 95 then
 						rarityselector = 1
-					elseif rand <= 100 then
+					else
 						rarityselector = 2
-					else return end
+					end
 
-					for k,v in RandomPairs(ents.FindInSphere(j[1], 400)) do
+					local nearbyEnts = ents.FindInSphere(j[1], j[2])
+
+					local chosenAnom
+					for k,v in RandomPairs(nearbyEnts) do
 						if (string.sub(v:GetClass(), 1, 5) == "anom_") then
-							for i=1,#self.anomalydefs do
-								if self.anomalydefs[i].entityname == v:GetClass() then
-									anomalyselector = i
+							for ii=1,#self.anomalydefs do
+								if self.anomalydefs[ii].entityname == v:GetClass() then
+									anomalyselector = ii
+									chosenAnom = v
 									break
 								end
 							end
+							if chosenAnom then break end
 						end
 					end
 
-					if anomalyselector == 0 then return end
+					if anomalyselector == 0 then
+						continue
+					end
 
 					local idat = 0
 
@@ -94,7 +107,19 @@ if SERVER then
 						idat = table.Random(self.anomalydefs[anomalyselector].veryRareArtifacts)
 					end
 
-					ix.item.Spawn(idat, j[1] + Vector( math.Rand(-8,8), math.Rand(-8,8), 20 ), nil, AngleRand(), {})
+					local anomPos = chosenAnom:GetPos()
+					local spawnPos = anomPos + Vector( math.Rand(-32,32), math.Rand(-32,32), 0 )
+					local groundTrace = util.TraceLine({start = spawnPos + Vector(0, 0, 512), endpos = spawnPos - Vector(0, 0, 128)})
+					if groundTrace.Hit and not groundTrace.HitSky and groundTrace.HitPos.z >= anomPos.z - 50 then
+						local pointIndex = i
+						ix.item.Spawn(idat, groundTrace.HitPos + Vector(0, 0, 15), function(item, entity)
+							self.artifactCounts[pointIndex] = (self.artifactCounts[pointIndex] or 0) + 1
+
+							entity:CallOnRemove("ixArtifactCounter", function()
+								self.artifactCounts[pointIndex] = math.max(0, (self.artifactCounts[pointIndex] or 1) - 1)
+							end)
+						end, AngleRand(), {})
+					end
 				end
 			end
 		end
@@ -137,26 +162,71 @@ if SERVER then
 			end
 		end
 
-		local entity = table.Random(selectedAnoms)
-		if entity then
-			for i = 1, math.ceil(v[2]/entity.interval) do
-				local position = v[1] + Vector( math.Rand(-v[2],v[2]), math.Rand(-v[2],v[2]), math.Rand(10,20) )
-				local data = {}
-				data.start = position
-				data.endpos = position
-				data.mins = Vector(-16, -16, 0)
-				data.maxs = Vector(16, 16, 71)
-				local trace = util.TraceHull(data)
+		if #selectedAnoms > 0 then
+			local sampleEntity = selectedAnoms[1]
+			local maxCount = math.max(2, math.min(7, math.ceil(v[2] / sampleEntity.interval)))
+			local minCount = math.max(1, math.floor(maxCount / 3))
+			if v[2] >= 768 then
+				maxCount = math.max(2, maxCount - 1)
+				minCount = math.max(2, math.ceil(maxCount / 3))
+			end
+			if v[2] >= 2500 then
+				minCount = math.max(4, minCount)
+			elseif v[2] >= 2000 then
+				minCount = math.max(3, minCount)
+			end
+			local spawnCount = math.random(minCount, maxCount)
 
-				if trace.Entity:IsValid() then
-					continue
-				end
+			local sectorSize = (2 * math.pi) / spawnCount
+			local sectorOffset = math.Rand(0, 2 * math.pi)
 
-				local spawnedent = ents.Create(entity.entityname)
-				if spawnedent then
-					spawnedent:SetPos(position)
-					spawnedent:Spawn()
-					count = count + 1
+			for i = 1, spawnCount do
+				local entity = table.Random(selectedAnoms)
+
+				for attempt = 1, 10 do
+					local sectorStart = sectorOffset + (i - 1) * sectorSize
+					local wiggle = (attempt - 1) * sectorSize * 0.25
+					local angle = sectorStart + math.Rand(-wiggle, sectorSize + wiggle)
+					local dist = math.sqrt(math.Rand(0.1, 1)) * v[2]
+					local position = v[1] + Vector( math.cos(angle) * dist, math.sin(angle) * dist, 0 )
+
+					local groundTrace = util.TraceLine({start = position + Vector(0, 0, 128), endpos = position - Vector(0, 0, 256)})
+					if not groundTrace.Hit or groundTrace.HitSky then continue end
+
+					position = groundTrace.HitPos + Vector(0, 0, 10)
+
+					local losTrace = util.TraceLine({start = v[1] + Vector(0, 0, 50), endpos = position + Vector(0, 0, 50)})
+					if losTrace.Hit and losTrace.Fraction < 0.95 then continue end
+
+					if v[2] >= 768 then
+						local tooClose = false
+						for _, nearby in pairs(ents.FindInSphere(position, math.min(v[2] * 0.25, 500))) do
+							if string.sub(nearby:GetClass(), 1, 5) == "anom_" then
+								tooClose = true
+								break
+							end
+						end
+						if tooClose then continue end
+					end
+
+					local data = {}
+					data.start = position
+					data.endpos = position
+					data.mins = Vector(-16, -16, 0)
+					data.maxs = Vector(16, 16, 71)
+					local trace = util.TraceHull(data)
+
+					if trace.Entity:IsValid() then
+						continue
+					end
+
+					local spawnedent = ents.Create(entity.entityname)
+					if spawnedent then
+						spawnedent:SetPos(position)
+						spawnedent:Spawn()
+						count = count + 1
+					end
+					break
 				end
 			end
 		end
@@ -175,8 +245,38 @@ if SERVER then
 
 	function PLUGIN:LoadData()
 		self.anomalypoints = self:GetData() or {}
+		self.artifactCounts = {}
 
 		self:cleanAnomalies()
+
+		local artifacts = {}
+		for _, ent in pairs(ents.FindByClass("ix_item")) do
+			local itemTable = ent:GetItemTable()
+			if itemTable and itemTable.isArtefact then
+				table.insert(artifacts, ent)
+			end
+		end
+		if #artifacts > 5 then
+			for _, ent in pairs(artifacts) do
+				ent:Remove()
+			end
+		end
+
+		timer.Simple(10, function()
+			local artifacts = {}
+			for _, ent in pairs(ents.FindByClass("ix_item")) do
+				local itemTable = ent:GetItemTable()
+				if itemTable and itemTable.isArtefact then
+					table.insert(artifacts, ent)
+				end
+			end
+			if #artifacts > 5 then
+				for _, ent in pairs(artifacts) do
+					ent:Remove()
+				end
+			end
+		end)
+
 		self:spawnAnomalies()
 		SetNetVar("anomalySpawnPoints", self.anomalypoints)
 	end
@@ -205,7 +305,7 @@ else
 
 	CreateConVar("ix_anomalydisplay", "0", FCVAR_ARCHIVE)
 
-	ix.option.Add("anomalySpawnerDisplayRange", ix.type.number, 2048, {
+	ix.option.Add("anomalySpawnerDisplayRange", ix.type.number, 3072, {
 		category = "observer", min = 512, max = 32768,
 		hidden = function()
 			return !CAMI.PlayerHasAccess(LocalPlayer(), "Helix - Manage Anomalies", nil)
@@ -213,7 +313,7 @@ else
 	})
 
 	local function IsInRange(center, radius)
-		return LocalPlayer():GetPos():Distance(center) <= ix.option.Get("anomalySpawnerDisplayRange", 2048) + (radius or 0)
+		return LocalPlayer():GetPos():Distance(center) <= ix.option.Get("anomalySpawnerDisplayRange", 3072) + (radius or 0)
 	end
 
 	local function DecodeAnomBitmask(bitmask, anomalydefs)
@@ -305,7 +405,7 @@ ix.command.Add("anomaddspawner", {
 		local hitpos = trace.HitPos + trace.HitNormal*5
 		local radius = radius or 128
 		local anomalies = string.lower(anomalies) or "bubble"
-		if (!radius or !isnumber(radius) or radius < 0 or radius > 2048) then
+		if (!radius or !isnumber(radius) or radius < 0 or radius > 3072) then
 			return "@invalidArg", 2
 		end
 

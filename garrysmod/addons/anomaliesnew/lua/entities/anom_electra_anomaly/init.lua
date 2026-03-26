@@ -42,6 +42,7 @@ end
 
 function ENT:StartTouch(ent)
 	timer.Create("electra_activated_once"..self:EntIndex(), 0.01, 1, function()
+		if not IsValid(self) then return end
 		self:EmitSound("electra_blast")
 		ParticleEffect( "electra_activated", self:GetPos(), Angle( 0, 0, 0 ) )
         -- Create a DamageInfo object
@@ -58,9 +59,11 @@ function ENT:StartTouch(ent)
 		self:StopSound("electra_idle")
 	end)	
 	timer.Create("electra_recharge"..self:EntIndex(), 1.95, 0, function()
+		if not IsValid(self) then return end
 		self:SetNWBool("StopParticle", false)
 	end)
 	timer.Create("electra_activated"..self:EntIndex(), 2.0, 0, function()
+		if not IsValid(self) then return end
 		self:EmitSound("electra_blast")
 		self:StopSound("electra_idle")
 		ParticleEffect( "electra_activated", self:GetPos(), Angle( 0, 0, 0 ) )
