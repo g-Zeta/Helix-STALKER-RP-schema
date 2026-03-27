@@ -77,7 +77,8 @@ ITEM.functions.Custom = {
 	
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 
@@ -101,7 +102,8 @@ ITEM.functions.Clone = {
 	end,
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 
@@ -225,7 +227,8 @@ ITEM.functions.Sell = {
 		client:GetCharacter():GiveMoney(math.Round((item.price/1.32)*(item:GetData("quantity",1)/item.ammoAmount)))
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 
@@ -239,6 +242,7 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }

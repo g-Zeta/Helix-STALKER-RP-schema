@@ -400,7 +400,9 @@ ITEM.functions.Sell = {
 		client:GetCharacter():GiveMoney(sellprice)
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip")
+		local owner = item:GetOwner()
+		local char = IsValid(owner) and owner:GetCharacter()
+		return !IsValid(item.entity) and char and char:HasFlags("1") and !item:GetData("equip")
 	end
 }
 
@@ -420,7 +422,9 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		local char = IsValid(owner) and owner:GetCharacter()
+		return !IsValid(item.entity) and char and char:HasFlags("1")
 	end
 }
 
@@ -568,7 +572,7 @@ function ITEM:OnEquipWeapon(client, weapon)
     end
 	
     timer.Simple(0.1, function()
-		if (IsValid(weapon)) then
+		if (IsValid(weapon) and weapon.attachSpecificAttachment) then
 			if ammotype ~= "Normal" then
 				weapon:attachSpecificAttachment(ammotype)
 			end
@@ -677,10 +681,12 @@ function ITEM:OnLoadout()
 				self:SetData("equipSlot", slot)
 			end
 			character:SetData("wepSlots",wepslots)
-			timer.Simple(0.1,function()
-			local ammotype = self:GetData("ammoType", "Normal")
-				if ammotype ~= "Normal" then
-					weapon:attachSpecificAttachment(ammotype)
+			timer.Simple(0.1, function()
+				if (IsValid(weapon) and weapon.attachSpecificAttachment) then
+					local ammotype = self:GetData("ammoType", "Normal")
+					if ammotype ~= "Normal" then
+						weapon:attachSpecificAttachment(ammotype)
+					end
 				end
 			end)
 
@@ -702,7 +708,7 @@ function ITEM:OnLoadout()
 			end
 
 			timer.Simple(0.1, function()
-				if (IsValid(weapon)) then
+				if (IsValid(weapon) and weapon.attachSpecificAttachment) then
 					for _, b in ipairs(attList) do
 						weapon:attachSpecificAttachment(b)
 					end
@@ -791,17 +797,17 @@ end,
 						mods[data[1]] = nil
 						item:SetData("attachments", mods)
 						
-						curPrice = item:GetData("RealPrice")
+						local curPrice = item:GetData("RealPrice")
                 	    if !curPrice then
                 		    curPrice = item.price
                 		end
                         item:SetData("RealPrice", (curPrice - ix.item.list[attData[1]].price))
-                        
+
                         local itemweight = item:GetData("weight", item.weight or 0)
                         local targetweight = ix.item.list[attData[1]].weight
                         local totweight = itemweight - targetweight
                         item:SetData("weight", totweight)
-                        
+
 						client:EmitSound("cw/holster4.wav")
 					else
 						client:NotifyLocalized("notAttachment")
@@ -875,7 +881,7 @@ ITEM.functions.RemoveUpgrade = {
 						mods[data[1]] = nil
 						item:SetData("upgrades", mods)
 						
-						curPrice = item:GetData("RealPrice")
+						local curPrice = item:GetData("RealPrice")
                 	    if !curPrice then
                 		    curPrice = item.price
                 		end
@@ -911,7 +917,8 @@ ITEM.functions.Custom = {
 	
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 
@@ -922,7 +929,7 @@ local function ammoswap(item, data)
     local atts = SWEP.Attachments
     local ammotype = data[1]
     local wepon = client:GetActiveWeapon()
-    local curammo = item:GetData("ammoType", name)
+    local curammo = item:GetData("ammoType", "Normal")
 	
     if (string.match(tostring(wepon), class)) then
         if (atts) then
@@ -1062,11 +1069,7 @@ ITEM.functions.SetDurability = {
 	
 	OnCanRun = function(item)
 		local char = item.player:GetChar()
-		if char:HasFlags("N") then
-			return true
-		else
-			return false
-		end
+		return char and char:HasFlags("N") or false
 	end,
 	
 	OnRun = function(item)
@@ -1095,7 +1098,8 @@ ITEM.functions.Clone = {
 	end,
 	OnCanRun = function(item)
 		local client = item.player
-		return client:GetCharacter():HasFlags("N") and !IsValid(item.entity)
+		local char = client:GetCharacter()
+		return char and char:HasFlags("N") and !IsValid(item.entity)
 	end
 }
 
@@ -1103,7 +1107,7 @@ hook.Add("PlayerDeath", "ixStripClip", function(client)
 	local character = client:GetCharacter()
 	if not character then return end
 	
-	local wepslots = character:SetData("wepSlots",{})
+	character:SetData("wepSlots",{})
 
 	for _, v in pairs(client:GetCharacter():GetInventory():GetItems()) do
 		if (v.isWeapon and v:GetData("equip")) then
