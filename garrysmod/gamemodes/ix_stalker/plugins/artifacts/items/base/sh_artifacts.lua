@@ -465,12 +465,29 @@ if (CLIENT) then
         if LocalPlayer():GetPos():Distance(entity:GetPos()) > 80 then
             entity:SetMaterial("models/shadertest/predator.vmt")
             entity:DrawShadow(false)
-			entity:StopAndDestroyParticles()
+			if entity.ixHasParticles then
+				entity:StopAndDestroyParticles()
+				entity.ixHasParticles = nil
+			end
         else
             entity:SetMaterial(null)
             entity:DrawShadow(true)
-			local visualeffect = CreateParticleSystem(entity,"vortigaunt_charge_token_d",1)
-			timer.Simple(2, function() if entity:IsValid() then entity:StopAndDestroyParticles() end end)
+			if not entity.ixHasParticles then
+				entity.ixHasParticles = true
+				entity.ixParticles = {}
+				for i = 1, 20 do
+					entity.ixParticles[i] = CreateParticleSystem(entity, "vortigaunt_charge_token_d", 1)
+				end
+				timer.Simple(3, function()
+					if IsValid(entity) and entity.ixParticles then
+						for _, p in pairs(entity.ixParticles) do
+							if IsValid(p) then
+								p:StopEmission()
+							end
+						end
+					end
+				end)
+			end
         end
 
         entity:DrawModel()
@@ -669,7 +686,7 @@ if (SERVER) then
 				if (math.random() < 0.35) then
 					phys:EnableGravity(true)
 					phys:Wake()
-					timer.Simple(math.Rand(1, 2), ArtifactMove)
+					timer.Simple(math.Rand(2, 4), ArtifactMove)
 					return
 				end
 
@@ -700,20 +717,20 @@ if (SERVER) then
 				diff.z = 0
 				local horizontalVel = diff / flightTime
 				local vec = horizontalVel + Vector(0, 0, verticalVel) + VectorRand() * 10
-				
+
 				phys:SetVelocity(vec)
 				phys:AddAngleVelocity(VectorRand() * 100)
 				
-				timer.Simple(flightTime + 0.1, ArtifactMove)
+				timer.Simple(flightTime + 0.5, ArtifactMove)
 			else
 				if (IsValid(phys) and !phys:IsGravityEnabled()) then
 					phys:EnableGravity(true)
 					phys:Wake()
 				end
-				timer.Simple(math.random(2, 5), ArtifactMove)
+				timer.Simple(math.random(4, 6), ArtifactMove)
 			end
 		end
 
-		timer.Simple(math.random(2, 5), ArtifactMove)
+		timer.Simple(math.random(4, 6), ArtifactMove)
 	end
 end

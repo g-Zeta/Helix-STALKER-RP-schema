@@ -12,6 +12,9 @@ ITEM.price = 12000
 
 ITEM.maxUses = 3
 
+ITEM.duration = 300
+ITEM.weightBuff = 20
+
 ITEM.sound = "stalker/inventory/inv_drink_flask.mp3"
 
 ITEM.img = Material("stalkerCoP/ui/medicine/hercules.png")

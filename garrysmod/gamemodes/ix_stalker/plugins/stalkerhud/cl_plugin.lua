@@ -329,26 +329,28 @@ function PLUGIN:SHoCHUDPaint()
 	surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
 	surface.DrawTexturedRect(ScrW()-233 * (ScrW()/1920), ScrH()-163 * (ScrH() / 1080), (173*LocalPlayer():GetLocalVar("stm", 100)) / 100 * (ScrW()/1920), 17 * (ScrH() / 1080))
 
-    -- Player stance indicator
-    local stanceMaterial
-	local velocity = lp:GetVelocity()
-	if lp:Crouching() and lp:GetVelocity():Length() == 0 then
-        stanceMaterial = posecrouching  -- Crouching
-    elseif lp:Crouching() and velocity:Length() > 0 then
-        stanceMaterial = posecrouchmove  -- Crouching and moving
-    elseif lp:GetVelocity():Length() == 0 then
-        stanceMaterial = poseidle  -- Idle/Standing
-    elseif velocity:Length() < 100 and lp:GetMoveType() == MOVETYPE_WALK then
-        stanceMaterial = posewalking  -- Walking
-    elseif velocity:Length() > 100 and lp:GetMoveType() == MOVETYPE_WALK then
-        stanceMaterial = poserunning    -- Running
-    end
+    -- Player stance indicator (hidden in noclip/observer)
+    local moveType = lp:GetMoveType()
+    if moveType != MOVETYPE_NOCLIP and lp:GetObserverMode() == OBS_MODE_NONE then
+        local stanceMaterial
+        local velocity = lp:GetVelocity()
+        if lp:Crouching() and velocity:Length() == 0 then
+            stanceMaterial = posecrouching
+        elseif lp:Crouching() and velocity:Length() > 0 then
+            stanceMaterial = posecrouchmove
+        elseif velocity:Length() == 0 then
+            stanceMaterial = poseidle
+        elseif velocity:Length() < 100 and moveType == MOVETYPE_WALK then
+            stanceMaterial = posewalking
+        elseif velocity:Length() > 100 and moveType == MOVETYPE_WALK then
+            stanceMaterial = poserunning
+        end
 
-    -- Draw the stance indicator if a material is set
-    if stanceMaterial then
-        surface.SetMaterial(stanceMaterial)
-        surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
-        surface.DrawTexturedRect(100 * (ScrW() / 1920), 865 * (ScrH() / 1080), 156 * (ScrW() / 1920), 191 * (ScrH() / 1080))
+        if stanceMaterial then
+            surface.SetMaterial(stanceMaterial)
+            surface.SetDrawColor(Color(255, 255, 255, hudAlpha))
+            surface.DrawTexturedRect(100 * (ScrW() / 1920), 865 * (ScrH() / 1080), 156 * (ScrW() / 1920), 191 * (ScrH() / 1080))
+        end
     end
 
 	--Ammo UI

@@ -1,12 +1,12 @@
 ITEM.name = "Medicine"
 ITEM.description = "Helps your body survive in the zone - in one way or another."
-ITEM.longdesc = nil
+ITEM.longdesc = "Long description here."
 ITEM.model = "models/Items/HealthKit.mdl"
 
 ITEM.width = 1
 ITEM.height = 1
 
-ITEM.weight = nil		-- weight of the full item in KG
+ITEM.weight = 1.0		-- weight of the full item in KG
 
 ITEM.price = nil
 ITEM.flag = nil			--e.g. "1"
@@ -125,6 +125,12 @@ if (CLIENT) then
 
 		if self.radProt > 0 then
 			ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), "+" .. self.radProt, Color(0, 135, 0), "materials/stalkerCoP/ui/icons/armorupgrades/radprot.png")
+		end
+
+		local isImperial = ix.option.Get("imperial", false)
+
+		if self.weightBuff > 0 then
+			ix.util.PropertyDesc4(tooltip, "Weight carried: ", Color(255, 255, 255), "+" .. ix.weight.WeightString(self.weightBuff, isImperial), Color(0, 135, 0), "materials/stalkerCoP/ui/icons/armorupgrades/carryweightinc.png")
 		end
 
 		if self.duration > 0 then
@@ -302,7 +308,11 @@ ITEM.functions.use = {
 		if (item.stamBuff > 0) then
 			item.player:AddBuff("buff_staminarestore", item.duration, { amount = item.stamBuff })
 		end
-		
+
+		if (item.weightBuff > 0) then
+			item.player:AddBuff("buff_weight", item.duration, { amount = item.weightBuff })
+		end
+
 		if (item.restore > 0) then
 			item.player:AddBuff("buff_slowheal", item.duration, { amount = item.restore })
 		end
@@ -365,7 +375,8 @@ ITEM.functions.Sell = {
 		client:GetCharacter():GiveMoney(sellprice)
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip",false)
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 
@@ -384,7 +395,8 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 

@@ -1,11 +1,11 @@
 ITEM.name = "Pseudogiant Hand"
-ITEM.model ="models/kek1ch/psevdogigant_hand.mdl"
 ITEM.description = "A hand from a Pseudogiant."
 ITEM.longdesc = "A trophy from a deceased Pseudogiant, could be valuable."
-ITEM.width = 1
-ITEM.height = 1
-ITEM.price = 15000
-ITEM.flag = "1"
-ITEM.value = ITEM.price*1*1
-ITEM.weight = 10
-ITEM.quantity = 1
+ITEM.model = "models/flaymi/anomaly/dynamics/equipments/psevdogigant_hand.mdl"
+
+ITEM.width = 2
+ITEM.height = 2
+
+ITEM.weight = 5
+
+ITEM.price = 6000

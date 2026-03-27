@@ -249,34 +249,6 @@ if SERVER then
 
 		self:cleanAnomalies()
 
-		local artifacts = {}
-		for _, ent in pairs(ents.FindByClass("ix_item")) do
-			local itemTable = ent:GetItemTable()
-			if itemTable and itemTable.isArtefact then
-				table.insert(artifacts, ent)
-			end
-		end
-		if #artifacts > 5 then
-			for _, ent in pairs(artifacts) do
-				ent:Remove()
-			end
-		end
-
-		timer.Simple(10, function()
-			local artifacts = {}
-			for _, ent in pairs(ents.FindByClass("ix_item")) do
-				local itemTable = ent:GetItemTable()
-				if itemTable and itemTable.isArtefact then
-					table.insert(artifacts, ent)
-				end
-			end
-			if #artifacts > 5 then
-				for _, ent in pairs(artifacts) do
-					ent:Remove()
-				end
-			end
-		end)
-
 		self:spawnAnomalies()
 		SetNetVar("anomalySpawnPoints", self.anomalypoints)
 	end

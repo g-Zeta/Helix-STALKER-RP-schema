@@ -1,9 +1,15 @@
 local PLUGIN = PLUGIN
-PLUGIN.name = "Customization"
-PLUGIN.author = "Unknown"
-PLUGIN.desc = "Item Customization."
+PLUGIN.name = "Item Customization"
+PLUGIN.author = "Unknown (modified by Zeta)"
+PLUGIN.desc = "This plugin allows you to customize existing items or create new ones."
 
 if(SERVER) then
+	util.AddNetworkString("ixCustom")
+	util.AddNetworkString("ixCustomA")
+	util.AddNetworkString("ixSwepUpdate")
+	util.AddNetworkString("ixCustomF")
+	util.AddNetworkString("ixAttribF")
+
 	--updates clientside values of sweps
 	function PLUGIN:updateSWEP(client, item)
 		local customData = item:GetData("custom", {})
@@ -22,7 +28,9 @@ if(SERVER) then
 			
 			itemInfo.name = customData.name
 			
-			netstream.Start(client, "nut_swepUpdate", itemInfo)
+			net.Start("ixSwepUpdate")
+				net.WriteTable(itemInfo)
+			net.Send(client)
 		end
 	end	
 	
@@ -46,6 +54,8 @@ if(SERVER) then
 		itemInfo.model = customData.model or item.model
 		itemInfo.material = customData.material or item.material
 		itemInfo.quality = customData.quality
+		itemInfo.weight = customData.weight or item.weight
+		itemInfo.price = customData.price or item.price
 		
 		if(item.isWeapon) then
 			itemInfo.weapon = true
@@ -76,14 +86,15 @@ if(SERVER) then
 			itemInfo.res = customData.res or item.res
 		end
 		
-		netstream.Start(client, "nut_custom", itemInfo)
+		net.Start("ixCustom")
+			net.WriteTable(itemInfo)
+		net.Send(client)
 	end
 	
 	--attribute customization start
 	function PLUGIN:startCustomA(client, item)
-		if !client:GetCharacter():HasFlags("N") then
-			return
-		end
+		local char = client:GetCharacter()
+		if not char or not char:HasFlags("N") then return end
 
 		local attribData = item:GetData("attrib", item.attribBoosts) or {}
 	
@@ -91,19 +102,23 @@ if(SERVER) then
 		itemInfo.id = item.id
 		itemInfo.attrib = attribData
 		
-		netstream.Start(client, "nut_customA", itemInfo)
+		net.Start("ixCustomA")
+			net.WriteTable(itemInfo)
+		net.Send(client)
 	end
 
 	--regular finish hook
-	netstream.Hook("nut_customF", function(client, data)
-		if !client:GetCharacter():HasFlags("N")then
-			return
-		end
+	net.Receive("ixCustomF", function(_, client)
+		local char = client:GetCharacter()
+		if not char or not char:HasFlags("N") then return end
 
-		local id = data[1]
+		local id = net.ReadUInt(32)
 		local item = ix.item.instances[id]
-		local customData = data[2]
-		
+
+		if not item or item:GetOwner() != client then return end
+
+		local customData = net.ReadTable()
+
 		/*if(customData.dura and customData.quality) then
 			local qualities = {
 				[1] = "Garbage",
@@ -133,11 +148,11 @@ if(SERVER) then
 			end
 		end*/
 		
-		if(customData.dura) then
+		if (customData.dura) then
 			item:SetData("durability", customData.dura)
 		end
 
-		if(customData.quantity) then
+		if (customData.quantity) then
 			item:SetData("quantity", customData.quantity)
 		end
 
@@ -147,22 +162,22 @@ if(SERVER) then
 	end)	
 	
 	--attribute finish hook
-	netstream.Hook("nut_attribF", function(client, data)
-		if !client:GetCharacter():HasFlags("N") then
-			return
-		end
+	net.Receive("ixAttribF", function(_, client)
+		local char = client:GetCharacter()
+		if not char or not char:HasFlags("N") then return end
 
-		local id = data[1]
+		local id = net.ReadUInt(32)
 		local item = ix.item.instances[id]
-		local attribData = data[2]
 		
-		if (item) then
-			item:SetData("attrib", attribData)
-		end
+		if not item or item:GetOwner() != client then return end
+
+		local attribData = net.ReadTable()
+		item:SetData("attrib", attribData)
 	end)
 else
 	--clientside hook for menus
-	netstream.Hook("nut_custom", function(data)
+	net.Receive("ixCustom", function()
+		local data = net.ReadTable()
 		local item = data
 	
 		--current values of item
@@ -173,6 +188,8 @@ else
 		local model = item.model
 		local material = item.material or ""
 		local quality = item.quality or "None"
+		local weight = item.weight
+		local price = item.price
 
 		local dura = item.dura
 		local quantity = (item.maxStack or item.ammoAmount or item.quantity)
@@ -229,6 +246,20 @@ else
 		local longdescC = vgui.Create("DTextEntry", scroll)
 		longdescC:SetText(longdesc or "")
 		longdescC:Dock(TOP)
+
+		local weightL = vgui.Create("DLabel", scroll)
+		weightL:SetText("Weight:")
+		weightL:Dock(TOP)
+		local weightC = vgui.Create("DTextEntry", scroll)
+		weightC:SetText(weight or 0)
+		weightC:Dock(TOP)
+
+		local priceL = vgui.Create("DLabel", scroll)
+		priceL:SetText("Price:")
+		priceL:Dock(TOP)
+		local priceC = vgui.Create("DTextEntry", scroll)
+		priceC:SetText(price or 0)
+		priceC:Dock(TOP)
 
 		/*--material customization
 		local materialL = vgui.Create("DLabel", scroll)
@@ -433,6 +464,8 @@ else
 			--customData[2].color = colorC:GetColor()
 			
 			customData[2].model = modelC:GetValue()
+			customData[2].weight = tonumber(weightC:GetValue())
+			customData[2].price = tonumber(priceC:GetValue())
 			
 			/*if(materialC:GetValue() != "") then
 				customData[2].material = materialC:GetValue()
@@ -462,7 +495,10 @@ else
 				end
 			end
 
-			netstream.Start("nut_customF", customData)
+			net.Start("ixCustomF")
+				net.WriteUInt(customData[1], 32)
+				net.WriteTable(customData[2])
+			net.SendToServer()
 			
 			frame:Remove()
 		end
@@ -476,7 +512,8 @@ else
 		end		
 	end)
 	
-	netstream.Hook("nut_customA", function(data)
+	net.Receive("ixCustomA", function()
+		local data = net.ReadTable()
 		local item = data
 	
 		--current values of item
@@ -526,7 +563,10 @@ else
 				end
 			end
 
-			netstream.Start("nut_attribF", customData)
+			net.Start("ixAttribF")
+				net.WriteUInt(customData[1], 32)
+				net.WriteTable(customData[2])
+			net.SendToServer()
 			
 			frame:Remove()
 		end
@@ -540,7 +580,8 @@ else
 		end		
 	end)
 	
-	netstream.Hook("nut_swepUpdate", function(data)
+	net.Receive("ixSwepUpdate", function()
+		local data = net.ReadTable()
 		local item = data
 		local weapon = LocalPlayer():GetWeapon(item.class)
 		

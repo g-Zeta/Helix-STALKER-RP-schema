@@ -135,7 +135,9 @@ ITEM.functions.Sell = {
 
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		if (!IsValid(owner) or !owner:GetCharacter()) then return false end
+		return !IsValid(item.entity) and owner:GetCharacter():HasFlags("1")
 	end
 }
 
@@ -150,7 +152,9 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		if (!IsValid(owner) or !owner:GetCharacter()) then return false end
+		return !IsValid(item.entity) and owner:GetCharacter():HasFlags("1")
 	end
 }
 

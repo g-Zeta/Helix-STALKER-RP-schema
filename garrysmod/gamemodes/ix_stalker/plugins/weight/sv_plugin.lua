@@ -3,24 +3,22 @@ function ix.weight.CalculateWeight(character)
     local inventory = character:GetInventory()
     local weight = 0
 
-    for i, v in pairs(inventory:GetItems()) do
-		local itemWeight = v:GetData("weight")
+    for _, v in pairs(inventory:GetItems()) do
+        -- If the item has a GetWeight function, it's responsible for its own total weight 
+        -- calculation (including internal quantity/stacking logic).
+        if (v.GetWeight) then
+            weight = weight + (v:GetWeight() or 0)
+        else
+            -- Fallback for simple items or customized items without complex weight logic
+            local itemWeight = v:GetData("weight") or v.weight or 0
+            local quantity = 1
 
-		if (!itemWeight) then
-			if (v.GetWeight) then
-				itemWeight = v:GetWeight() or 0
-			else
-				itemWeight = v.weight or 0
-			end
-		end
+            if (!v.isAmmo) then
+                quantity = v:GetData("quantity", 1)
+            end
 
-		local quantity = 1
-
-		if (!v.isAmmo) then
-			quantity = v:GetData("quantity", 1)
-		end
-
-		weight = weight + (itemWeight * quantity)
+            weight = weight + (itemWeight * quantity)
+        end
     end
 
     return weight

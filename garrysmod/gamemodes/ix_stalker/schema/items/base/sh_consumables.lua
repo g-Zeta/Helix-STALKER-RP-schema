@@ -1,63 +1,80 @@
 ITEM.name = "Consumable"
-ITEM.description = "Something to eat"
-ITEM.longdesc = ""
-ITEM.model = "models/kleiner.mdl"
+ITEM.description = "Something to eat or drink."
+ITEM.longdesc = "Long description here."
+ITEM.model = "models/props_junk/garbage_metalcan001a.mdl"
+
+ITEM.quantity = 1
 ITEM.width = 1
 ITEM.height = 1
-ITEM.category = "Consumables"
+ITEM.quantMax = 10
+ITEM.weight = 1.0
+
+ITEM.price = 100
+ITEM.flag = "1"
+
+ITEM.isFood = false
+ITEM.isDrink = false
+ITEM.cookable = false
+
 ITEM.hunger = 0
 ITEM.thirst = 0
-ITEM.empty = false
-ITEM.quantity = 1
-ITEM.quantMax = 1
-ITEM.useName = "Consume" -- "Eat" or "Drink" generally
-ITEM.useIcon = "icon16/stalker/drink.png" -- or "icon16/stalker/eat.png"
 
-ITEM.functions.Sell = {
-	name = "Sell",
-	icon = "icon16/stalker/sell.png",
-	sound = "physics/metal/chain_impact_soft2.wav",
-	OnRun = function(item)
-		local client = item.player
-		local sellprice = item.price/1.32
-		
-		if item.quantity > 1 then
-			sellprice = ((item.price/1.32) * (item:GetData("quantity",item.quantity)/item.quantity))
-		end
-		sellprice = math.Round(sellprice)
-		client:Notify( "Sold for "..(sellprice).." rubles." )
-		client:GetCharacter():GiveMoney(sellprice)
-		return true 
-	end,
-	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
-	end
-}
+ITEM.duration = 0		-- effect duration in seconds/ticks
+ITEM.radrem = 0			-- radiation removal amount per tick
+ITEM.stamBuff = 0		-- stamina restore amount per tick
 
-ITEM.functions.Value = {
-	name = "Value",
-	icon = "icon16/help.png",
-	sound = "physics/metal/chain_impact_soft2.wav",
-	OnRun = function(item)
-		local client = item.player
-		local sellprice = (item.price/1.32)
-		
-		if item.quantity > 1 then
-			sellprice = (sellprice * (item:GetData("quantity",item.quantity)/item.quantity))
+ITEM.category = "Consumables"
+
+if (CLIENT) then
+	function ITEM:PaintOver(item, w, h)
+		local quantity = item:GetData("quantity", 1)
+
+		if (quantity > 1) then
+			draw.SimpleTextOutlined("x" .. quantity, "DermaDefault", w - 2, h - 2, color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 1, color_black)
 		end
-		sellprice = math.Round(sellprice)
-		client:Notify( "Item is sellable for "..(sellprice).." rubles." )
-		return false
-	end,
-	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
 	end
-}
+
+	function ITEM:PopulateTooltip(tooltip)
+		if (self.hunger and self.hunger != 0) then
+			local color = self.hunger > 0 and Color(0, 135, 0) or Color(200, 0, 0)
+			local prefix = self.hunger > 0 and "+" or ""
+			ix.util.PropertyDesc4(tooltip, "Hunger: ", Color(255, 255, 255), prefix .. self.hunger, color, "materials/stalkerCoP/ui/icons/armorupgrades/hunger.png")
+		end
+
+		if (self.thirst and self.thirst != 0) then
+			local color = self.thirst > 0 and Color(0, 135, 0) or Color(200, 0, 0)
+			local prefix = self.thirst > 0 and "+" or ""
+			ix.util.PropertyDesc4(tooltip, "Thirst: ", Color(255, 255, 255), prefix .. self.thirst, color, "materials/stalkerCoP/ui/icons/armorupgrades/bleeding.png")
+		end
+
+		local radAmount = (self.duration or 0) * (self.radrem or 0)
+
+		if (radAmount > 0) then
+			ix.util.PropertyDesc4(tooltip, "Radiation: ", Color(255, 255, 255), "-" .. radAmount, Color(0, 135, 0), "materials/stalkerCoP/ui/icons/armorupgrades/rad.png")
+		end
+
+		local staminaAmount = (self.stamBuff or 0)
+
+		if (staminaAmount > 0) then
+			ix.util.PropertyDesc4(tooltip, "Stamina: ", Color(255, 255, 255), "+" .. staminaAmount, Color(0, 135, 0), "materials/stalkerCoP/ui/icons/armorupgrades/stamina.png")
+		end
+
+		if self.duration > 0 then
+			ix.util.PropertyDesc4(tooltip, "Duration: ", Color(255, 255, 255), self.duration .. " sec.", Color(200, 200, 0), "materials/stalkerCoP/ui/icons/misc/time.png")
+		end
+
+		tooltip:SizeToContents()
+	end
+end
+
+function ITEM:GetWeight()
+	return (self.weight or 0) * self:GetData("quantity", 1)
+end
 
 function ITEM:GetDescription()
 	local str = self.description
 	if self.longdesc and !IsValid(self.entity) then
-		str = str.."\n"..(self.longdesc or "")
+		str = str.."\n\n"..(self.longdesc or "")
 	end
 
 	local customData = self:GetData("custom", {})
@@ -66,7 +83,7 @@ function ITEM:GetDescription()
 	end
 	
 	if (customData.longdesc) and !IsValid(self.entity) then
-		str = str.."\n"..customData.longdesc or ""
+		str = str.."\n\n"..customData.longdesc or ""
 	end
 
     return (str)
@@ -82,6 +99,95 @@ function ITEM:GetName()
 	
 	return name
 end
+
+ITEM.functions.use = {
+	name = "Use",
+	tip = "Use this item",
+	icon = "icon16/cup.png",
+	OnRun = function(item)
+		local client = item.player
+		local character = client:GetCharacter()
+		local quantity = item:GetData("quantity", 1)
+
+		if (item.hunger and item.hunger != 0 and client.SetHunger and client.GetHunger) then
+			local newHunger = math.Clamp(client:GetHunger() + item.hunger, 0, 100)
+			client:SetHunger(newHunger)
+			if (client.UpdateHungerState) then client:UpdateHungerState(client) end
+		end
+
+		if (item.thirst and item.thirst != 0 and client.SetThirst and client.GetThirst) then
+			local newThirst = math.Clamp(client:GetThirst() + item.thirst, 0, 100)
+			client:SetThirst(newThirst)
+			if (client.UpdateThirstState) then client:UpdateThirstState(client) end
+		end
+
+		if (item.radrem > 0) then
+			client:AddBuff("buff_radiationremoval", item.duration, { amount = item.radrem })
+		end
+
+		if (item.stamBuff > 0) then
+			client:AddBuff("buff_staminarestore", item.duration, { amount = item.stamBuff })
+		end
+
+		quantity = quantity - 1
+		item:SetData("quantity", quantity)
+
+		if (ix.weight) then	ix.weight.Update(character)	end
+		
+		if (quantity > 0) then
+			return false
+		end
+
+		return true
+	end,
+	OnCanRun = function(item)
+		return !IsValid(item.entity)
+	end
+}
+
+function ITEM:OnRegistered()
+	if (self.isFood) then
+		self.functions.use.name = "Eat"
+		self.functions.use.icon = "stalkerCoP/ui/icons/misc/eat.png"
+	elseif (self.isDrink) then
+		self.functions.use.name = "Drink"
+		self.functions.use.icon = "stalkerCoP/ui/icons/misc/drink.png"
+	end
+end
+
+ITEM.functions.Sell = {
+	name = "Sell",
+	icon = "stalkerCoP/ui/icons/misc/sell.png",
+	sound = "physics/metal/chain_impact_soft2.wav",
+	OnRun = function(item)
+		local client = item.player
+		local sellprice = math.Round(item.price)
+
+		client:Notify( "Sold for ".. ix.currency.Get(sellprice) .. "." )
+		client:GetCharacter():GiveMoney(sellprice)
+	end,
+	OnCanRun = function(item)
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
+	end
+}
+
+ITEM.functions.Value = {
+	name = "Value",
+	icon = "icon16/help.png",
+	sound = "physics/metal/chain_impact_soft2.wav",
+	OnRun = function(item)
+		local client = item.player
+		local sellprice = math.Round(item.price)
+
+		client:Notify( "Item is sellable for ".. ix.currency.Get(sellprice) .. "." )
+		return false
+	end,
+	OnCanRun = function(item)
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
+	end
+}
 
 ITEM.functions.Custom = {
 	name = "Customize",
@@ -100,42 +206,93 @@ ITEM.functions.Custom = {
 	end
 }
 
-ITEM.functions.Inspect = {
-	name = "Inspect",
-	tip = "Inspect this item",
-	icon = "icon16/picture.png",
-	OnClick = function(item, test)
-		local customData = item:GetData("custom", {})
+ITEM.functions.split = {
+	name = "Split",
+	tip = "useTip",
+	icon = "stalkerCoP/ui/icons/misc/split.png",
+	isMulti = true,
+	multiOptions = function(item, client)
+		local targets = {}
+		local quantity = item:GetData("quantity", 1)
 
-		local frame = vgui.Create("DFrame")
-		frame:SetSize(540, 680)
-		frame:SetTitle(item.name)
-		frame:MakePopup()
-		frame:Center()
-
-		frame.html = frame:Add("DHTML")
-		frame.html:Dock(FILL)
-		
-		local imageCode = [[<img src = "]]..customData.img..[["/>]]
-		
-		frame.html:SetHTML([[<html><body style="background-color: #000000; color: #282B2D; font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Palatino LT STD', Georgia, serif; font-size 16px; text-align: justify;">]]..imageCode..[[</body></html>]])
-	end,
-	OnRun = function(item)
-		return false
+		for i = 1, quantity - 1 do
+			table.insert(targets, {
+				name = i,
+				data = {i},
+			})
+		end
+		return targets
 	end,
 	OnCanRun = function(item)
-		local customData = item:GetData("custom", {})
-	
-		if(!customData.img) then
+		local quantity = item:GetData("quantity", 1)
+		if (quantity <= 1) then
 			return false
 		end
+
+		return (!IsValid(item.entity) and item.invID == item.player:GetCharacter():GetInventory():GetID())
+	end,
+	OnRun = function(item, data)
+		if (data[1]) then
+			local quantity = item:GetData("quantity", 1)
+			local client = item.player
+			local splitAmount = data[1]
+
+			if (splitAmount >= quantity or splitAmount <= 0) then
+				return false
+			end
+			
+			item:SetData("quantity", quantity - splitAmount)
+			if (ix.weight) then
+				ix.weight.Update(client:GetChar())
+			end
+
+			local x, y, bagInvID = client:GetCharacter():GetInventory():Add(item.uniqueID, 1, {["quantity"] = splitAmount})
+
+			if (!x) then
+				item:SetData("quantity", quantity)
+				if (ix.weight) then
+					ix.weight.Update(client:GetChar())
+				end
+				client:NotifyLocalized("noSpace")
+				return false
+			end
+
+			item.player:EmitSound("stalker/inventory/inv_properties.mp3", 110)
+		end
+		return false
+	end,
+}
+
+ITEM.functions.combine = {
+	OnCanRun = function(item, data)
+		if (!data or data[1] == item.id) then return false end
+
+		local targetItem = ix.item.instances[data[1]]
+		return targetItem and targetItem.uniqueID == item.uniqueID
+	end,
+	OnRun = function(item, data)
+		local sourceItem = ix.item.instances[data[1]]
+		local quantMax = item.quantMax or 10
+		local currentQuant = item:GetData("quantity", 1)
+		local sourceQuant = sourceItem:GetData("quantity", 1)
+		local canAdd = quantMax - currentQuant
 		
-		if(item.entity) then
-			return false
+		item.player:EmitSound("stalker/inventory/inv_properties.mp3", 100)
+		
+		if (canAdd >= sourceQuant) then
+			item:SetData("quantity", currentQuant + sourceQuant)
+			sourceItem:Remove()
+		else
+			item:SetData("quantity", quantMax)
+			sourceItem:SetData("quantity", sourceQuant - canAdd)
 		end
 		
-		return true
-	end
+		if (ix.weight) then
+			ix.weight.Update(item.player:GetChar())
+		end
+
+		return false
+	end,
 }
 
 ITEM.functions.Clone = {
@@ -160,107 +317,5 @@ ITEM.functions.Clone = {
 		local client = item.player
 		local char = client:GetCharacter()
 		return char and char:HasFlags("N") and !IsValid(item.entity)
-	end
-}
-
-if (CLIENT) then
-	function ITEM:PaintOver(item, w, h)
-		local cooked = item:GetData("cooked", 1)
-		local quantity = item:GetData("quantity", item.quantity)
-
-		draw.SimpleText(quantity.."/"..item.quantMax, "DermaDefault", 3, h - 1, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
-	end
-end
-
-ITEM.functions.combine = {
-	OnCanRun = function(item, data)
-		if !data then
-			return false
-		end
-		
-		if !data[1] then
-			return false
-		end
-		
-		local targetItem = ix.item.instances[data[1]]
-
-		if targetItem.uniqueID == item.uniqueID then
-			return true
-		else
-			return false
-		end
-	end,
-	OnRun = function(item, data)
-		local targetItem = ix.item.instances[data[1]]
-		local localQuant = item:GetData("quantity", item.quantity)
-		local targetQuant = targetItem:GetData("quantity", targetItem.quantity)
-		local combinedQuant = (localQuant + targetQuant)
-
-		item.player:EmitSound("stalkersound/inv_properties.mp3", 110)
-
-		if combinedQuant <= item.quantMax then
-			targetItem:SetData("quantity", combinedQuant)
-			return true
-		elseif localQuant >= targetQuant then
-			targetItem:SetData("quantity",item.quantity)
-			item:SetData("quantity",(localQuant - (item.quantity - targetQuant)))
-			return false
-		else
-			targetItem:SetData("quantity",(targetQuant - (item.quantity - localQuant)))
-			item:SetData("quantity",item.quantity)
-			return false
-		end
-	end,
-}
-
-ITEM.functions.use = {
-	name = ITEM.useName,
-	icon = ITEM.useIcon,
-	OnCanRun = function(item)
-		plyThirst = item.player:GetCharacter():GetData("thirst", 100)
-		plyHunger = item.player:GetCharacter():GetData("hunger", 100)
-		
-		if !IsValid(item.entity) then
-			if (item.thirst > 0 and plyThirst >= 100) then
-				return false
-			elseif(item.hunger > 0 and plyHunger >= 100) then
-				return false
-			end
-		end
-	end,
-	OnRun = function(item)
-		local itemtable = item
-		local player = itemtable.player
-		local hunger = player:GetCharacter():GetData("hunger", 100)
-		local thirst = player:GetCharacter():GetData("thirst", 100)
-		local quantity = itemtable:GetData("quantity", itemtable.quantity)
-		local newhealth = math.Clamp(player:Health() + itemtable.heal, 1, 100)
-		player:SetHealth(newhealth)
-		player:SetHunger(hunger + itemtable.hunger)
-		player:SetThirst(thirst + itemtable.thirst)
-		player:UpdateThirstState(itemtable.player)
-		if itemtable.empty then
-			local inv = player:GetCharacter():GetInventory()
-			inv:Add(itemtable.empty)
-		end
-		
-		if itemtable.healot and not timer.Exists("foodheal") then
-			timer.Create("foodheal", 3, 5, function()
-				local newhealth = math.Clamp(player:Health() + itemtable.heal, 1, 100)
-				player:SetHealth(newhealth)
-			end)
-		elseif itemtable.healot and timer.Exists("foodheal") then
-			timer.Adjust("foodheal", 3, 5, function()
-				local newhealth = math.Clamp(player:Health() + itemtable.heal, 1, 100)
-				player:SetHealth(newhealth)
-			end)
-		end
-
-		quantity = quantity - 1
-		
-		if (quantity >= 1) then
-			itemtable:SetData("quantity", quantity)
-			return false
-		end
 	end
 }

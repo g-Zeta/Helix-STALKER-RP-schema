@@ -1,11 +1,11 @@
 ITEM.name = "Cat Tail"
-ITEM.model ="models/kek1ch/item_cat_tail.mdl"
 ITEM.description = "The tail from a cat."
 ITEM.longdesc = "Cat tails contain various materials inside their strands of hair which helps their balancing on supernatural levels, aiding them in gaining their infamous agility."
-ITEM.width = 1
+ITEM.model = "models/flaymi/anomaly/dynamics/equipments/item_cat_tail.mdl"
+
+ITEM.width = 2
 ITEM.height = 1
-ITEM.price = 2000
-ITEM.flag = "1"
-ITEM.value = ITEM.price*1*1
-ITEM.weight = 2
-ITEM.quantity = 1
+
+ITEM.weight = 0.2
+
+ITEM.price = 350

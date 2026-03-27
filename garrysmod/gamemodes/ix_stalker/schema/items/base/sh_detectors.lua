@@ -1,18 +1,18 @@
 ITEM.name = "Detector"
 ITEM.description = "A detector."
-ITEM.longdesc = nil
+ITEM.longdesc = "Long description here."
 ITEM.model = "models/weapons/w_pistol.mdl"
-ITEM.category = "Electronics"
-ITEM.class = "weapon_pistol"
 
 ITEM.width = 1
 ITEM.height = 1
 
+ITEM.category = "Electronics"
+ITEM.class = "weapon_pistol"
+ITEM.weaponCategory = "artifactdetector"
+
 ITEM.isArtifactdetector = true
 ITEM.isWeapon = true
 ITEM.noAmmo = true
-ITEM.weaponCategory = "artifactdetector"
-ITEM.equipIcon = Material("stalkerCoP/ui/icons/misc/equip.png")
 
 
 if (CLIENT) then
@@ -37,7 +37,8 @@ ITEM.functions.Sell = {
 		client:GetCharacter():GiveMoney(sellprice)
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1") and !item:GetData("equip",false)
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 
@@ -53,7 +54,8 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 

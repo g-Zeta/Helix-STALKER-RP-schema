@@ -12,39 +12,19 @@ ITEM.weight = 0
 ITEM.outfitCategory = "backpack"
 ITEM.isBackpack = true
 ITEM.img = Material("placeholders/slot_backpack.png")
-ITEM.equipIcon = Material("materials/vgui/ui/stalker/misc/equip.png")
 
 --Weight buff
 ITEM.buff = "weight"
 ITEM.buffval = 1
 
 if (CLIENT) then
---[[
-	function ITEM:PaintOver(item, w, h)
-		if (item:GetData("equip")) then
-			surface.SetDrawColor(110, 255, 110, 255)
-		else
-			surface.SetDrawColor(255, 110, 110, 255)
-		end
-
-		surface.SetMaterial(item.equipIcon)
-		surface.DrawTexturedRect(w-23,h-23,19,19)
-	end
-]]
     function ITEM:DisplayBuffValue(tooltip)
         local buffValue = self.buffval or 0
 		local isImperial = ix.option.Get("imperial", false)
 
-        if isImperial then
-            -- Convert metric to imperial (1 kg = 2.20462 lbs)
-            buffValue = buffValue * 2.20462
-            tooltip:AppendText("Capacity: " .. math.Round(buffValue, 2) .. " lbs") -- Display in pounds
-        else
-            tooltip:AppendText("Capacity: " .. math.Round(buffValue, 2) .. " kg") -- Display in kilograms
-        end
-
-        -- Use PropertyDesc3 to add the buff value to the tooltip
-        ix.util.PropertyDesc3(tooltip, "Capacity: +" .. math.Round(buffValue, 2) .. (isImperial and " lbs" or " kg"), Color(255, 255, 255), Material("vgui/ui/stalker/armorupgrades/carryweightinc.png"), 999)
+		if (buffValue > 0) then
+			ix.util.PropertyDesc4(tooltip, "Weight carried: ", Color(255, 255, 255), "+" .. ix.weight.WeightString(buffValue, isImperial), Color(0, 135, 0), "materials/stalkerCoP/ui/icons/armorupgrades/carryweightinc.png")
+		end
     end
 
     function ITEM:PopulateTooltip(tooltip)
@@ -77,6 +57,10 @@ ITEM.functions.Equip = {
 		item:SetData("equip", true)
 		item:OnEquipped()
 
+		if (ix.weight) then
+			ix.weight.Update(char)
+		end
+
 		return false
 	end,
 	OnCanRun = function(item)
@@ -104,6 +88,10 @@ ITEM.functions.EquipUn = { -- sorry, for name order.
 		item:SetData("equip", false)
 		item:OnUnequipped()
 		
+		if (ix.weight) then
+			ix.weight.Update(char)
+		end
+
 		return false
 	end,
 
@@ -128,6 +116,10 @@ ITEM:Hook("drop", function(item)
         end
         
         item:SetData("equip", nil);
+
+		if (ix.weight) then
+			ix.weight.Update(character)
+		end
     end;
 end);
 
@@ -152,7 +144,9 @@ ITEM.functions.Sell = {
 			end
 			
 			item:SetData("equip", nil);		
-		end;		
+		end;
+
+		if (ix.weight) then	ix.weight.Update(character)	end
 	end,
 	OnCanRun = function(item)	-- made it multiple if's just because it was getting too long
 		if (!IsValid(item.entity) and item:GetData("equip",false) == false) then
@@ -175,7 +169,8 @@ ITEM.functions.Value = {
 		return false
 	end,
 	OnCanRun = function(item)
-		return !IsValid(item.entity) and item:GetOwner():GetCharacter():HasFlags("1")
+		local owner = item:GetOwner()
+		return !IsValid(item.entity) and owner and owner:GetCharacter() and owner:GetCharacter():HasFlags("1")
 	end
 }
 
