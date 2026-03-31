@@ -8,8 +8,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "pistolMag"
 
-CustomizableWeaponry:registerAmmo("9x21MM", "9x21MM Rounds", 9, 18)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "Gyurza"

@@ -6,10 +6,6 @@ AddCSLuaFile("sh_soundscript.lua")
 include("sh_sounds.lua")
 include("sh_soundscript.lua")
 
-CustomizableWeaponry:registerAmmo(".357", ".357 Rounds", 9.1, 33)
-CustomizableWeaponry:registerAmmo(".357 AP", ".357 AP", 9.1, 31)
-CustomizableWeaponry:registerAmmo(".357 MG", ".357 MG", 9.1, 32)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "Colt Python"

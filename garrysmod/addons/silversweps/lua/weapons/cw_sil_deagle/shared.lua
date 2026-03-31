@@ -8,9 +8,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "pistolMag"
 
-CustomizableWeaponry:registerAmmo(".50 AE AP", ".50 AE AP", 9, 51)
-CustomizableWeaponry:registerAmmo(".50 AE MG", ".50 AE MG", 9, 49)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "Desert Eagle"

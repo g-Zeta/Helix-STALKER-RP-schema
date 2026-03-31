@@ -6,9 +6,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "smgMag"
 
-CustomizableWeaponry:registerAmmo("9x19MM AP", "9x19MM AP", 9, 20)
-CustomizableWeaponry:registerAmmo("9x19MM MG", "9x19MM MG", 9, 21)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "Mac-10"

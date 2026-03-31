@@ -8,8 +8,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "brMag"
 
-CustomizableWeaponry:registerAmmo("Batteries", "Gauss Rounds", 0, 0)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "Gauss Rifle Item 62"

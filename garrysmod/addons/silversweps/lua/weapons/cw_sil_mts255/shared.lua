@@ -6,9 +6,6 @@ AddCSLuaFile("sh_soundscript.lua")
 include("sh_sounds.lua")
 include("sh_soundscript.lua")
 
-CustomizableWeaponry:registerAmmo("12 Gauge Slug", "12 Gauge Slug", 12, 71)
-CustomizableWeaponry:registerAmmo("12 Gauge Flechette", "12 Gauge Flechette", 12, 71)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "MTs255 Revolver Shotgun"

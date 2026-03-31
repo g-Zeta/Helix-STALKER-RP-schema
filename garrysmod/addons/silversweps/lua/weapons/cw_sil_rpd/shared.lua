@@ -3,10 +3,6 @@ AddCSLuaFile()
 AddCSLuaFile("sh_sounds.lua")
 include("sh_sounds.lua")
 
-CustomizableWeaponry:registerAmmo("7.62x39MMB", "7.62x39MMB Box Rounds", 7.62, 54)
-CustomizableWeaponry:registerAmmo("7.62x39MMB AP", "7.62x39MMB AP", 7.62, 68)
-CustomizableWeaponry:registerAmmo("7.62x39MMB MG", "7.62x39MMB MG", 7.62, 67)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "RPD"

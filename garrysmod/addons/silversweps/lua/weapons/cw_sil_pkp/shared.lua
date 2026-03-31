@@ -8,10 +8,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "lmgBox"
 
-CustomizableWeaponry:registerAmmo("7.62x54MMB", "7.62x54MMB Box Rounds", 7.62, 54)
-CustomizableWeaponry:registerAmmo("7.62x54MMB AP", "7.62x54MMB AP", 7.62, 68)
-CustomizableWeaponry:registerAmmo("7.62x54MMB MG", "7.62x54MMB MG", 7.62, 67)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "PKP Pecheneg"

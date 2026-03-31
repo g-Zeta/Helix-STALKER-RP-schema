@@ -8,9 +8,6 @@ include("sh_soundscript.lua")
 
 SWEP.magType = "arMag"
 
-CustomizableWeaponry:registerAmmo("12.7x55mm", "12.7x55mm STs-130", 12.7, 55)
-CustomizableWeaponry:registerAmmo("12.7x55mm -AP-", "12.7x55mm STs-130 -AP-", 12.7, 55)
-
 if CLIENT then
 	SWEP.DrawCrosshair = false
 	SWEP.PrintName = "ASh-12"
