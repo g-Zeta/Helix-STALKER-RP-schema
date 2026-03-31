@@ -88,7 +88,7 @@ end
 -- unless you set the font/colors manually.
 -- @realm client
 function PANEL:SetImportant()
-	self:SetFont("ixSmallTitleFont")
+	self:SetFont("stalkertooltiptitlefont")
 	self:SetExpensiveShadow(1, color_black)
 	self:SetBackgroundColor(ix.config.Get("color"))
 end
@@ -448,12 +448,12 @@ function PANEL:Init()
 	self.bMinimal = true
 	self.ixAlpha = 0 -- to avoid conflicts if we're animating a non-tooltip panel
 
-	--self:SetExpensiveShadow(1, color_black)
+	self:SetExpensiveShadow(1, color_black)
 	self:SetContentAlignment(5)
 end
 
 function PANEL:SetImportant()
-	self:SetFont("ixMinimalTitleFont")
+	self:SetFont("stalkertooltiptitlefont")
 end
 
 -- background color will affect text instead in minimal tooltips

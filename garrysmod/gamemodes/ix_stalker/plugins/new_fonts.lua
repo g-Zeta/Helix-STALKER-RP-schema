@@ -92,4 +92,12 @@ if (CLIENT) then
 		weight = 500,
 		antialias = true
 	})
+
+	surface.CreateFont("stalkertooltiptitlefont", {	--Tooltip Title
+		font = "arial",
+		size = ScreenScale(11),
+		extended = true,
+		weight = 600,
+		antialias = true
+	})
 end
